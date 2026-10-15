@@ -1,0 +1,6 @@
+# Never commit reservation exports: they contain guest names, contacts and allergies
+*.csv
+*.json
+!package.json
+backups/
+.DS_Store

@@ -1,0 +1,1546 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Aspen Grove Conference Details</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: follows the Aspen Grove website. Navy header band, white nav strip, light grey page with white cards, royal-blue actions, IBM Plex Sans throughout. Section rail on the left, form on the right. */
+:root{
+  --bg:#f6f6f8; --surface:#ffffff; --sunk:#eef2f7; --line:#e1e5eb; --rule:#afd6fe;
+  --fg:#141414; --muted:#666666;
+  --navy:#002e5d; --navy-deep:#001832; --navy-ink:#ffffff; --title:#002e5d;
+  --spruce:#0047ba; --spruce-ink:#ffffff; --aspen:#0047ba; --aspen-soft:#e7f1fe;
+  --ok:#1f7a45; --ok-soft:#dff1e6; --warn:#9a5a00; --warn-soft:#fdf0d9; --bad:#c41230; --bad-soft:#fde4e7;
+  --display:"IBM Plex Sans","Open Sans",Helvetica,Arial,sans-serif;
+  --body:"IBM Plex Sans","Open Sans",Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:4px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1722; --surface:#142132; --sunk:#1a2b40; --line:#2a3d55; --rule:#2f527d;
+  --fg:#e9eef4; --muted:#9db0c4;
+  --navy:#001832; --navy-deep:#000f20; --navy-ink:#ffffff; --title:#e9eef4;
+  --spruce:#7db4ff; --spruce-ink:#06203f; --aspen:#7db4ff; --aspen-soft:#1a2f4d;
+  --ok:#7fcf9c; --ok-soft:#1b3325; --warn:#f0b65c; --warn-soft:#3a2c14; --bad:#ff8a95; --bad-soft:#3d1d22;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1722; --surface:#142132; --sunk:#1a2b40; --line:#2a3d55; --rule:#2f527d;
+  --fg:#e9eef4; --muted:#9db0c4;
+  --navy:#001832; --navy-deep:#000f20; --navy-ink:#ffffff; --title:#e9eef4;
+  --spruce:#7db4ff; --spruce-ink:#06203f; --aspen:#7db4ff; --aspen-soft:#1a2f4d;
+  --ok:#7fcf9c; --ok-soft:#1b3325; --warn:#f0b65c; --warn-soft:#3a2c14; --bad:#ff8a95; --bad-soft:#3d1d22;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5;padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:1.75rem}
+h2{font-size:1.3rem}
+h3{font-size:1.05rem}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--aspen);outline-offset:2px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+
+/* masthead: navy band like the Aspen Grove site header, then a white strip with the page title and view switch */
+.band{margin-inline:-16px;background:var(--navy);color:var(--navy-ink)}
+.band-in{max-width:1120px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.lockup{display:flex;align-items:center;gap:14px;font-size:1.35rem;font-weight:500;letter-spacing:.01em}
+.lockup .div{width:1px;align-self:stretch;background:rgba(255,255,255,.35)}
+.lockup .sub{font-size:.95rem;font-weight:400;opacity:.85}
+.proto{font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(255,255,255,.5);padding:2px 8px;border-radius:3px;color:var(--navy-ink)}
+.strip{margin-inline:-16px;background:var(--surface);border-bottom:1px solid var(--line);margin-bottom:20px}
+.strip-in{max-width:1120px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.strip h1{font-size:1.6rem;color:var(--title)}
+.tabs{display:flex;gap:0;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.tabs button{border:0;background:var(--surface);padding:7px 16px;cursor:pointer;font-weight:500;color:var(--muted);font-size:.9rem}
+.tabs button+button{border-left:1px solid var(--line)}
+.tabs button[aria-pressed="true"]{background:var(--spruce);color:var(--spruce-ink)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:8px 16px;border-radius:3px;cursor:pointer;font-weight:600;color:var(--spruce)}
+.btn:hover{border-color:var(--spruce)}
+.btn.primary{background:var(--spruce);color:var(--spruce-ink);border-color:var(--spruce)}
+.btn.primary:hover{background:var(--navy);border-color:var(--navy);color:var(--navy-ink)}
+.btn.gold{background:var(--navy);color:var(--navy-ink);border-color:var(--navy)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--spruce);padding-inline:8px}
+.btn.danger{background:var(--bad);color:var(--surface);border-color:var(--bad)}
+.btn.danger-text{color:var(--bad)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+.notice{padding:10px 14px;border-radius:var(--r);font-size:.925rem}
+.notice.info{background:var(--sunk)}
+.notice.warn{background:var(--warn-soft);color:var(--fg);border-left:4px solid var(--warn)}
+.notice.bad{background:var(--bad-soft);border-left:4px solid var(--bad)}
+.notice.ok{background:var(--ok-soft);border-left:4px solid var(--ok)}
+
+/* home */
+.home{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px;display:flex;flex-direction:column;gap:14px}
+.panel p{margin:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.steps{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;color:var(--muted)}
+.steps b{color:var(--fg)}
+
+/* form layout */
+.editor{display:grid;grid-template-columns:220px minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:820px){.editor{grid-template-columns:minmax(0,1fr)}.rail{position:static!important}}
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:flex;flex-direction:column;gap:14px}
+.rail nav{display:flex;flex-direction:column;gap:2px}
+@media (max-width:820px){.rail nav{flex-direction:row;flex-wrap:wrap}}
+.rail a{display:flex;justify-content:space-between;gap:8px;text-decoration:none;color:var(--fg);padding:6px 10px;border-radius:6px;font-size:.925rem}
+.rail a:hover{background:var(--sunk)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none;align-self:center}
+.dot.done{background:var(--ok)}
+.codecard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:6px}
+.codecard .code{font-size:1.4rem;letter-spacing:.06em}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px;width:fit-content}
+.pill.draft{background:var(--warn-soft);color:var(--warn)}
+.pill.locked{background:var(--ok-soft);color:var(--ok)}
+.save{font-size:.8rem;color:var(--muted)}
+
+.form{display:flex;flex-direction:column;gap:22px;min-width:0}
+section.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:16px;scroll-margin-top:16px;min-width:0}
+.sechead{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap;border-bottom:2px solid var(--rule);padding-bottom:10px}
+.sechead .num{font-family:var(--mono);color:var(--aspen);font-size:.85rem;margin-right:8px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;align-items:start}
+.f{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:.9rem;min-width:0}
+.f .hint{font-weight:400;color:var(--muted);font-size:.8rem}
+input[type=text],input[type=tel],input[type=email],input[type=number],input[type=date],input[type=time],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-weight:400;min-width:0}
+textarea{min-height:76px;resize:vertical}
+input:disabled,select:disabled,textarea:disabled{opacity:.75;cursor:not-allowed}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;flex-wrap:wrap}
+.seg label{display:flex;align-items:center;gap:6px;padding:7px 14px;cursor:pointer;font-weight:600;font-size:.9rem}
+.seg label+label{border-left:1px solid var(--line)}
+.seg input{accent-color:var(--spruce)}
+.seg label:has(input:checked){background:var(--sunk)}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.chk{display:flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--line);border-radius:3px;cursor:pointer;font-size:.9rem}
+.chk:has(input:checked){border-color:var(--spruce);background:var(--sunk)}
+.chk input{accent-color:var(--spruce)}
+
+/* days */
+.daytabs{display:flex;gap:6px;flex-wrap:wrap}
+.daytabs button{border:1px solid var(--line);background:var(--bg);padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;display:flex;gap:6px;align-items:center}
+.daytabs button[aria-pressed="true"]{background:var(--spruce);color:var(--spruce-ink);border-color:var(--spruce)}
+.stickybar{position:sticky;top:env(safe-area-inset-top,0px);z-index:3;background:var(--surface);margin-inline:-22px;padding:10px 22px;border-bottom:1px solid var(--line)}
+.dtab{position:relative;display:inline-flex}
+.peek{display:none;position:absolute;top:calc(100% + 8px);left:0;z-index:20;width:min(340px,80vw);background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 24px rgba(0,0,0,.18);padding:12px 14px;flex-direction:column;gap:6px;font-size:.85rem;line-height:1.35;text-align:left;pointer-events:none}
+.dtab.right .peek{left:auto;right:0}
+.peek::before{content:"";position:absolute;top:-6px;left:22px;width:10px;height:10px;background:var(--surface);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg)}
+.dtab.right .peek::before{left:auto;right:22px}
+@media (hover:hover){.dtab:hover .peek{display:flex}}
+.dtab:has(button:focus-visible) .peek{display:flex}
+.pk-h{font-family:var(--display);font-weight:600;font-size:.95rem;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:2px}
+.pk-r{display:grid;grid-template-columns:112px minmax(0,1fr);gap:8px}
+.pk-l{color:var(--muted);font-size:.8rem;padding-top:1px}
+.pk-v b{font-weight:600}
+.pk-miss{color:var(--warn);font-weight:600}
+@media (prefers-reduced-motion:no-preference){.peek{animation:pk .12s ease-out}@keyframes pk{from{opacity:0;transform:translateY(-3px)}}}
+.daynav{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px}
+.flag{display:inline-flex;width:fit-content;font-size:.78rem;font-weight:700;color:var(--warn);background:var(--warn-soft);padding:2px 10px;border-radius:999px}
+.meal{border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.mealhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.mealhead .t{font-family:var(--mono);font-size:.85rem;color:var(--muted)}
+.mealgrid{display:grid;grid-template-columns:minmax(0,2fr) minmax(110px,1fr);gap:10px}
+@media (max-width:520px){.mealgrid{grid-template-columns:minmax(0,1fr)}}
+.sides{font-size:.85rem;color:var(--muted);margin:0}
+.snackcats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.snackcats h4{margin:0 0 6px;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.snackcats .checks{flex-direction:column;align-items:stretch;gap:4px}
+.snackcats .chk{border-radius:6px}
+.chk.full{opacity:.45}
+.count{font-family:var(--mono);font-size:.85rem}
+
+/* allergies */
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.925rem}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+td input{min-width:120px}
+
+/* costs + lock */
+.extras{display:flex;flex-direction:column;gap:4px;font-variant-numeric:tabular-nums}
+.extras .ln{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dotted var(--line);padding-block:4px}
+.lockbar{display:flex;flex-direction:column;gap:12px}
+.missing{margin:0;padding-left:1.2em}
+.confirm{display:flex;flex-direction:column;gap:10px;border:2px solid var(--spruce);border-radius:var(--r);padding:16px;background:var(--aspen-soft)}
+
+/* review */
+.nextstep{flex-direction:row!important;flex-wrap:wrap;justify-content:space-between;align-items:center;background:var(--sunk)!important}
+.reviewhead{display:flex;flex-direction:column;gap:4px;padding-block:4px 2px}
+.reviewhead .eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--aspen);font-weight:700}
+.rtitle{font-size:1.6rem}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px 24px;margin:0}
+.kv>div{min-width:0}
+.kv dt{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kv dd{margin:2px 0 0;font-weight:600;overflow-wrap:anywhere}
+.prose{margin:0;white-space:pre-wrap;max-width:65ch}
+.missingval{color:var(--warn);font-weight:600}
+.sumday{display:flex;flex-direction:column;gap:6px}
+.sumday+.sumday{border-top:1px solid var(--line);padding-top:14px}
+.sumtable th{width:150px;text-transform:none;letter-spacing:0;font-size:.9rem;color:var(--fg);font-weight:600}
+.sumtable td.tm{width:90px;white-space:nowrap;color:var(--muted);font-size:.85rem}
+.sumtable tr:last-child th,.sumtable tr:last-child td{border-bottom:0}
+/* new: counts, allergies, attendee list */
+.mealgrid3{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:10px;align-items:start}
+@media (max-width:620px){.mealgrid3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.mealgrid3>:first-child{grid-column:1/-1}}
+.mwarn{display:flex;flex-direction:column;gap:2px}.mwarn:empty{display:none}
+.warnline{font-size:.82rem;font-weight:600;color:var(--warn)}
+.albadge{display:flex;flex-direction:column;gap:2px;font-size:.85rem;background:var(--warn-soft);border-left:3px solid var(--warn);padding:7px 11px;border-radius:3px}
+.albadge.sev{background:var(--bad-soft);border-left-color:var(--bad)}
+.albadge span{color:var(--fg);opacity:.85}
+.rhint{font-size:.83rem;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.btn.tiny{padding:2px 8px;font-size:.8rem}
+.subhead{font-weight:600;padding-top:14px;border-top:1px solid var(--line)}
+.rosterbox{display:flex;flex-direction:column;gap:10px;border:1px dashed var(--spruce);border-radius:var(--r);padding:14px 16px;background:var(--aspen-soft)}
+.rosterbox details summary{cursor:pointer;color:var(--spruce);font-weight:600;font-size:.9rem}
+.coltable th{text-transform:none;letter-spacing:0;font-size:.85rem;color:var(--fg);width:210px}
+.coltable td{font-size:.85rem}
+.tplbox{display:flex;flex-direction:column;gap:6px}
+.tplbox textarea{font-family:var(--mono);font-size:.78rem;min-height:110px;white-space:pre;overflow:auto}
+.altable td{vertical-align:top}
+.altable select{min-width:130px}
+.alother{margin-top:6px;display:block;width:100%}
+.altable select[id^="al-mode"]{min-width:190px}
+.altable td input{min-width:140px}
+.altable td .hint{display:block;margin-top:3px;font-size:.78rem;color:var(--muted)}
+.altable tr.hasgrid td{border-bottom:0}
+.gridrow td{background:var(--sunk)}
+.algrid{overflow-x:auto;margin-top:6px}
+.algrid table{width:auto;font-size:.85rem}
+.algrid th,.algrid td{text-align:center;padding:4px 8px}
+.algrid thead th{text-transform:none;letter-spacing:0;font-size:.8rem}
+.algrid th[scope=row]{text-align:left;white-space:nowrap;text-transform:none;letter-spacing:0;color:var(--fg);font-size:.85rem}
+.algrid input{accent-color:var(--spruce);width:16px;height:16px}
+.sevtag{font-weight:600}.sevtag.sev{color:var(--bad)}
+.bymeal tr.sevrow td{background:var(--bad-soft)}
+.sumtable td.gc{width:96px;white-space:nowrap;color:var(--muted);font-size:.85rem}
+.pk-sev{color:var(--bad);font-weight:600}
+/* staff: meal locations */
+.bulk{display:flex;flex-wrap:wrap;gap:12px;align-items:end;background:var(--sunk);padding:12px 14px;border-radius:var(--r)}
+.bulk select{min-width:170px}
+.plantable{table-layout:fixed;min-width:680px}
+.plantable th:nth-child(1){width:150px}.plantable th:nth-child(2){width:150px}.plantable th:nth-child(3){width:80px}.plantable th:nth-child(5){width:210px}
+.plantable select{width:100%}
+.plantable th[scope=row]{text-transform:none;letter-spacing:0;font-size:.9rem;color:var(--fg);white-space:nowrap}
+.plantable tr.off th,.plantable tr.off td{color:var(--muted)}
+.plantable td.mono{white-space:nowrap}
+.locnote,.roomsel{margin-top:6px;display:block;width:100%}
+.timein{width:100%}
+/* staff */
+.stafftable td,.stafftable th{white-space:nowrap}
+.stafftable td.g{white-space:normal;min-width:180px}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r)}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--navy);color:var(--navy-ink);padding:10px 18px;border-radius:3px;font-weight:600;font-size:.9rem;z-index:10}
+@media (prefers-reduced-motion:no-preference){.toast{animation:pop .2s ease-out}@keyframes pop{from{transform:translate(-50%,8px);opacity:.4}}}
+
+/* save status */
+.save{display:inline-flex;align-items:flex-start;gap:7px;line-height:1.35}
+.save::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--line);flex:none;margin-top:.35em}
+.save[data-s="ok"]::before{background:var(--ok)}
+.save[data-s="busy"]::before{background:var(--warn)}
+.save[data-s="bad"]{color:var(--bad);font-weight:600}
+.save[data-s="bad"]::before{background:var(--bad)}
+/* conference services */
+.subnav{display:flex;gap:2px;flex-wrap:wrap;border-bottom:2px solid var(--rule);margin-bottom:18px}
+.subnav button{border:0;background:none;padding:9px 14px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;font-size:.95rem}
+.subnav button[aria-pressed="true"]{color:var(--title);border-bottom-color:var(--spruce)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;display:flex;flex-direction:column;gap:2px}
+.stat .n{font-family:var(--mono);font-size:1.6rem;font-weight:500;line-height:1.1}
+.stat .l{font-size:.82rem;color:var(--muted)}
+.stat.alert .n{color:var(--bad)}
+.stack{display:flex;flex-direction:column;gap:18px}
+.prog{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);font-family:var(--mono)}
+.prog .bar{width:72px;height:6px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.prog .bar i{display:block;height:100%;background:var(--spruce)}
+.pill.waiting{background:var(--sunk);color:var(--muted)}
+.pill.overdue{background:var(--bad-soft);color:var(--bad)}
+.pill.progress{background:var(--aspen-soft);color:var(--spruce)}
+.acts{display:flex;flex-wrap:wrap;gap:6px;white-space:normal}
+.acts .btn{padding:5px 10px;font-size:.85rem}
+.stafftable td.a{white-space:normal;min-width:250px}
+.msgcard{border:2px solid var(--spruce);background:var(--aspen-soft)}
+.msgcard textarea{min-height:230px;font-size:.9rem;line-height:1.5;background:var(--surface)}
+.copyline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.9rem}
+.copyline code{font-family:var(--mono);background:var(--surface);border:1px solid var(--line);padding:3px 8px;border-radius:3px;user-select:all;overflow-wrap:anywhere}
+.startform .grid2{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.history{margin:0;padding:0;list-style:none;display:flex;flex-direction:column}
+.history li{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr);gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.history li:last-child{border-bottom:0}
+.history time{color:var(--muted);font-family:var(--mono);font-size:.8rem;padding-top:2px}
+.history .who{color:var(--muted)}
+.checkline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.health{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 24px;margin:0}
+.health dt{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.health dd{margin:2px 0 0;font-weight:600}
+.dlrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line)}
+.dlrow p{margin:2px 0 0}
+.sheetbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.sheetwrap{overflow-x:auto}
+.kitchenpick{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+.kitchenpick select{min-width:240px}
+</style>
+<style id="sheetcss">
+/* Printable sheets: deliberately paper-white in both themes, so what staff see on screen matches what prints. */
+.sheet{background:#fff;color:#16181c;font-family:"IBM Plex Sans",Helvetica,Arial,sans-serif;font-size:13px;line-height:1.4;padding:28px 32px;border:1px solid #cfd5dd;border-radius:4px;max-width:900px;margin:0 auto;min-width:640px}
+.sheet h1{font-size:21px;margin:0;color:#002e5d;font-weight:600}
+.sheet h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#002e5d;border-bottom:2px solid #002e5d;padding-bottom:3px;margin:20px 0 8px;font-weight:700}
+.sheet h3{font-size:13.5px;margin:14px 0 6px;color:#16181c}
+.sheet .top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:4px solid #002e5d;padding-bottom:12px}
+.sheet .org{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#4a5260;font-weight:700}
+.sheet .stamp{border:2px solid #1f7a45;color:#1f7a45;font-weight:700;padding:4px 10px;border-radius:3px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;text-align:center}
+.sheet .stamp.draft{border-color:#9a5a00;color:#9a5a00}
+.sheet .stamp span{display:block;font-weight:500;letter-spacing:0;text-transform:none;font-size:11px}
+.sheet table{border-collapse:collapse;width:100%}
+.sheet th,.sheet td{border:1px solid #c9ced6;padding:5px 7px;text-align:left;vertical-align:top}
+.sheet thead th{background:#eef2f7;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#2b3340}
+.sheet tbody th{font-weight:600;white-space:nowrap}
+.sheet td.n{font-family:"IBM Plex Mono",Menlo,monospace;text-align:right;white-space:nowrap}
+.sheet tr.tot td,.sheet tr.tot th{background:#f4f6f9;font-weight:700}
+.sheet .kvs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 18px}
+.sheet .kvs span{display:block;font-size:10px;text-transform:uppercase;color:#5a6270;letter-spacing:.07em;font-weight:700}
+.sheet .sev,.sheet .sevtag.sev,.sheet .pk-sev{color:#b00020;font-weight:700}
+.sheet .missingval,.sheet .miss{color:#9a5a00;font-weight:600}
+.sheet .muted{color:#5a6270}.sheet .small{font-size:11.5px}
+.sheet .note{white-space:pre-wrap;margin:0}
+.sheet .al{display:block}
+.sheet .foot{margin-top:20px;padding-top:8px;border-top:1px solid #c9ced6;font-size:10.5px;color:#5a6270;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sheet .day{break-inside:avoid}
+@media print{.sheet{border:0;padding:0;max-width:none;min-width:0}.noprint{display:none}}
+</style>
+
+<header>
+    <div class="band"><div class="band-in">
+      <div class="lockup"><span>Aspen Grove</span><span class="div" aria-hidden="true"></span><span class="sub">Conference Services</span></div>
+      <span class="proto">Prototype</span>
+    </div></div>
+    <div class="strip"><div class="strip-in">
+      <h1>Conference Final Details</h1>
+      <div class="tabs" role="group" aria-label="View">
+        <button id="tab-org" aria-pressed="true">Organizer</button>
+        <button id="tab-staff" aria-pressed="false">Conference Services</button>
+      </div>
+    </div></div>
+  </header>
+<div class="wrap">
+  <div id="banner"></div>
+  <main id="app"></main>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+// ---------- Menu data (from the Final Details form & menus) ----------
+const BREAKFAST=[
+ {id:"pancakes",name:"Pancakes",sides:"Yogurt cups, scrambled eggs, sausage, country potatoes"},
+ {id:"frenchtoast",name:"French Toast",sides:"Bacon, parfait bar"},
+ {id:"waffles",name:"Waffles",sides:"Strawberries and whipped cream, bacon, yogurt cups"},
+ {id:"omelets",name:"Omelets",sides:"Ham, country potatoes, yogurt cups"},
+ {id:"quiche",name:"Quiche",sides:"Sausage, parfait bar"}];
+const LUNCH=[
+ {id:"philly",name:"Philly Cheese Steak Sandwiches",sides:"Sautéed mushrooms, peppers and onions, french fries",second:true},
+ {id:"frenchdip",name:"French Dip Sandwiches",sides:"Au jus, crispy tater tots"},
+ {id:"fajitas",name:"Fajitas",sides:"Sour cream, salsa, cheese, guacamole, Spanish rice",meat:true,second:true},
+ {id:"ziti",name:"Baked Ziti",sides:"Steamed broccoli, breadsticks"},
+ {id:"soupsand",name:"Soup & Sandwich Bar",sides:"Meats, cheeses, lettuce, tomatoes, pickles, chips"}];
+const DINNER=[
+ {id:"pork",name:"Pork Tenderloin",sides:"Apple cream sauce, mashed potatoes, steamed carrots"},
+ {id:"salmon",name:"Oven Baked Salmon",sides:"Normandy vegetables, rice pilaf",note:"+ market price"},
+ {id:"cordon",name:"Chicken Cordon Bleu",sides:"Roasted carrot, celery and onion, creamy polenta"},
+ {id:"lasagna",name:"Lasagna",sides:"Roasted butternut squash"},
+ {id:"grilled",name:"Grilled Chicken",sides:"Parmesan basil orzo, grilled asparagus"},
+ {id:"parm",name:"Chicken Parmesan",sides:"Spaghetti, steamed broccoli"},
+ {id:"hanger",name:"Hanger Steak",sides:"Demi-glace, herb roasted potatoes, steamed green beans",pp:2}];
+const VEG=[{id:"veglasagna",name:"Vegetarian Lasagna"},{id:"peppers",name:"Stuffed Bell Peppers"},{id:"padthai",name:"Tofu Pad Thai"},{id:"portobello",name:"Stuffed Portobello"}];
+const SNACKS={
+ Fresh:["Whole Fruit","Mixed Fruit Tray","Veggie Tray","Relish Tray","Bruschetta","Caprese Skewers"],
+ Dry:["Bagged Apple Chips","Mixed Nuts","Pub Mix","Chips","Granola Bars","Trail Mix Snack Bags","Pretzels"],
+ Savory:["Meatballs","Soft Pretzels & Cheese Sauce","Mini Bagels","Hummus & Pita","Chips & Salsa","Spanakopita","Mini Empanadas"],
+ Sweet:["Muffins","Danish Pastries","Mini Cream Puffs","Cookie Tray","Brownies & Bars","Individually Wrapped Chocolates","Chocolate Covered Nuts or Fruits"]};
+const MEALS=[
+ {k:"breakfast",label:"Breakfast",time:"08:00",list:BREAKFAST,base:"Oatmeal bar served with every breakfast.",incl:"oatmeal bar"},
+ {k:"amSnack",label:"Morning snack",time:"10:30",snack:true},
+ {k:"lunch",label:"Lunch",time:"12:30",list:LUNCH,base:"Salad served with every lunch.",incl:"salad"},
+ {k:"pmSnack",label:"Afternoon snack",time:"15:00",snack:true},
+ {k:"dinner",label:"Dinner",time:"18:00",list:DINNER,base:"Salad and dessert served with every dinner.",incl:"salad, dessert"}];
+const AV=["Projector","Screen","Whiteboard","Microphone","Speakers / sound","Easel & flip chart"];
+const DEADLINE_DAYS=14, MAX_DAYS=7, TODAY=startOfDay(new Date());
+
+// ---------- helpers ----------
+function startOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x}
+function parseDate(s){if(!s)return null;const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function fmtDate(s,opts){const d=typeof s==="string"?parseDate(s):s;return d?d.toLocaleDateString("en-US",opts||{weekday:"short",month:"short",day:"numeric"}):"—"}
+function fmtTime(t){if(!t)return"";const[h,m]=t.split(":").map(Number);return ((h+11)%12+1)+":"+String(m).padStart(2,"0")+(h<12?" a.m.":" p.m.")}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function daysBetween(a,b){return Math.round((startOfDay(b)-startOfDay(a))/864e5)}
+function newCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<5;i++)s+=a[Math.floor(Math.random()*a.length)];return "AG-"+s}
+function normCode(s){s=(s||"").trim().toUpperCase().replace(/\s+/g,"");if(s&&!s.startsWith("AG-"))s="AG-"+s.replace(/^AG/,"");return s}
+function deadlineOf(r){const d=parseDate(r.startDate);if(!d)return null;const x=new Date(d);x.setDate(x.getDate()-DEADLINE_DAYS);return x}
+function blankDay(date){const meals={};MEALS.forEach(m=>{meals[m.k]=m.snack?{on:false,time:m.time,items:[],count:""}:{choice:"",time:m.time,addon:false,second:false,meat:"Chicken",vegChoice:"",vegCount:0,count:"",service:"hall",location:""}});return {date,meals}}
+function blankRes(code){return {code,status:"draft",group:"",contact:"",phone:"",email:"",headcount:"",startDate:"",endDate:"",attendeeNotes:"",setup:"",roomChanges:"",setupNotes:"",noAV:false,av:[],avOther:"",days:[],allergies:[],comments:"",onsite:{same:false,name:"",phone:""},firstMeal:"",lastMeal:"",roster:null,checklist:{schedule:false,payment:false},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),lockedAt:null}}
+function getPath(o,p){return p.split(".").reduce((a,k)=>a==null?a:a[k],o)}
+function setPath(o,p,v){const ks=p.split(".");let a=o;for(let i=0;i<ks.length-1;i++)a=a[ks[i]];a[ks[ks.length-1]]=v}
+
+// ---------- allergy list options ----------
+const ALLERGENS=["Milk","Eggs","Fish","Crustacean shellfish","Tree nuts","Peanuts","Wheat/Gluten","Soybeans","Sesame"];
+const DIETS=["Vegan","Vegetarian"];
+const RESTRICT_OPTS=[...ALLERGENS,...DIETS];
+function matchRestriction(t){const x=String(t||"").toLowerCase().trim();if(!x)return "";
+  const tests=[[/^vegan/,"Vegan"],[/^vegetarian/,"Vegetarian"],[/\b(milk|dairy|lactose)\b/,"Milk"],[/\beggs?\b/,"Eggs"],[/\b(crustacean|shellfish|shrimp|crab|lobster|prawn)/,"Crustacean shellfish"],[/\bfish\b/,"Fish"],
+    [/\bpeanuts?\b/,"Peanuts"],[/\b(tree ?nuts?|almond|walnut|cashew|pecan|pistachio|hazelnut|macadamia)/,"Tree nuts"],[/\b(wheat|gluten|celiac|coeliac)/,"Wheat/Gluten"],[/\bsoy(beans?|a)?\b/,"Soybeans"],[/\bsesame\b/,"Sesame"]];
+  for(const[re,v]of tests)if(re.test(x))return v;return ""}
+const isDietRow=a=>!a.other&&DIETS.includes(a.allergy);
+
+// ---------- meal slots, stay window, counts ----------
+const MEAL=Object.fromEntries(MEALS.map(m=>[m.k,m]));
+const SLOTS=MEALS.map(m=>m.k), MAINS=["breakfast","lunch","dinner"];
+const slotIdx=(di,k)=>di*5+SLOTS.indexOf(k);
+const slotKey=(date,k)=>date+"|"+k;
+function keyIdxR(r,key){if(!key)return -1;const[d,k]=key.split("|");const di=r.days.findIndex(x=>x.date===d);return di<0||!SLOTS.includes(k)?-1:slotIdx(di,k)}
+const keyIdx=key=>keyIdxR(res,key);
+function eventWindow(r=res){const n=r.days.length;return n?[0,n*5-1]:[0,-1]}
+function slotLabel(key){const[d,k]=key.split("|");return `${fmtDate(d)} ${MEAL[k]?MEAL[k].label.toLowerCase():k}`}
+const headN=(r=res)=>Number(r.headcount)||0;
+const mealCount=(st,r=res)=>st.count===""||st.count==null?headN(r):(Number(st.count)||0);
+const isServed=(m,st)=>m.snack?!!st.on:!!(st.choice&&st.choice!=="none");
+const isSevere=a=>a.type==="Medical"||(a.type!=="Preference"&&(a.severity==="Severe"||a.severity==="Airborne"));
+const noSeverity=a=>a.type==="Preference"||a.type==="Medical";
+const TYPE_LABEL={Allergy:"Allergy",Intolerance:"Intolerance",Preference:"Dietary preference",Medical:"Medically prescribed"};
+const SEV_LABEL={Mild:"Mild",Severe:"Severe",Airborne:"Airborne / anaphylactic"};
+function applyWindow(){
+  const[a,b]=eventWindow();if(a>b)return;
+  res.days.forEach((d,di)=>MEALS.forEach(m=>{const st=d.meals[m.k],idx=slotIdx(di,m.k),out=idx<a||idx>b;
+    if(m.snack){if(out&&st.on){st.on=false;st.auto=true}else if(!out&&st.auto){st.on=st.items.length>0;st.auto=false}}
+    else{if(out&&st.choice!=="none"){st.prev=st.choice;st.choice="none";st.auto=true}else if(!out&&st.auto&&st.choice==="none"){st.choice=st.prev||"";st.auto=false;delete st.prev}}}));
+}
+function normalize(r){
+  r.days=r.days||[];r.av=r.av||[];r.checklist=r.checklist||{schedule:false,payment:false};
+  r.onsite=r.onsite||{same:false,name:"",phone:""};r.firstMeal=r.firstMeal||"";r.lastMeal=r.lastMeal||"";r.roster=r.roster||null;
+  r.days.forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(st.count===undefined)st.count="";if(!m.snack){if(!st.service)st.service="hall";if(st.location===undefined)st.location=""}}));
+  r.allergies=(r.allergies||[]).map(a=>({name:a.name||"",allergy:a.allergy||"",type:a.type||(a.allergy?"Allergy":""),severity:a.severity||"",mode:a.mode||"all",meals:Array.isArray(a.meals)?a.meals:[],note:typeof a.meals==="string"?a.meals:(a.note||""),from:a.from||"",to:a.to||"",src:a.src||"",other:a.other}));
+  r.allergies.forEach(a=>{if(a.other===undefined){const m=matchRestriction(a.allergy);if(a.allergy&&RESTRICT_OPTS.includes(a.allergy))a.other=false;else if(a.allergy&&m&&a.allergy.trim().toLowerCase()===m.toLowerCase()){a.allergy=m;a.other=false}else a.other=!!a.allergy}if(!a.other&&a.allergy==="Wheat")a.allergy="Wheat/Gluten";if(a.other&&/^\s*(gluten|wheat)\s*$/i.test(a.allergy)){a.allergy="Wheat/Gluten";a.other=false}if(isDietRow(a)){if(a.type!=="Medical")a.type="Preference";a.severity=""}else if(!a.other&&a.allergy&&noSeverity(a))a.type="";});
+  return r;
+}
+function allergyWindow(a){const[ea,eb]=eventWindow();let x=a.from?keyIdx(a.from):-1,y=a.to?keyIdx(a.to):-1;return[x<0?ea:x,y<0?eb:y]}
+function allergiesAt(di,k){const d=res.days[di];if(!d||!isServed(MEAL[k],d.meals[k]))return[];const idx=slotIdx(di,k),key=slotKey(d.date,k);
+  return res.allergies.filter(a=>a.name||a.allergy).filter(a=>{if(a.mode==="specific")return a.meals.includes(key);const[x,y]=allergyWindow(a);return idx>=x&&idx<=y})}
+function rosterWindow(p){const[ea,eb]=eventWindow();let x=p.from?keyIdx(p.from):-1,y=p.to?keyIdx(p.to):-1;return[x<0?ea:x,y<0?eb:y]}
+function rosterAt(di,k){if(!res.roster)return[];const idx=slotIdx(di,k);return res.roster.filter(p=>{const[x,y]=rosterWindow(p);return idx>=x&&idx<=y})}
+function applyRosterCounts(){res.days.forEach((d,di)=>MEALS.forEach(m=>{const st=d.meals[m.k],c=rosterAt(di,m.k).length;
+  st.count=c;if(!isServed(m,st)&&!m.snack&&!st.choice&&c===0){st.choice="none";st.auto=true}}))}
+
+// ---------- storage: shared db when available, this browser otherwise ----------
+const store={db:null,mode:"pending",
+ async init(){
+  try{ if(window.claude&&claude.use){ this.db=await claude.use("db") } }catch(e){ this.db=null }
+  this.mode=this.db?"db":"local"; renderBanner();
+ },
+ async get(code){
+  await ready;
+  if(this.db){const s=await this.db.doc("reservations/"+code).get();return s.exists?structuredClone(s.data()):null}
+  try{const raw=localStorage.getItem("agres:"+code);return raw?JSON.parse(raw):null}catch(e){return null}
+ },
+ async put(r){
+  await ready;
+  if(this.db){await this.db.doc("reservations/"+r.code).set(JSON.parse(JSON.stringify(r)));return}
+  try{localStorage.setItem("agres:"+r.code,JSON.stringify(r))}catch(e){throw {code:"local",message:"This browser won't store data."}}
+ },
+ async del(code){
+  await ready;
+  if(this.db){await this.db.doc("reservations/"+code).delete();this.db.doc("staffnotes/"+code).delete().catch(()=>{});return}
+  try{localStorage.removeItem("agres:"+code);localStorage.removeItem("agstaff:"+code)}catch(e){}
+ },
+ async getStaff(code){
+  await ready;
+  if(this.db){const s=await this.db.doc("staffnotes/"+code).get();return s.exists?structuredClone(s.data()):null}
+  try{const raw=localStorage.getItem("agstaff:"+code);return raw?JSON.parse(raw):null}catch(e){return null}
+ },
+ async putStaff(code,obj){
+  await ready;
+  if(this.db){await this.db.doc("staffnotes/"+code).set(JSON.parse(JSON.stringify(obj)));return}
+  try{localStorage.setItem("agstaff:"+code,JSON.stringify(obj))}catch(e){throw {code:"local"}}
+ },
+ async allStaff(){
+  await ready;
+  if(this.db){const q=await this.db.collection("staffnotes").get();const o={};q.docs.forEach(d=>{const x=d.data();o[x.code||d.id]=x});return o}
+  const o={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith("agstaff:"))o[k.slice(8)]=JSON.parse(localStorage.getItem(k))}}catch(e){}return o;
+ },
+ async check(){
+  await ready;const t0=performance.now(),stamp=new Date().toISOString();
+  if(this.db){await this.db.doc("health/check").set({at:stamp,by:who.id||""});const s=await this.db.doc("health/check").get();
+    if(!s.exists||s.data().at!==stamp)throw {code:"mismatch"};}
+  else{localStorage.setItem("aghealth",stamp);if(localStorage.getItem("aghealth")!==stamp)throw {code:"mismatch"}}
+  return Math.round(performance.now()-t0);
+ },
+ async all(){
+  await ready;
+  if(this.db){const q=await this.db.collection("reservations").get();return q.docs.map(d=>d.data())}
+  const out=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith("agres:"))out.push(JSON.parse(localStorage.getItem(k)))}}catch(e){}
+  return out;
+ }};
+
+// ---------- app state ----------
+let view="home", res=null, activeDay=0, confirmingLock=false, saveState="", saving=Promise.resolve(), saveTimer=null, staffRows=null, staffUnsub=null, homeMsg="", pendingDelete=null, pendingImport=null, rosterError="", showTpl=false, plan=null, planSaveT=null, planState="", staffInfo=null;
+const app=document.getElementById("app");
+
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2600)}
+function renderBanner(){
+  const b=document.getElementById("banner");
+  b.innerHTML=store.mode==="local"?`<div class="notice warn" style="margin-bottom:16px">Demo mode: reservations are saved in this browser only. Open the published page while signed in to share them with Aspen Grove staff.</div>`:"";
+}
+
+function isLocked(){return res&&res.status==="locked"}
+
+// ---------- completeness ----------
+function sectionStatus(r){
+  const s={};
+  s.contact=!!(r.group&&r.contact&&r.phone&&r.email&&Number(r.headcount)>0&&r.startDate&&r.endDate&&(r.onsite.same||(r.onsite.name&&r.onsite.phone)));
+  s.room=!!(r.setup&&r.roomChanges&&(r.noAV||r.av.length||r.avOther));
+  s.meals=r.days.length>0&&r.days.every(d=>["breakfast","lunch","dinner"].every(k=>d.meals[k].choice)&&["amSnack","pmSnack"].every(k=>!d.meals[k].on||d.meals[k].items.length>0));
+  s.allergies=allergyIssues(r).length===0&&(r.allergies.length>0||r.noAllergies===true);
+  s.checklist=!!r.checklist.schedule;
+  return s;
+}
+function missingList(r){
+  const m=[];
+  if(!r.group)m.push("Group name");if(!r.contact)m.push("Your name");if(!r.phone)m.push("Phone number");if(!r.email)m.push("Email");
+  if(!(Number(r.headcount)>0))m.push("Final headcount");if(!r.startDate||!r.endDate)m.push("Event dates");
+  if(!r.onsite.same&&(!r.onsite.name||!r.onsite.phone))m.push("On-site contact: name and cell phone");
+
+  if(!r.setup)m.push("Preferred room setup");if(!r.roomChanges)m.push("Room changes yes/no");
+  if(!(r.noAV||r.av.length||r.avOther))m.push("A/V needs, or check “No audio/visual needs”");
+  r.days.forEach(d=>{["breakfast","lunch","dinner"].forEach(k=>{if(!d.meals[k].choice)m.push(`${fmtDate(d.date)}: ${k} selection`)});
+    ["amSnack","pmSnack"].forEach(k=>{if(d.meals[k].on&&!d.meals[k].items.length)m.push(`${fmtDate(d.date)}: pick items for the ${k==="amSnack"?"morning":"afternoon"} snack`)})});
+  m.push(...allergyIssues(r));
+  if(!r.allergies.length&&r.noAllergies!==true)m.push("List allergies, or confirm none");
+  if(!r.checklist.schedule)m.push("Confirm the conference schedule was emailed");
+  return m;
+}
+function allergyIssues(r){const m=[];r.allergies.forEach((a,i)=>{const w=a.name?`Allergy row ${i+1} (${a.name})`:`Allergy row ${i+1}`;
+  if(!a.name)m.push(`${w}: add the guest's name`);if(!a.allergy)m.push(a.other?`${w}: describe the allergy or restriction`:`${w}: choose an allergy or restriction`);if(!a.type)m.push(`${w}: choose a type`);
+  if(a.type==="Allergy"&&!a.severity)m.push(`${w}: choose a severity`)});return m}
+function extras(r){
+  const n=Number(r.headcount)||0, lines=[];let total=0,market=false;
+  r.days.forEach(d=>{
+    const b=d.meals.breakfast,l=d.meals.lunch,dn=d.meals.dinner,nb=mealCount(b,r),nl=mealCount(l,r),nd=mealCount(dn,r),day=fmtDate(d.date);
+    if(b.choice&&b.choice!=="none"&&b.addon){lines.push([`${day} · Breakfast add-on, ${nb} × $1.50`,1.5*nb]);total+=1.5*nb}
+    if(l.second&&LUNCH.find(x=>x.id===l.choice)?.second){lines.push([`${day} · Lunch 2nd protein, ${nl} × $3`,3*nl]);total+=3*nl}
+    if(dn.choice==="hanger"){lines.push([`${day} · Hanger steak, ${nd} × $2`,2*nd]);total+=2*nd}
+    if(dn.choice==="salmon"){market=true;lines.push([`${day} · Salmon, ${nd} guests (market price)`,null])}
+  });
+  if(r.roomChanges==="yes")lines.push(["Room setup changes during event (needs approval, fee may apply)",null]);
+  return {lines,total,market,n};
+}
+
+// ---------- HOME ----------
+function renderHome(){
+  view="home";res=null;actingAs="organizer";setTab("org");
+  app.innerHTML=`
+  <div class="home">
+    <div class="panel">
+      <h2>Start your final details</h2>
+      <p class="muted">For group organizers with a confirmed event at Aspen Grove. You'll get a reservation code so you can come back and make changes.</p>
+      <ol class="steps">
+        <li><b>Create</b> your reservation and fill in what you know.</li>
+        <li><b>Modify</b> any time with your code. Changes save as you go.</li>
+        <li><b>Lock in</b> when everything is final, at least ${DEADLINE_DAYS} days before your event.</li>
+      </ol>
+      <div class="row"><button class="btn primary" id="create">Create a reservation</button></div>
+    </div>
+    <form class="panel" id="lookup">
+      <h2>Continue a reservation</h2>
+      <label class="f" for="code-in">Reservation code<span class="hint">Looks like AG-7KQ2M</span>
+        <input id="code-in" type="text" class="mono" autocomplete="off" placeholder="AG-" required></label>
+      <div class="row"><button class="btn primary" type="submit">Open reservation</button>
+      <button class="btn ghost" type="button" id="example">Open the example (AG-DEMO1)</button></div>
+      ${homeMsg?`<div class="notice bad">${esc(homeMsg)}</div>`:""}
+    </form>
+  </div>`;
+  homeMsg="";
+  document.getElementById("create").onclick=async()=>{
+    let code=newCode();for(let i=0;i<3&&await store.get(code).catch(()=>null);i++)code=newCode();
+    res=blankRes(code);actingAs="organizer";logEvent(res,"Created by organizer");
+    try{await store.put(res)}catch(e){toast("Couldn't create the reservation. Try again in a moment.");return}
+    openEditor(res);toast("Reservation "+code+" created");
+  };
+  document.getElementById("lookup").onsubmit=e=>{e.preventDefault();openCode(document.getElementById("code-in").value)};
+  document.getElementById("example").onclick=()=>openCode("AG-DEMO1");
+}
+async function openCode(raw){
+  const code=normCode(raw);if(!code){return}
+  let r=null;try{r=await store.get(code)}catch(e){}
+  if(!r&&code==="AG-DEMO1"&&store.mode==="local"){r=localExample();await store.put(r).catch(()=>{})}
+  if(!r){homeMsg=`No reservation found for ${code}. Check the code in your confirmation email, or create a new one.`;renderHome();return}
+  openEditor(r);
+}
+
+// ---------- EDITOR ----------
+function openEditor(r){view="edit";res=normalize(r);lastSig=sectionSig(res);dirty=false;clearTimeout(retryT);retryN=0;restoreOffer=null;
+  {const b=store.mode==="db"?bakGet(res.code):null;if(b&&b.updatedAt>(res.updatedAt||"")&&res.status!=="locked")restoreOffer=b;else if(b)bakDel(res.code)}
+  setSaveState(store.mode==="db"?(res.updatedAt?"Saved to Aspen Grove · "+fmtDate(new Date(res.updatedAt),{month:"short",day:"numeric"})+", "+clock(res.updatedAt):"Saved to Aspen Grove"):"Saved on this device only","ok");
+  staffInfo=null;{const code=res.code;store.getStaff(code).then(x=>{if(res&&res.code===code){staffInfo=x;if(x&&(view==="review"||(view==="edit"&&x.times&&Object.keys(x.times).length)))rerender()}}).catch(()=>{})}pendingImport=null;rosterError="";showTpl=false;activeDay=Math.min(activeDay,Math.max(0,res.days.length-1));confirmingLock=false;view="edit";isLocked()?renderReview():renderEditor();window.scrollTo(0,0)}
+
+function syncDays(){
+  const s=parseDate(res.startDate),e=parseDate(res.endDate);
+  if(!s||!e||e<s){return}
+  const keep=Object.fromEntries(res.days.map(d=>[d.date,d]));const out=[];
+  for(let d=new Date(s),i=0;d<=e&&i<MAX_DAYS;d.setDate(d.getDate()+1),i++){const k=iso(d);out.push(keep[k]||blankDay(k))}
+  res.days=out;activeDay=Math.min(activeDay,out.length-1);
+}
+
+function field(label,path,type="text",hint="",attrs=""){
+  const v=getPath(res,path)??"";
+  return `<label class="f" for="f-${path}">${label}
+  ${type==="textarea"?`<textarea id="f-${path}" data-path="${path}" ${attrs}>${esc(v)}</textarea>`:`<input id="f-${path}" type="${type}" data-path="${path}" value="${esc(v)}" ${attrs}>`}${hint?`<span class="hint">${hint}</span>`:""}</label>`;
+}
+function seg(name,path,opts){const v=getPath(res,path);return `<div class="seg" role="radiogroup" aria-label="${name}">${opts.map(([val,l])=>`<label><input type="radio" name="${path}" data-path="${path}" value="${val}" ${v===val?"checked":""}>${l}</label>`).join("")}</div>`}
+
+function mealWarn(di,m){const st=res.days[di].meals[m.k];if(!isServed(m,st))return "";const n=mealCount(st),h=headN(),w=[];
+  if(h&&n>h)w.push(`More guests than your final headcount (${h})`);
+  if(!m.snack&&st.vegChoice&&Number(st.vegCount)>n)w.push("More vegetarian plates than guests at this meal");
+  if(n===0)w.push("No guests at this meal. Choose Not needed if no one will eat.");
+  return w.map(x=>`<span class="warnline">${esc(x)}</span>`).join("")}
+function allergyBadge(di,m){const l=allergiesAt(di,m.k);if(!l.length)return "";const sev=l.filter(isSevere).length;
+  const names=l.slice(0,4).map(a=>esc(a.name||"Guest")+(a.allergy?` (${esc(a.allergy)}${isSevere(a)?", "+SEV_LABEL[a.severity].toLowerCase():""})`:"")).join(", ")+(l.length>4?` and ${l.length-4} more`:"");
+  return `<div class="albadge ${sev?"sev":""}"><b>${l.length} guest${l.length>1?"s":""} with allergies or restrictions${sev?` · ${sev} severe`:""}</b><span>${names}</span></div>`}
+function rosterHint(di,m){return ""}
+const rosterVeg=()=>new Set(res.allergies.filter(isDietRow).map(a=>a.name.trim().toLowerCase()).filter(Boolean)).size;
+function guestsField(p){const st=getPath(res,p),v=st.count===""||st.count==null?(headN()||""):st.count;return `<label class="f" for="f-${p}.count">Guests<input id="f-${p}.count" type="number" min="0" data-path="${p}.count" value="${esc(v)}"></label>`}
+
+function renderMeal(d,di,m){
+  const st=d.meals[m.k];const p=`days.${di}.meals.${m.k}`;
+  if(m.snack){
+    const n=st.items.length;
+    return `<div class="meal"><div class="mealhead"><h3>${m.label}</h3><span class="t">${fmtTime(timeOf(d.date,m))}${st.on?` · ${mealCount(st)} guests`:""}</span></div>
+      <label class="chk" style="width:fit-content"><input type="checkbox" id="${p}.on" data-path="${p}.on" ${st.on?"checked":""}> Include ${m.k==="amSnack"?"a":"an"} ${m.label.toLowerCase()} break</label>
+      ${st.on?`<div class="row" style="justify-content:space-between"><span class="small muted">Choose up to 3 items across any category.</span><span class="count">${n} / 3 chosen</span></div>
+      <div class="snackcats">${Object.entries(SNACKS).map(([cat,items])=>`<div><h4>${cat}</h4><div class="checks">${items.map(it=>{const on=st.items.includes(it);const full=!on&&n>=3;return `<label class="chk${full?" full":""}"><input type="checkbox" data-snack="${p}" value="${esc(it)}" ${on?"checked":""} ${full?"disabled":""}>${esc(it)}</label>`}).join("")}</div></div>`).join("")}</div>
+      <div class="grid2">${guestsField(p)}</div>`:""}
+      ${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
+    </div>`;
+  }
+  const sel=m.list.find(x=>x.id===st.choice);
+  const vegOK=m.k!=="breakfast";
+  return `<div class="meal"><div class="mealhead"><h3>${m.label}</h3><span class="t">${fmtTime(timeOf(d.date,m))}${sel?` · ${mealCount(st)} guests`:""}</span></div>
+    <div class="mealgrid3">
+      <label class="f" for="${p}.choice">Entrée
+        <select id="${p}.choice" data-path="${p}.choice"><option value="">Choose a ${m.label.toLowerCase()} entrée</option>${m.list.map(x=>`<option value="${x.id}" ${st.choice===x.id?"selected":""}>${esc(x.name)} - Includes ${esc(x.sides.toLowerCase())}, ${m.incl}${x.pp?` (+$${x.pp} pp)`:""}${x.note?` (${x.note})`:""}</option>`).join("")}<option value="none" ${st.choice==="none"?"selected":""}>Not needed this day</option></select></label>
+      ${sel?guestsField(p):"<span></span>"}
+    </div>
+    ${(()=>{if(!st.choice||st.choice==="none")return "";const rp=res.days.map((x,i)=>i!==di&&x.meals[m.k].choice===st.choice?fmtDate(x.date):null).filter(Boolean);return rp.length?`<span class="flag">Also served ${rp.join(", ")}</span>`:""})()}
+    ${sel&&m.k==="breakfast"?`<label class="chk" style="width:fit-content"><input type="checkbox" data-path="${p}.addon" ${st.addon?"checked":""}> Add sausage, bacon, eggs or potatoes (+$1.50 pp)</label>`:""}
+    ${sel&&sel.meat?`<div class="row"><span class="small" style="font-weight:600">Meat</span>${seg("Fajita meat",p+".meat",[["Beef","Beef"],["Chicken","Chicken"]])}</div>`:""}
+    ${sel&&sel.second?`<label class="chk" style="width:fit-content"><input type="checkbox" data-path="${p}.second" ${st.second?"checked":""}> Add a 2nd protein (+$3 pp)</label>`:""}
+    ${vegOK&&st.choice&&st.choice!=="none"?`<div class="grid2">
+      <label class="f" for="${p}.vegChoice">Vegetarian option<select id="${p}.vegChoice" data-path="${p}.vegChoice"><option value="">None</option>${VEG.map(v=>`<option value="${v.id}" ${st.vegChoice===v.id?"selected":""}>${v.name}</option>`).join("")}</select><span class="hint">Can also be prepared vegan</span></label>
+      ${st.vegChoice?field("Vegetarian plates",p+".vegCount","number",rosterVeg()?`${rosterVeg()} vegetarian or vegan guest${rosterVeg()===1?"":"s"} listed in section 04`:"How many guests",'min="0"'):""}</div>`:""}
+    ${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
+  </div>`;
+}
+
+function peekValue(m,st,di){
+  const alTxt="";
+  if(m.snack){if(!st.on)return `<span class="muted">No break</span>`;return (st.items.length?esc(st.items.join(", ")):`<span class="pk-miss">Pick items</span>`)+`<span class="muted"> · ${mealCount(st)}</span>`+alTxt}
+  if(!st.choice)return `<span class="pk-miss">Not chosen yet</span>`;
+  if(st.choice==="none")return `<span class="muted">Not needed</span>`;
+  const x=m.list.find(o=>o.id===st.choice);if(!x)return "—";
+  const extra=[`${mealCount(st)} guests`];if(x.meat)extra.push(st.meat||"Chicken");if(m.k==="breakfast"&&st.addon)extra.push("+ add-on");if(x.second&&st.second)extra.push("+ 2nd protein");
+  if(st.vegChoice){const v=VEG.find(v=>v.id===st.vegChoice);extra.push(`${Number(st.vegCount)||0} ${v?v.name:"veg"}`)}
+  return `<b>${esc(x.name)}</b><span class="muted"> · ${esc(extra.join(" · "))}</span>`+alTxt;
+}
+function peek(d,i){
+  return `<span class="peek" role="tooltip" id="peek-${i}"><span class="pk-h">${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</span>${MEALS.map(m=>`<span class="pk-r"><span class="pk-l">${m.label}</span><span class="pk-v">${peekValue(m,d.meals[m.k],i)}</span></span>`).join("")}</span>`;
+}
+
+function mealPicker(path,cur){const o=[];res.days.forEach(d=>MAINS.forEach(k=>o.push([slotKey(d.date,k),`${fmtDate(d.date)} · ${MEAL[k].label}`])));
+  return `<select id="f-${path}" data-path="${path}">${o.map(([v,l])=>`<option value="${v}" ${cur===v?"selected":""}>${l}</option>`).join("")}</select>`}
+function allergyRows(locked){
+  return res.allergies.map((a,i)=>{
+    const sel=(f,opts,cur,label)=>`<select aria-label="${label}" id="al-${f}-${i}" data-path="allergies.${i}.${f}">${opts.map(([v,l])=>`<option value="${v}" ${cur===v?"selected":""}>${l}</option>`).join("")}</select>`;
+    return `<tr><td><input type="text" aria-label="Guest name" id="al-n-${i}" data-path="allergies.${i}.name" value="${esc(a.name)}">${a.src==="roster"?`<span class="hint">From guest list</span>`:""}</td>
+      <td><select class="alpick" id="al-pick-${i}" data-i="${i}" aria-label="Allergy or restriction"><option value="">Choose…</option><optgroup label="Allergens">${ALLERGENS.map(o=>`<option ${!a.other&&a.allergy===o?"selected":""}>${o}</option>`).join("")}</optgroup><optgroup label="Diet">${DIETS.map(o=>`<option ${!a.other&&a.allergy===o?"selected":""}>${o}</option>`).join("")}</optgroup><option value="Other" ${a.other?"selected":""}>Other</option></select>${a.other?`<input type="text" class="alother" aria-label="Describe the allergy or restriction" id="al-a-${i}" data-path="allergies.${i}.allergy" value="${esc(a.allergy)}" placeholder="Describe it, e.g. Kiwi">`:""}${a.note?`<span class="hint">${esc(a.note)}</span>`:""}</td>
+      <td>${sel("type",isDietRow(a)?[["Preference","Dietary preference"],["Medical","Medically prescribed"]]:a.other?[["","Choose…"],["Allergy","Allergy"],["Intolerance","Intolerance"],["Preference","Dietary preference"],["Medical","Medically prescribed"]]:[["","Choose…"],["Allergy","Allergy"],["Intolerance","Intolerance"]],a.type,"Type")}</td>
+      <td>${noSeverity(a)?`<span class="muted small">Not needed</span>`:sel("severity",[["","Choose…"],["Mild","Mild"],["Severe","Severe"],["Airborne","Airborne / anaphylactic"]],a.severity,"Severity")}</td>
+      <td>${locked?"":`<button class="btn ghost" data-delallergy="${i}" aria-label="Remove row ${i+1}">Remove</button>`}</td></tr>
+`;
+  }).join("");
+}
+function mealGrid(i,a){
+  return `<div class="algrid"><table><thead><tr><th>Day</th>${MEALS.map(m=>`<th>${m.snack?(m.k==="amSnack"?"AM snack":"PM snack"):m.label}</th>`).join("")}</tr></thead><tbody>${res.days.map(d=>`<tr><th scope="row">${fmtDate(d.date)}</th>${MEALS.map(m=>{const key=slotKey(d.date,m.k),served=isServed(m,d.meals[m.k]);return `<td><input type="checkbox" aria-label="${fmtDate(d.date)} ${m.label}" data-almeal="${i}" value="${key}" ${a.meals.includes(key)?"checked":""} ${served?"":"disabled"}></td>`}).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+const COL_HELP=[["Guest","Guest's full name. Required"],["Allergy or Restriction","One of Milk, Eggs, Fish, Crustacean shellfish, Tree nuts, Peanuts, Wheat/Gluten, Soybeans or Sesame. Anything else, describe it (it's listed as Other). Blank if none"],["Type","Allergy, Intolerance, Preference or Medical (medically prescribed diet)"],["Diet","Vegetarian, Vegan, or blank"],["Severity","Mild, Severe or Airborne (for allergies)"]];
+const dietCounts=list=>({veg:list.filter(x=>x.diet==="Vegetarian").length,vegan:list.filter(x=>x.diet==="Vegan").length});
+function tableDietText(){const seen=new Set();return dietText(res.allergies.filter(isDietRow).filter(a=>{const k=a.name.trim().toLowerCase()+"|"+a.allergy;if(seen.has(k))return false;seen.add(k);return true}).map(a=>({diet:a.allergy})))}
+function dietText(list){const d=dietCounts(list);return [d.veg?`${d.veg} vegetarian`:"",d.vegan?`${d.vegan} vegan`:""].filter(Boolean).join(" · ")}
+function rosterBox(locked){
+  const r=res;
+  if(pendingImport)return importPreview();
+  const help=`<details><summary>What goes in each column</summary><div class="tablewrap"><table class="coltable"><tbody>${COL_HELP.map(([a,b])=>`<tr><th scope="row">${a}</th><td>${b}</td></tr>`).join("")}</tbody></table></div><span class="hint">Rows that start with EXAMPLE are ignored.</span></details>`;
+  const tpl=`<button class="btn" id="dltemplate">Download template (CSV)</button>`;
+  const file=`<input type="file" id="rosterfile" accept=".csv,.xlsx,.xls,.txt" hidden>`;
+  const err=rosterError?`<div class="notice bad small">${esc(rosterError)}</div>`:"";
+  if(r.roster){const dt=tableDietText();return `<div class="rosterbox"><div><b>Guest list:</b> ${r.roster.length} guest${r.roster.length===1?"":"s"}${r.rosterFile?` from ${esc(r.rosterFile)}`:""}${r.rosterAt?`, uploaded ${fmtDate(new Date(r.rosterAt),{month:"short",day:"numeric"})}`:""}.${dt?` Diet: ${dt}.`:""}</div>
+    ${locked?"":`<div class="row"><button class="btn" data-pickfile>Upload a new version</button>${file}${tpl}<button class="btn ghost danger-text" data-rosterremove>Remove list</button></div>`}${err}${templateFallback()}</div>`}
+  if(locked)return "";
+  return `<div class="rosterbox"><div><b>Have a list of guests with allergies or special diets?</b> Upload it before planning meals and we'll fill in the allergy list below and your vegetarian plate counts. Start from our template so we get the columns we need.</div>
+    <div class="row">${tpl}<button class="btn primary" data-pickfile>Upload guest list</button>${file}</div>
+    <span class="hint">CSV or Excel file with these columns: Guest, Allergy or Restriction, Type, Diet, Severity.</span>${help}${err}${templateFallback()}</div>`;
+}
+function templateFallback(){return showTpl?`<div class="tplbox"><span class="small">Downloads aren't available here. Copy this into a spreadsheet, or into a text file saved as .csv:</span><textarea id="tpltext" readonly>${esc(templateCSV())}</textarea><div class="row"><button class="btn" data-copytpl>Copy template</button></div></div>`:""}
+function templateCSV(){
+  return ["Guest,Allergy or Restriction,Type,Diet,Severity",
+  "EXAMPLE Sam Lee,Tree nuts,Allergy,,Severe",
+  "EXAMPLE Alex Kim,Milk,Intolerance,,Mild",
+  "EXAMPLE Jordan Smith,,,Vegetarian,",
+  "EXAMPLE Casey Ward,Peanuts,Allergy,Vegan,Airborne",
+  "EXAMPLE Pat Ruiz,Low sodium,Medical,,"].join("\r\n")+"\r\n"}
+function importPreview(){const p=pendingImport,n=p.rows.length,al=p.rows.filter(x=>x.allergy).length,dt=dietText(p.rows);
+  return `<div class="rosterbox"><div><b>${esc(p.fileName)}</b>: ${n} guest${n===1?"":"s"} found · ${al} with allergies or restrictions${dt?` · ${dt}`:""}.</div>
+    ${p.problems.length?`<div class="notice warn small"><b>${p.problems.length} thing${p.problems.length===1?"":"s"} to check.</b> Rows are still imported; you can fix these after.<ul class="missing">${p.problems.slice(0,8).map(x=>`<li>${esc(x)}</li>`).join("")}${p.problems.length>8?`<li>and ${p.problems.length-8} more</li>`:""}</ul></div>`:""}
+    <span class="hint">Allergies from this list replace any imported earlier. Allergies you typed in yourself stay.</span>
+    <div class="row"><button class="btn primary" data-doimport>Import ${n} guest${n===1?"":"s"}</button><button class="btn" data-cancelimport>Cancel</button></div></div>`}
+
+// ---------- attendee list parsing ----------
+const HDR={guest:["guest","guestname","guests","name","fullname","attendee","attendeename"],
+  allergy:["allergyorrestriction","allergy","allergies","restriction","foodallergy","allergen","allergens"],type:["type","allergytype"],diet:["diet","dietary","dietarypreference"],severity:["severity"]};
+const hnorm=x=>String(x??"").toLowerCase().replace(/[^a-z]/g,"");
+function parseCSV(text){text=text.replace(/^﻿/,"");const rows=[];let row=[],f="",q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=ch}
+    else if(ch==='"')q=true;else if(ch===","){row.push(f);f=""}
+    else if(ch==="\n"||ch==="\r"){if(ch==="\r"&&text[i+1]==="\n")i++;row.push(f);rows.push(row);row=[];f=""}else f+=ch}
+  if(f||row.length){row.push(f);rows.push(row)}return rows}
+function parseAnyDate(x){x=String(x||"").trim();if(!x)return "";let m;const yr=parseDate(res.startDate)?.getFullYear()||new Date().getFullYear();
+  if(m=x.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return iso(new Date(+m[1],+m[2]-1,+m[3]));
+  if(m=x.match(/^(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?$/)){let y=m[3]?+m[3]:yr;if(y<100)y+=2000;return iso(new Date(y,+m[1]-1,+m[2]))}
+  const d=new Date(x);if(!isNaN(d)){if(!/\d{4}/.test(x))d.setFullYear(yr);return iso(d)}return null}
+function parseMealWord(x){x=String(x||"").trim().toLowerCase();if(!x)return "";if(/^b/.test(x))return "breakfast";if(/^l/.test(x))return "lunch";if(/^(d|s)/.test(x))return "dinner";return null}
+function parseRoster(table,fileName){
+  const problems=[],rows=[];
+  const hi=table.findIndex(r=>r.some(c=>HDR.guest.includes(hnorm(c))));
+  if(hi<0)return{error:`We couldn't find a Guest column in ${fileName}. Start from the template.`};
+  const H=table[hi].map(hnorm),c={};Object.keys(HDR).forEach(k=>c[k]=H.findIndex(h=>HDR[k].includes(h)));
+  for(let i=hi+1;i<table.length;i++){
+    const raw=table[i]||[];if(raw.every(x=>!String(x??"").trim()))continue;
+    const g=k=>c[k]>=0?String(raw[c[k]]??"").trim():"",line=i+1;
+    const name=g("guest");
+    if(/^example\b/i.test(name))continue;
+    if(!name){problems.push(`Row ${line}: no guest name, so it was skipped`);continue}
+    const dr=g("diet").toLowerCase(),diet=/vegan/.test(dr)?"Vegan":/veget/.test(dr)?"Vegetarian":"";
+    if(dr&&!diet)problems.push(`Row ${line} (${name}): diet "${g("diet")}" isn't Vegetarian or Vegan`);
+    const allergy=g("allergy"),tr=g("type").toLowerCase();
+    let type=/intol/.test(tr)?"Intolerance":/med|prescri|doctor/.test(tr)?"Medical":/pref|diet/.test(tr)?"Preference":/aller/.test(tr)?"Allergy":"";
+    if(tr&&!type)problems.push(`Row ${line} (${name}): type "${g("type")}" isn't Allergy, Intolerance, Preference or Medical`);
+    if(allergy&&!type)type="Allergy";
+    const sr=g("severity").toLowerCase(),severity=/air|anaph/.test(sr)?"Airborne":/sev|high/.test(sr)?"Severe":/mild|low|mod/.test(sr)?"Mild":"";
+    if(sr&&!severity)problems.push(`Row ${line} (${name}): severity "${g("severity")}" isn't Mild, Severe or Airborne`);
+    if(allergy&&type==="Allergy"&&!severity)problems.push(`Row ${line} (${name}): no severity for ${allergy}. Set it in the allergy table after importing`);
+    rows.push({name,diet,allergy,type,severity:allergy?severity:""});
+  }
+  return{rows,problems,fileName};
+}
+function loadXLSX(){return new Promise((ok,no)=>{if(window.XLSX)return ok(window.XLSX);const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";sc.onload=()=>window.XLSX?ok(window.XLSX):no();sc.onerror=()=>no();document.head.appendChild(sc)})}
+async function handleRosterFile(file){
+  rosterError="";if(!file)return;
+  try{
+    let table;
+    if(/\.xlsx?$/i.test(file.name)){let X;try{X=await loadXLSX()}catch(e){rosterError="Excel files can't be read here right now. Save your spreadsheet as CSV and upload that.";rerender();return}
+      const wb=X.read(await file.arrayBuffer());table=X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:""})}
+    else table=parseCSV(await file.text());
+    const p=parseRoster(table,file.name);
+    if(p.error){rosterError=p.error;rerender();return}
+    if(!p.rows.length){rosterError=`No guests found in ${file.name}. Put one guest per row under the header row.`;rerender();return}
+    pendingImport=p;rerender();
+  }catch(e){rosterError=`We couldn't read ${file.name}. Start from the template, save it as CSV, and try again.`;rerender()}
+}
+function doImport(){
+  const p=pendingImport;
+  res.roster=p.rows;res.rosterFile=p.fileName;res.rosterAt=new Date().toISOString();
+  const row=(name,allergy,other,type,severity)=>({name,allergy,type,severity,mode:"all",meals:[],note:"",from:"",to:"",src:"roster",other});
+  res.allergies=res.allergies.filter(a=>a.src!=="roster").concat(p.rows.flatMap(x=>{const out=[];
+    if(x.allergy){const m=matchRestriction(x.allergy);if(m&&DIETS.includes(m))out.push(row(x.name,m,false,x.type==="Medical"?"Medical":"Preference",""));else out.push(row(x.name,m||x.allergy,!m,x.type||"Allergy",x.severity))}
+    if(x.diet&&!out.some(r=>r.allergy===x.diet))out.push(row(x.name,x.diet,false,x.type==="Medical"&&!x.allergy?"Medical":"Preference",""));
+    return out}));
+  if(res.allergies.length)res.noAllergies=false;
+  {const n=rosterVeg();if(n)res.days.forEach(d=>MAINS.forEach(k=>{const st=d.meals[k];if(st.vegChoice&&!Number(st.vegCount))st.vegCount=n}))}
+  pendingImport=null;rerender();scheduleSave();toast(`Imported ${p.rows.length} guests`);
+}
+const dlNs=(async()=>{try{return window.claude&&claude.use?await claude.use("downloads"):null}catch(e){return null}})();
+
+function renderEditor(){
+  const r=res, locked=isLocked(), s=sectionStatus(r), dl=deadlineOf(r);
+  const daysLeft=dl?daysBetween(TODAY,dl):null;
+  const ex=extras(r);
+  const secs=[["contact","Group & contact"],["attendees","Attendee notes"],["room","Room & A/V"],["allergies","Attendees & allergies"],["meals","Meals & snacks"],["comments","Comments"]];
+  const dot=k=>k in s?`<span class="dot ${s[k]?"done":""}"></span>`:"";
+  let deadlineNote="";
+  if(dl&&!locked){
+    if(daysLeft>0)deadlineNote=`<div class="notice info small">Lock in by <b>${fmtDate(dl,{weekday:"long",month:"long",day:"numeric"})}</b> · ${daysLeft} day${daysLeft===1?"":"s"} left.</div>`;
+    else deadlineNote=`<div class="notice warn small">The two-week deadline was ${fmtDate(dl,{month:"long",day:"numeric"})}. You can still lock in, but some allergy requests may not be possible.</div>`;
+  }
+  app.innerHTML=`
+  <div class="editor">
+    <aside class="rail">
+      <div class="codecard">
+        <span class="small muted">Reservation code</span>
+        <span class="code mono">${esc(r.code)}</span>
+        <span class="pill ${locked?"locked":"draft"}">${locked?"Locked in":"Draft · editable"}</span>
+        ${saveChip()}
+      </div>
+      ${deadlineNote}
+      <nav aria-label="Sections">${secs.map(([k,l])=>`<a href="#sec-${k}">${l}${dot(k)}</a>`).join("")}</nav>
+      <button class="btn primary" data-goreview>${locked?"View summary":"Review &amp; lock in →"}</button>
+      <button class="btn ghost" id="back" style="justify-content:flex-start">${actingAs==="staff"?"← Back to groups":"← Start page"}</button>
+    </aside>
+    <div class="form" id="form">
+      ${restoreOffer?`<div class="notice warn" role="alert"><b>This device has changes from ${fmtDate(new Date(restoreOffer.updatedAt),{month:"short",day:"numeric"})} at ${clock(restoreOffer.updatedAt)} that didn't reach Aspen Grove.</b> Restore them to pick up where you left off.<div class="row" style="margin-top:8px"><button class="btn primary" data-restore>Restore my changes</button><button class="btn" data-discard>Discard them</button></div></div>`:""}
+      ${actingAs==="staff"?`<div class="notice info small">You're editing as <b>Conference Services</b>. Changes are labeled that way in the change history.</div>`:""}
+      ${locked?`<div class="notice ok"><b>Locked in ${r.lockedAt?fmtDate(new Date(r.lockedAt),{month:"long",day:"numeric"}):""}.</b> Aspen Grove has your final details. To change anything, contact Conference Services and they can reopen it.</div>`:""}
+      <section class="card" id="sec-contact"><div class="sechead"><h2><span class="num">01</span>Group &amp; contact</h2></div>
+        <div class="grid2">${field("Group name","group")}${field("Final headcount","headcount","number","","min=\"1\"")}</div>
+        <div class="grid2">${field("First day","startDate","date")}${field("Last day","endDate","date","Up to "+MAX_DAYS+" days")}</div>
+        <div class="grid2">${field("Your name","contact")}${field("Phone number","phone","tel")}${field("Email","email","email")}</div>
+        <div class="subhead">On-site contact</div><span class="small muted" style="margin-top:-8px">Who should we call if something comes up while your group is here?</span>
+        <label class="chk" style="width:fit-content"><input type="checkbox" data-path="onsite.same" ${r.onsite.same?"checked":""}> I'll be on site. Contact me.</label>
+        ${r.onsite.same?"":`<div class="grid2">${field("On-site contact name","onsite.name")}${field("On-site cell phone","onsite.phone","tel")}</div>`}
+      </section>
+
+      <section class="card" id="sec-attendees"><div class="sechead"><h2><span class="num">02</span>Attendee notes</h2></div>
+        ${field("Partial attendees or unusual guest information","attendeeNotes","textarea","For example: 12 guests arrive Friday lunch, 4 leave before Saturday dinner")}
+      </section>
+
+      <section class="card" id="sec-room"><div class="sechead"><h2><span class="num">03</span>Conference room &amp; A/V</h2><span class="small muted">Room assigned by Aspen Grove</span></div>
+        <div class="row"><span style="font-weight:600;min-width:150px">Preferred setup</span>${seg("Preferred setup","setup",[["theater","Theater"],["rounds","Round tables"]])}</div>
+        <div class="row"><span style="font-weight:600;min-width:150px">Setup changes during event</span>${seg("Room changes","roomChanges",[["yes","Yes"],["no","No"]])}</div>
+        ${r.roomChanges==="yes"?`<div class="notice warn small">Mid-event changes need approval from the operations team, and fees may apply. Describe them below.</div>`:""}
+        ${field("Additional setup notes","setupNotes","textarea")}
+        <div class="f" style="gap:12px"><span>Audio/visual equipment</span>
+          <label class="chk" style="width:fit-content"><input type="checkbox" data-path="noAV" ${r.noAV?"checked":""}> No audio/visual needs</label>
+          ${r.noAV?"":`<div class="checks">${AV.map(a=>`<label class="chk"><input type="checkbox" data-av value="${esc(a)}" ${r.av.includes(a)?"checked":""}>${esc(a)}</label>`).join("")}</div>
+          ${field("Other A/V or special requests","avOther")}`}
+        </div>
+      </section>
+
+      <section class="card" id="sec-allergies"><div class="sechead"><h2><span class="num">04</span>Attendees &amp; allergies</h2><span class="small muted">Must be received ${DEADLINE_DAYS} days before your event</span></div>
+        ${rosterBox(locked)}
+        <h3>Allergies and food restrictions</h3>
+        ${r.allergies.length?`<div class="tablewrap"><table class="altable"><thead><tr><th>Guest</th><th>Allergy or restriction</th><th>Type</th><th>Severity</th><th></th></tr></thead><tbody>${allergyRows(locked)}</tbody></table></div>`
+          :`<label class="chk" style="width:fit-content"><input type="checkbox" data-path="noAllergies" ${r.noAllergies===true?"checked":""}> No guests with allergies or food restrictions</label>`}
+        ${locked?"":`<div class="row"><button class="btn" id="addallergy">+ Add a guest</button></div>`}
+        <p class="small muted" style="margin:0">We accommodate many, but not all, food restrictions. We plan for each guest's allergies at every meal and snack.</p>
+      </section>
+
+      <section class="card" id="sec-meals"><div class="sechead"><h2><span class="num">05</span>Meals &amp; snacks</h2><span class="small muted">Dining hall · water, lemonade and soda included</span></div>
+        ${r.days.length?`
+        <div class="stickybar"><div class="daytabs" role="group" aria-label="Event day">${r.days.map((d,i)=>{const done=["breakfast","lunch","dinner"].every(k=>d.meals[k].choice);return `<span class="dtab${r.days.length>2&&i>=r.days.length/2?" right":""}"><button data-day="${i}" aria-pressed="${i===activeDay}" aria-describedby="peek-${i}"><span class="dot ${done?"done":""}"></span>${fmtDate(d.date)}</button>${peek(d,i)}</span>`}).join("")}</div></div>
+        <div class="row" style="justify-content:space-between"><h3>${fmtDate(r.days[activeDay].date,{weekday:"long",month:"long",day:"numeric"})}</h3>${activeDay&&!locked?`<button class="btn" data-copyday="${activeDay}">Copy ${fmtDate(r.days[activeDay-1].date,{weekday:"long"})}'s meals</button>`:""}</div>
+        ${MEALS.map(m=>renderMeal(r.days[activeDay],activeDay,m)).join("")}
+        <div class="daynav">${activeDay?`<button class="btn" data-day="${activeDay-1}" data-top>← ${fmtDate(r.days[activeDay-1].date)}</button>`:"<span></span>"}${activeDay<r.days.length-1?`<button class="btn primary" data-day="${activeDay+1}" data-top>Next: ${fmtDate(r.days[activeDay+1].date)} →</button>`:`<span class="small muted">Last day of your event</span>`}</div>
+        <p class="small muted" style="margin:0">Meals and snacks are served at the times shown. Need a different time, or a meal boxed or served somewhere else? Mention it in Additional comments and our staff will follow up. Changes may carry a fee. When several groups are on site, Aspen Grove may pre-select meals.</p>`
+        :`<div class="empty">Enter your first and last day above and a menu for each day appears here.</div>`}
+      </section>
+
+      <section class="card" id="sec-comments"><div class="sechead"><h2><span class="num">06</span>Additional comments</h2></div>
+        ${field("Anything else we should know","comments","textarea")}
+      </section>
+
+      <section class="card nextstep">
+        <div><h2>Ready to review?</h2><p class="muted" style="margin:4px 0 0">See everything you've selected on one page, then lock in your final details.</p></div>
+        <button class="btn primary" data-goreview>Review &amp; lock in →</button>
+      </section>
+    </div>
+  </div>`;
+  if(locked)document.querySelectorAll("#form input,#form select,#form textarea").forEach(el=>el.disabled=true);
+}
+
+const SETUP_LABEL={theater:"Theater",rounds:"Round tables"};
+function val(v,empty="Not provided"){return v!==undefined&&v!==null&&String(v).trim()!==""?esc(v):`<span class="missingval">${empty}</span>`}
+function mealLine(m,st){
+  if(m.snack){
+    if(!st.on)return `<span class="muted">Not included</span>`;
+    return st.items.length?esc(st.items.join(", ")):`<span class="missingval">Pick up to 3 items</span>`;
+  }
+  if(!st.choice)return `<span class="missingval">Not chosen yet</span>`;
+  if(st.choice==="none")return `<span class="muted">Not needed</span>`;
+  const x=m.list.find(i=>i.id===st.choice);if(!x)return "—";
+  const bits=[`<b>${esc(x.name)}</b>`];
+  if(x.meat)bits.push(esc(st.meat||"Chicken"));
+  if(m.k==="breakfast"&&st.addon)bits.push("+ breakfast add-on");
+  if(x.second&&st.second)bits.push("+ 2nd protein");
+  if(x.pp)bits.push(`+$${x.pp} pp`);
+  if(x.note)bits.push(esc(x.note));
+  let out=bits.join(" · ")+`<div class="small muted">Includes ${esc(x.sides.toLowerCase())}, ${m.incl}</div>`;
+  if(st.vegChoice){const v=VEG.find(v=>v.id===st.vegChoice);out+=`<div class="small">Vegetarian: ${esc(v?v.name:"")} × ${Number(st.vegCount)||0}</div>`}
+  return out;
+}
+function sumHead(num,title,sec,locked){return `<div class="sechead"><h2><span class="num">${num}</span>${title}</h2>${locked?"":`<button class="btn ghost" data-editsec="${sec}">Edit</button>`}</div>`}
+
+function sevTag(a){if(a.type==="Medical")return `<span class="sevtag sev">Strict, no substitutions</span>`;if(a.type==="Preference")return `<span class="muted">—</span>`;if(!a.severity)return a.type==="Allergy"?`<span class="missingval">Not set</span>`:`<span class="muted">—</span>`;return `<span class="sevtag ${isSevere(a)?"sev":""}">${SEV_LABEL[a.severity]}</span>`}
+function allergyByMeal(){return res.days.map((d,di)=>{const rows=[];MEALS.forEach(m=>allergiesAt(di,m.k).forEach(a=>rows.push([m,a])));if(!rows.length)return "";
+  return `<div class="sumday"><h3>${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</h3><div class="tablewrap"><table class="bymeal"><thead><tr><th>Meal</th><th>Guest</th><th>Allergy or restriction</th><th>Severity</th></tr></thead><tbody>${rows.map(([m,a])=>`<tr class="${isSevere(a)?"sevrow":""}"><td>${m.label}</td><td>${esc(a.name)}</td><td>${esc(a.allergy)}${a.type&&a.type!=="Allergy"?` <span class="muted small">(${a.type.toLowerCase()})</span>`:""}</td><td>${sevTag(a)}</td></tr>`).join("")}</tbody></table></div></div>`}).join("")}
+
+function locLine(date,m){const L=staffInfo&&staffInfo.locations&&staffInfo.locations[slotKey(date,m.k)];if(!L)return "";return `<div class="small">Location: <b>${esc(locLabel(L))}</b> <span class="muted">(set by Aspen Grove)</span></div>`}
+
+function renderReview(){
+  view="review";
+  const r=res, locked=isLocked(), dl=deadlineOf(r), ex=extras(r);
+  const daysLeft=dl?daysBetween(TODAY,dl):null;
+  const nDays=r.days.length;
+  const dates=r.startDate?fmtDate(r.startDate,{weekday:"short",month:"long",day:"numeric",year:"numeric"})+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate,{weekday:"short",month:"long",day:"numeric"}):""):null;
+  let deadlineNote="";
+  if(dl&&!locked){
+    deadlineNote=daysLeft>0?`<div class="notice info small">Lock in by <b>${fmtDate(dl,{weekday:"long",month:"long",day:"numeric"})}</b> · ${daysLeft} day${daysLeft===1?"":"s"} left.</div>`
+      :`<div class="notice warn small">The two-week deadline was ${fmtDate(dl,{month:"long",day:"numeric"})}. You can still lock in, but some allergy requests may not be possible.</div>`;
+  }
+  const av=r.noAV?"None needed":[...r.av,...(r.avOther?[r.avOther]:[])].join(", ");
+  app.innerHTML=`
+  <div class="editor">
+    <aside class="rail">
+      <div class="codecard">
+        <span class="small muted">Reservation code</span>
+        <span class="code mono">${esc(r.code)}</span>
+        <span class="pill ${locked?"locked":"draft"}">${locked?"Locked in":"Draft · editable"}</span>
+        ${saveChip()}
+      </div>
+      ${deadlineNote}
+      <button class="btn" data-editsec="contact">${locked?"View full form":"← Back to editing"}</button>
+      <button class="btn" data-sheet="${esc(r.code)}">${locked?"Get a printable copy":"Preview printable sheet"}</button>
+      <button class="btn ghost" id="back" style="justify-content:flex-start">${actingAs==="staff"?"← Back to groups":"← Start page"}</button>
+    </aside>
+    <div class="form" id="form">
+      <div class="reviewhead">
+        <span class="eyebrow">${locked?"Final details":"Review before you lock in"}</span>
+        <h2 class="rtitle">${val(r.group,"Untitled group")}</h2>
+        <p class="muted" style="margin:0">${dates?esc(dates):"Dates not set"}${nDays?` · ${nDays} day${nDays===1?"":"s"}`:""}${r.headcount?` · ${esc(r.headcount)} guests`:""}</p>
+      </div>
+      ${locked?`<div class="notice ok"><b>Locked in ${r.lockedAt?fmtDate(new Date(r.lockedAt),{month:"long",day:"numeric"}):""}.</b> Aspen Grove has your final details. To change anything, contact Conference Services and they can reopen it.</div>`:""}
+
+      <section class="card">${sumHead("01","Group &amp; contact","contact",locked)}
+        <dl class="kv">
+          <div><dt>Group</dt><dd>${val(r.group)}</dd></div>
+          <div><dt>Final headcount</dt><dd class="mono">${val(r.headcount)}</dd></div>
+          <div><dt>Dates</dt><dd>${dates?esc(dates):val("")}</dd></div>
+          <div><dt>Organizer</dt><dd>${val(r.contact)}</dd></div>
+          <div><dt>Phone</dt><dd>${val(r.phone)}</dd></div>
+          <div><dt>Email</dt><dd>${val(r.email)}</dd></div>
+          <div><dt>On-site contact</dt><dd>${r.onsite.same?`${val(r.contact)} · ${val(r.phone)}`:`${val(r.onsite.name)} · ${val(r.onsite.phone)}`}</dd></div>
+        </dl>
+      </section>
+
+      <section class="card">${sumHead("02","Attendee notes","attendees",locked)}
+        <p class="prose">${r.attendeeNotes?esc(r.attendeeNotes):`<span class="muted">None</span>`}</p>
+      </section>
+
+      <section class="card">${sumHead("03","Conference room &amp; A/V","room",locked)}
+        <dl class="kv">
+          <div><dt>Preferred setup</dt><dd>${r.setup?SETUP_LABEL[r.setup]:val("")}</dd></div>
+          <div><dt>Changes during event</dt><dd>${r.roomChanges?(r.roomChanges==="yes"?"Yes · needs approval":"No"):val("")}</dd></div>
+          <div><dt>Audio/visual</dt><dd>${av?esc(av):val("","Not answered")}</dd></div>
+        </dl>
+        ${r.setupNotes?`<p class="prose"><span class="small muted">Setup notes: </span>${esc(r.setupNotes)}</p>`:""}
+      </section>
+
+      <section class="card">${sumHead("04","Attendees &amp; allergies","allergies",locked)}
+        ${r.roster?`<p class="prose">Guest list: <b>${r.roster.length}</b> guests${r.rosterFile?` from ${esc(r.rosterFile)}`:""}${tableDietText()?` · ${tableDietText()}`:""}.</p>`:""}
+        ${r.allergies.length?`<p class="prose">${r.allergies.length} guest${r.allergies.length===1?"":"s"} with allergies or restrictions${r.allergies.filter(isSevere).length?` · <b style="color:var(--bad)">${r.allergies.filter(isSevere).length} severe, airborne or medically prescribed</b>`:""}.</p>
+          <div class="tablewrap"><table><thead><tr><th>Guest</th><th>Allergy or restriction</th><th>Type</th><th>Severity</th></tr></thead><tbody>
+          ${r.allergies.map(a=>`<tr><td>${val(a.name)}</td><td>${val(a.allergy)}</td><td>${a.type?TYPE_LABEL[a.type]||a.type:val("","Not set")}</td><td>${sevTag(a)}</td></tr>`).join("")}</tbody></table></div>
+          <p class="prose small muted">Planned for every meal and snack.</p>`
+          :`<p class="prose">${r.noAllergies===true?"No guests with allergies or food restrictions.":`<span class="missingval">List allergies, or confirm none.</span>`}</p>`}
+      </section>
+
+      <section class="card">${sumHead("05","Meals &amp; snacks","meals",locked)}
+        ${nDays?r.days.map(d=>`<div class="sumday"><h3>${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</h3>
+          <div class="tablewrap"><table class="sumtable"><tbody>
+          ${MEALS.map(m=>{const st=d.meals[m.k];const show=!m.snack||st.on;const sv=isServed(m,st);return `<tr><th scope="row">${m.label}</th><td class="mono tm">${show&&st.choice!=="none"?fmtTime(timeOf(d.date,m)):""}</td><td class="gc">${sv?mealCount(st)+" guests":""}</td><td>${mealLine(m,st)}${isPlanned(m,st)?locLine(d.date,m):""}</td></tr>`}).join("")}
+          </tbody></table></div></div>`).join(""):`<p class="prose"><span class="missingval">Set your event dates to plan meals.</span></p>`}
+      </section>
+
+      <section class="card">${sumHead("06","Additional comments","comments",locked)}
+        <p class="prose">${r.comments?esc(r.comments):`<span class="muted">None</span>`}</p>
+      </section>
+
+      <section class="card" id="sec-lock"><div class="sechead"><h2><span class="num">07</span>Lock in</h2></div>
+        <div class="f" style="gap:8px"><span>Checklist</span>
+          <label class="chk" style="width:fit-content"><input type="checkbox" data-path="checklist.schedule" ${r.checklist.schedule?"checked":""} ${locked?"disabled":""}> Conference schedule emailed to Aspen Grove</label>
+          <label class="chk" style="width:fit-content"><input type="checkbox" data-path="checklist.payment" ${r.checklist.payment?"checked":""} ${locked?"disabled":""}> Final payment sent (due two weeks before the event)</label>
+        </div>
+        <div class="f"><span>Menu upgrades and possible fees${ex.n?` · ${ex.n} guests`:""}</span>
+          ${ex.lines.length?`<div class="extras">${ex.lines.map(([l,v])=>`<div class="ln"><span>${esc(l)}</span><span class="mono">${v==null?"TBD":"$"+v.toFixed(2)}</span></div>`).join("")}
+          <div class="ln" style="font-weight:700;border:0"><span>Estimated upgrades${ex.market?" (plus market price)":""}</span><span class="mono">$${ex.total.toFixed(2)}</span></div></div>`:`<span class="small muted" style="font-weight:400">No upgrades selected. Your package price covers these selections.</span>`}
+        </div>
+        <div class="lockbar" id="lockbar">${renderLockbar()}</div>
+      </section>
+
+      <section class="card"><div class="sechead"><h2>Change history</h2><span class="small muted">Every save is recorded</span></div>
+        ${historyList(r,12)}
+      </section>
+    </div>
+  </div>`;
+  fillNames();
+}
+
+function renderLockbar(){
+  if(isLocked())return `<div class="notice ok">Locked in. Questions or changes go to Aspen Grove Conference Services.</div><div class="row"><button class="btn" data-sheet="${esc(res.code)}">Get a printable copy</button></div>`;
+  const miss=missingList(res);
+  if(miss.length)return `<div class="notice info"><b>${miss.length} item${miss.length===1?"":"s"} left before you can lock in:</b><ul class="missing small">${miss.slice(0,8).map(m=>`<li>${esc(m)}</li>`).join("")}${miss.length>8?`<li>and ${miss.length-8} more</li>`:""}</ul></div>
+    <div class="row"><button class="btn gold" disabled>Lock in reservation</button><span class="small muted">Your draft is saved. Come back with code <span class="mono">${esc(res.code)}</span>.</span></div>`;
+  if(confirmingLock)return `<div class="confirm"><b>Lock in final details for ${esc(res.group)}?</b><span class="small">After you lock in, the form becomes read-only. Aspen Grove staff will need to reopen it for any changes.</span>
+    <div class="row"><button class="btn primary" id="dolock">Yes, lock in</button><button class="btn" id="cancellock">Keep editing</button></div></div>`;
+  return `<div class="notice ok">Everything required is filled in.</div><div class="row"><button class="btn gold" id="lock">Lock in reservation</button></div>`;
+}
+function refreshLive(){
+  // update parts that depend on values without re-rendering inputs
+  const lb=document.getElementById("lockbar");if(lb)lb.innerHTML=renderLockbar();
+  const s=sectionStatus(res);document.querySelectorAll(".rail nav a").forEach(a=>{const k=a.getAttribute("href").slice(5);const d=a.querySelector(".dot");if(d)d.classList.toggle("done",!!s[k])});
+}
+
+// ---------- saving ----------
+// Every save goes to the shared Aspen Grove record. Until it lands, a safety copy stays on this device,
+// failed saves retry on their own, and the organizer is offered the copy back if they return before it lands.
+let saveKind="", dirty=false, retryT=null, retryN=0, restoreOffer=null;
+const clock=d=>(d?new Date(d):new Date()).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+function saveChip(){return `<span class="save" id="savestate" data-s="${saveKind}" role="status">${esc(saveState)}</span>`}
+function setSaveState(t,kind){saveState=t;saveKind=kind||(/^Saving/.test(t)?"busy":/^Not saved|permission|can't/i.test(t)?"bad":"ok");const el=document.getElementById("savestate");if(el){el.textContent=t;el.dataset.s=saveKind}}
+function scheduleSave(){if(!res||isLocked())return;dirty=true;setSaveState("Saving…");clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,700)}
+function bakKey(c){return "agbak:"+c}
+function bakPut(r){if(store.mode!=="db")return;try{localStorage.setItem(bakKey(r.code),JSON.stringify(r))}catch(e){}}
+function bakGet(c){try{const x=localStorage.getItem(bakKey(c));return x?JSON.parse(x):null}catch(e){return null}}
+function bakDel(c){try{localStorage.removeItem(bakKey(c))}catch(e){}}
+const FATAL=["invalid_argument","quota_exceeded","revoked","not_granted","capability_disabled","capability_removed","transform_error","local"];
+function saveNow(){
+  if(!res)return saving;
+  logEdits(res);
+  const snap=JSON.parse(JSON.stringify({...res,updatedAt:new Date().toISOString()}));res.updatedAt=snap.updatedAt;
+  dirty=true;bakPut(snap);clearTimeout(retryT);
+  saving=saving.then(()=>store.put(snap)).then(()=>{
+    if(res&&res.code===snap.code&&res.updatedAt===snap.updatedAt){dirty=false;bakDel(snap.code)}
+    retryN=0;setSaveState(store.mode==="db"?"Saved to Aspen Grove · "+clock():"Saved on this device · "+clock(),"ok");
+  }).catch(e=>{
+    const code=e&&e.code;
+    if(code==="invalid_argument"||code==="not_granted"||code==="revoked"){setSaveState("Not saved: this account can't save here. Your changes are kept on this device.","bad");return}
+    if(code==="quota_exceeded"){setSaveState("Not saved: the reservation list is full. Contact Conference Services.","bad");return}
+    retryN++;const wait=Math.min(30,2*2**(retryN-1));
+    setSaveState(`Not saved yet. Kept on this device, retrying in ${wait}s.`,"bad");
+    retryT=setTimeout(()=>{if(res&&res.code===snap.code&&dirty)saveNow()},wait*1000);
+  });
+  return saving;
+}
+window.addEventListener("online",()=>{if(res&&dirty)saveNow()});
+window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.returnValue=""}});
+
+// ---------- change history ----------
+const who={id:"",name:"",u:null};
+const SECTION_FIELDS={"Group & contact":["group","contact","phone","email","headcount","startDate","endDate","onsite"],"Attendee notes":["attendeeNotes"],"Room & A/V":["setup","roomChanges","setupNotes","noAV","av","avOther"],"Allergies":["allergies","noAllergies","roster"],"Meals & snacks":["days","firstMeal","lastMeal"],"Comments":["comments"],"Checklist":["checklist"]};
+function sectionSig(r){const o={};for(const[k,fs]of Object.entries(SECTION_FIELDS))o[k]=JSON.stringify(fs.map(f=>r[f]));return o}
+let lastSig=null, actingAs="organizer";
+function logEvent(r,what,extra){r.history=r.history||[];r.history.push({at:new Date().toISOString(),role:actingAs,by:who.id||"",what,...(extra||{})});if(r.history.length>80)r.history=r.history.slice(-80)}
+function logEdits(r){
+  const now=sectionSig(r);if(!lastSig){lastSig=now;return}
+  const changed=Object.keys(now).filter(k=>now[k]!==lastSig[k]);lastSig=now;if(!changed.length)return;
+  r.history=r.history||[];const h=r.history[r.history.length-1];
+  if(h&&h.what==="Edited"&&h.role===actingAs&&h.by===(who.id||"")&&Date.now()-new Date(h.at)<30*60e3){h.at=new Date().toISOString();h.secs=[...new Set([...(h.secs||[]),...changed])]}
+  else logEvent(r,"Edited",{secs:changed});
+}
+const ROLE={organizer:"Organizer",staff:"Conference Services"};
+const nameCache={};
+function historyList(r,limit){const h=[...(r.history||[])].reverse().slice(0,limit||100);
+  if(!h.length)return `<p class="small muted" style="margin:0">No changes recorded yet. Changes made from now on are listed here with who made them and when.</p>`;
+  return `<ul class="history">${h.map(x=>`<li><time datetime="${esc(x.at)}">${fmtDate(new Date(x.at),{month:"short",day:"numeric"})} · ${clock(x.at)}</time><span><b>${esc(x.what)}</b>${x.secs&&x.secs.length?`: ${esc(x.secs.join(", "))}`:""} <span class="who">· ${ROLE[x.role]||"Someone"}${x.by?` <span data-uid="${esc(x.by)}">${esc(nameCache[x.by]?"("+nameCache[x.by]+")":"")}</span>`:""}</span></span></li>`).join("")}</ul>`}
+async function fillNames(){if(!who.u||!who.u.profiles)return;const els=[...document.querySelectorAll("[data-uid]")];const ids=[...new Set(els.map(e=>e.dataset.uid))].filter(i=>!(i in nameCache));
+  if(ids.length){try{const ps=await who.u.profiles(ids);ids.forEach(i=>nameCache[i]=(ps[i]&&ps[i].name)||"")}catch(e){ids.forEach(i=>nameCache[i]="")}}
+  document.querySelectorAll("[data-uid]").forEach(e=>{const n=nameCache[e.dataset.uid];e.textContent=n?"("+n+")":""})}
+
+// ---------- events ----------
+app.addEventListener("input",e=>{
+  const el=e.target;
+  if(view==="staffplan"){if(el.classList.contains("locnote")){const L=plan.locations[el.dataset.key];if(L){L.note=el.value;planSave()}}return}if((view!=="edit"&&view!=="review")||!el.dataset.path||el.type==="checkbox"||el.type==="radio"||el.tagName==="SELECT"||el.type==="date")return;
+  setPath(res,el.dataset.path,el.type==="number"?(el.value===""||(/\.count$/.test(el.dataset.path)&&Number(el.value)===headN())?"":Number(el.value)):el.value);
+  if(el.dataset.path.endsWith(".time")){const h=el.closest(".meal")?.querySelector(".t");if(h)h.textContent=fmtTime(el.value)}
+  const mm=el.dataset.path.match(/^days\.(\d+)\.meals\.(\w+)\.(count|vegCount)$/);if(mm){const w=document.getElementById(`mw-${mm[1]}-${mm[2]}`);if(w)w.innerHTML=mealWarn(+mm[1],MEAL[mm[2]])}
+  scheduleSave();refreshLive();
+});
+app.addEventListener("change",e=>{
+  const el=e.target;
+  if(view==="staffplan"){
+    if(el.classList.contains("locsel")){const key=el.dataset.key,prev=plan.locations[key];plan.locations[key]={place:el.value,note:el.value==="Other"?(prev&&prev.note)||"":"",room:el.value==="Conference room"?(prev&&prev.room)||"":""};planSave();
+      rerender();if(el.value==="Other")document.getElementById("locnote-"+key)?.focus();if(el.value==="Conference room")document.getElementById("room-"+key)?.focus()}
+    else if(el.classList.contains("timein")){const key=el.dataset.key;if(!el.value||el.value===el.dataset.def)delete plan.times[key];else plan.times[key]=el.value;planSave();rerender()}
+    else if(el.classList.contains("roomsel")){const key=el.dataset.key;const L=plan.locations[key]||{place:"Conference room",note:""};L.place="Conference room";L.room=el.value;plan.locations[key]=L;planSave()}
+    return}if((view!=="edit"&&view!=="review")||isLocked())return;
+  if(el.id==="rosterfile"){const f=el.files&&el.files[0];el.value="";handleRosterFile(f);return}
+  if(el.classList.contains("alpick")){const a=res.allergies[+el.dataset.i],v=el.value;
+    if(v==="Other"){if(!a.other){a.other=true;a.allergy=""}}
+    else{a.other=false;a.allergy=v;if(DIETS.includes(v)){if(a.type!=="Medical")a.type="Preference";a.severity=""}else if(v&&(!a.type||noSeverity(a)))a.type="Allergy"}
+    rerender();scheduleSave();if(v==="Other")document.getElementById("al-a-"+el.dataset.i)?.focus();return}
+  if(el.dataset.almeal!==undefined){const a=res.allergies[+el.dataset.almeal];const i=a.meals.indexOf(el.value);if(el.checked&&i<0)a.meals.push(el.value);if(!el.checked&&i>=0)a.meals.splice(i,1);scheduleSave();refreshLive();return}
+  if(el.dataset.snack!==undefined){const p=el.dataset.snack;const arr=getPath(res,p+".items");
+    if(el.checked){if(arr.length<3)arr.push(el.value)}else{const i=arr.indexOf(el.value);if(i>=0)arr.splice(i,1)}
+    rerender();scheduleSave();return}
+  if(el.dataset.av!==undefined){const i=res.av.indexOf(el.value);if(el.checked&&i<0)res.av.push(el.value);if(!el.checked&&i>=0)res.av.splice(i,1);scheduleSave();refreshLive();return}
+  if(!el.dataset.path)return;
+  let v=el.type==="checkbox"?el.checked:el.type==="number"?(el.value===""||(/\.count$/.test(el.dataset.path)&&Number(el.value)===headN())?"":Number(el.value)):el.value;
+  setPath(res,el.dataset.path,v);
+  if(el.dataset.path==="startDate"||el.dataset.path==="endDate"){
+    if(el.dataset.path==="startDate"&&(!res.endDate||res.endDate<res.startDate))res.endDate=res.startDate;
+    syncDays();
+  }
+  if(el.dataset.path.endsWith(".vegChoice")){const cp=el.dataset.path.replace("vegChoice","vegCount");if(!v)setPath(res,cp,0);else if(!Number(getPath(res,cp))&&rosterVeg())setPath(res,cp,rosterVeg())}
+  if(/^days\.\d+\.meals\.\w+\.(choice|on)$/.test(el.dataset.path)){const st=getPath(res,el.dataset.path.replace(/\.(choice|on)$/,""));st.auto=false;delete st.prev}
+  if(el.type==="checkbox"||el.type==="radio"||el.tagName==="SELECT"||el.type==="date"||el.dataset.path==="headcount")rerender();
+  scheduleSave();
+});
+function rerender(){const y=window.scrollY;view==="staffplan"?renderPlan():view==="review"?renderReview():view==="sheet"?renderSheet():view==="staff"?renderStaff():renderEditor();window.scrollTo(0,y)}
+app.addEventListener("click",async e=>{
+  const b=e.target.closest("button,a");if(!b)return;
+  if(b.matches(".rail a")){e.preventDefault();document.querySelector(b.getAttribute("href"))?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});return}
+  if(b.id==="back"){await saving;if(actingAs==="staff"){setTab("staff");loadStaff()}else renderHome();return}
+  if(b.dataset.restore!==undefined){const x=restoreOffer;restoreOffer=null;delete x._unsaved;res=normalize(x);lastSig=null;logEvent(res,"Restored unsaved changes from this device");lastSig=sectionSig(res);rerender();saveNow();toast("Changes restored");return}
+  if(b.dataset.discard!==undefined){bakDel(res.code);restoreOffer=null;rerender();toast("Discarded");return}
+  if(b.dataset.sheet){await saving;openSheet(b.dataset.sheet);return}
+  if(b.dataset.sheetback!==undefined){sheetBack();return}
+  if(b.dataset.sheetdl!==undefined){downloadSheet();return}
+  if(b.dataset.stab){staffTab=b.dataset.stab;staffMsg=null;startOpen=false;if(staffTab==="kitchen")loadKitchen();renderStaff();return}
+  if(b.dataset.startgroup!==undefined){startOpen=!startOpen;staffMsg=null;renderStaff();if(startOpen)document.getElementById("sg-group")?.focus();return}
+  if(b.dataset.invite){inviteFor(b.dataset.invite);return}
+  if(b.dataset.remind){remindFor(b.dataset.remind);return}
+  if(b.dataset.closemsg!==undefined){staffMsg=null;renderStaff();return}
+  if(b.dataset.copymsg!==undefined){const t=document.getElementById("msgtext");try{await navigator.clipboard.writeText(t.value);toast("Message copied. Paste it into an email.")}catch(err){t.focus();t.select();toast("Press Ctrl+C or Cmd+C to copy")}return}
+  if(b.dataset.copylink!==undefined){const v=b.dataset.copylink;try{await navigator.clipboard.writeText(v);toast("Copied")}catch(err){toast("Select the text and copy it")}return}
+  if(b.dataset.kdl!==undefined){downloadKitchen();return}
+  if(b.dataset.export){exportData(b.dataset.export);return}
+  if(b.dataset.healthcheck!==undefined){runCheck();return}
+  if(b.dataset.goreview!==undefined){clearTimeout(saveTimer);if(saveState==="Saving…")saveNow();confirmingLock=false;renderReview();window.scrollTo(0,0);return}
+  if(b.dataset.editsec){const sec=b.dataset.editsec;view="edit";renderEditor();const el=document.getElementById("sec-"+sec);if(el)el.scrollIntoView();else window.scrollTo(0,0);return}
+  if(b.dataset.day){activeDay=Number(b.dataset.day);if("top" in b.dataset){renderEditor();document.getElementById("sec-meals")?.scrollIntoView()}else rerender();return}
+  if(b.dataset.copyday){const i=Number(b.dataset.copyday);if(i>0){res.days[i].meals=JSON.parse(JSON.stringify(res.days[i-1].meals));rerender();scheduleSave();toast("Copied "+fmtDate(res.days[i-1].date)+" to "+fmtDate(res.days[i].date))}return}
+  if(b.dataset.pickfile!==undefined){document.getElementById("rosterfile")?.click();return}
+  if(b.id==="dltemplate"){const ns=await dlNs;if(!ns){showTpl=true;rerender();return}
+    try{await ns.save({filename:`${res.code}-attendee-list.csv`,data:templateCSV()});toast("Template saved")}catch(err){if(err&&err.code==="declined")return;showTpl=true;rerender()}return}
+  if(b.dataset.copytpl!==undefined){const t=document.getElementById("tpltext");try{await navigator.clipboard.writeText(templateCSV());toast("Template copied")}catch(err){t?.focus();t?.select();toast("Press Ctrl+C or Cmd+C to copy")}return}
+  if(b.dataset.doimport!==undefined){doImport();return}
+  if(b.dataset.cancelimport!==undefined){pendingImport=null;rerender();return}
+  if(b.dataset.rosterremove!==undefined){res.roster=null;res.rosterFile="";res.rosterAt=null;rerender();scheduleSave();toast("Guest list removed. Allergies from it stay in the table.");return}
+  if(b.dataset.usecount){const[di,k,c]=b.dataset.usecount.split("|");res.days[+di].meals[k].count=+c;rerender();scheduleSave();return}
+  if(b.id==="addallergy"){res.allergies.push({name:"",allergy:"",type:"",severity:"",mode:"all",meals:[],note:"",from:"",to:"",src:"",other:false});res.noAllergies=false;rerender();document.getElementById("al-n-"+(res.allergies.length-1))?.focus();scheduleSave();return}
+  if(b.dataset.delallergy){res.allergies.splice(Number(b.dataset.delallergy),1);rerender();scheduleSave();return}
+  if(b.id==="lock"){confirmingLock=true;refreshLive();return}
+  if(b.id==="cancellock"){confirmingLock=false;refreshLive();return}
+  if(b.id==="dolock"){
+    clearTimeout(saveTimer);
+    res.status="locked";res.lockedAt=new Date().toISOString();logEdits(res);logEvent(res,"Locked in");
+    const p=saveNow();await p;
+    if(saveKind==="bad"){res.status="draft";res.lockedAt=null;res.history.pop();refreshLive();toast("Couldn't lock in. Your draft is unchanged.");return}
+    confirmingLock=false;rerender();toast("Locked in. Aspen Grove has your final details.");return}
+  if(b.dataset.open){actingAs="staff";openCode(b.dataset.open);return}
+  if(b.dataset.plan){openPlan(b.dataset.plan);return}
+  if(b.dataset.backstaff!==undefined){clearTimeout(planSaveT);if(planState==="Saving…"){try{await store.putStaff(res.code,{...plan,code:res.code,updatedAt:new Date().toISOString()})}catch(err){}}loadStaff();return}
+  if(b.dataset.bulkapply!==undefined){const bm=document.getElementById("bulk-meal").value,bs=document.getElementById("bulk-snack").value,br=document.getElementById("bulk-room").value;if(!bm&&!bs){toast("Choose a location to apply");return}
+    let n=0;res.days.forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(!isPlanned(m,st))return;const v=m.snack?bs:bm;if(v){plan.locations[slotKey(d.date,m.k)]={place:v,note:"",room:v==="Conference room"?br:""};n++}}));
+    rerender();planSave();toast(`Updated ${n} location${n===1?"":"s"}`);return}
+  if(b.dataset.askdelete){pendingDelete=b.dataset.askdelete;renderStaff();return}
+  if(b.dataset.canceldelete!==undefined){pendingDelete=null;renderStaff();return}
+  if(b.dataset.dodelete){
+    const code=b.dataset.dodelete;b.disabled=true;
+    try{await store.del(code);staffRows=(staffRows||[]).filter(r=>r.code!==code);pendingDelete=null;toast(code+" deleted")}
+    catch(err){pendingDelete=null;toast("Couldn't delete. You may not have edit access.")}
+    renderStaff();return}
+  if(b.dataset.unlock){
+    const r=await store.get(b.dataset.unlock);if(!r)return;r.status="draft";r.lockedAt=null;r.updatedAt=new Date().toISOString();{const a=actingAs;actingAs="staff";logEvent(r,"Reopened for changes");actingAs=a}
+    try{await store.put(r);toast(r.code+" reopened for edits")}catch(err){toast("Couldn't reopen. You may not have edit access.")}
+    if(store.mode==="local")loadStaff();return}
+});
+
+// ---------- STAFF: meal locations ----------
+const LOCS=["Dining hall","Conference room","Aspen Lobby","Boxed to go","Other"];
+const ROOMS=["Timp Room A","Timp Room B","Timp Room C","Fir","Spruce","Pine"];
+const locLabel=L=>L.place==="Other"?(L.note||"Other"):L.place==="Conference room"?(L.room?`Conference room · ${L.room}`:"Conference room (room not set)"):L.place;
+const roomSelect=(cls,id,key,cur,label)=>`<select class="${cls}" id="${id}"${key?` data-key="${key}"`:""} aria-label="${label}"><option value="">Choose a room</option>${ROOMS.map(o=>`<option ${cur===o?"selected":""}>${o}</option>`).join("")}</select>`;
+const defLoc=m=>m.snack?"Aspen Lobby":"Dining hall";
+const timeOf=(date,m)=>(staffInfo&&staffInfo.times&&staffInfo.times[slotKey(date,m.k)])||m.time;
+const isPlanned=(m,st)=>m.snack?!!st.on:st.choice!=="none";
+async function openPlan(code){
+  let r=null;try{r=await store.get(code)}catch(e){}
+  if(!r){toast("Couldn't open "+code);return}
+  res=normalize(r);plan=null;try{plan=await store.getStaff(code)}catch(e){}
+  plan=plan||{code,locations:{}};plan.locations=plan.locations||{};plan.times=plan.times||{};planState="";
+  renderPlan();window.scrollTo(0,0);
+}
+const locOf=(key,m)=>plan.locations[key]||{place:defLoc(m),note:"",room:""};
+function menuShort(m,st){
+  if(m.snack)return st.items.length?esc(st.items.join(", ")):`<span class="missingval">Items not picked</span>`;
+  if(!st.choice)return `<span class="missingval">Not chosen yet</span>`;
+  const x=m.list.find(o=>o.id===st.choice);let t=`<b>${esc(x?x.name:"")}</b>`;
+  if(st.vegChoice){const v=VEG.find(v=>v.id===st.vegChoice);t+=` <span class="muted small">+ ${Number(st.vegCount)||0} ${esc(v?v.name:"vegetarian")}</span>`}
+  return t;
+}
+function renderPlan(){
+  view="staffplan";const r=res,locked=r.status==="locked";
+  const dates=r.startDate?fmtDate(r.startDate,{weekday:"short",month:"long",day:"numeric"})+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate,{weekday:"short",month:"long",day:"numeric"}):""):"Dates not set";
+  const opt=(list,none)=>`${none?`<option value="">No change</option>`:""}${list.map(o=>`<option>${o}</option>`).join("")}`;
+  app.innerHTML=`<div class="panel plan">
+    <div class="row" style="justify-content:space-between"><button class="btn ghost" data-backstaff>← Upcoming groups</button><span class="save" id="planstate">${esc(planState)}</span></div>
+    <div class="reviewhead"><span class="eyebrow">Meal locations · staff only</span><h2 class="rtitle">${esc(r.group||"Untitled group")}</h2>
+      <p class="muted" style="margin:0"><span class="mono">${esc(r.code)}</span> · ${esc(dates)}${r.headcount?` · ${esc(r.headcount)} guests`:""} · <span class="pill ${locked?"locked":"draft"}">${locked?"Locked in":"Draft"}</span></p></div>
+    ${r.days.length?`<div class="bulk">
+      <label class="f" for="bulk-meal">Set every meal to<select id="bulk-meal">${opt(LOCS.filter(o=>o!=="Other"),true)}</select></label>
+      <label class="f" for="bulk-snack">Set every snack to<select id="bulk-snack">${opt(LOCS.filter(o=>o!=="Other"),true)}</select></label>
+      <label class="f" for="bulk-room">Which conference room<select id="bulk-room"><option value="">Choose a room</option>${ROOMS.map(o=>`<option>${o}</option>`).join("")}</select></label>
+      <button class="btn" data-bulkapply>Apply</button></div>
+    ${r.days.map((d,di)=>`<div class="sumday"><h3>${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</h3>
+      <div class="tablewrap"><table class="plantable"><thead><tr><th>Meal</th><th>Time</th><th>Guests</th><th>Menu</th><th>Location</th></tr></thead><tbody>
+      ${MEALS.map(m=>{const st=d.meals[m.k],key=slotKey(d.date,m.k),sv=isPlanned(m,st),L=locOf(key,m);
+        return `<tr class="${sv?"":"off"}"><th scope="row">${m.label}</th><td>${sv?(()=>{const t=plan.times[key]||m.time,ch=t!==m.time;return `<input type="time" class="timein" id="time-${key}" data-key="${key}" data-def="${m.time}" value="${t}" aria-label="Time for ${fmtDate(d.date)} ${m.label}">${ch?`<span class="warnline">Fee may apply (standard: ${fmtTime(m.time)})</span>`:""}`})():""}</td><td class="mono">${sv?mealCount(st):""}</td><td>${sv?menuShort(m,st):`<span class="muted">Not served</span>`}</td>
+        <td>${sv?`<select class="locsel" id="loc-${key}" data-key="${key}" aria-label="Location for ${fmtDate(d.date)} ${m.label}">${LOCS.map(o=>`<option ${L.place===o?"selected":""}>${o}</option>`).join("")}</select>${L.place==="Conference room"?roomSelect("roomsel","room-"+key,key,L.room||"","Conference room for "+fmtDate(d.date)+" "+m.label):""}${L.place==="Other"?`<input type="text" class="locnote" id="locnote-${key}" data-key="${key}" value="${esc(L.note)}" placeholder="Where?" aria-label="Other location">`:""}`:""}</td></tr>`}).join("")}
+      </tbody></table></div></div>`).join("")}`:`<div class="empty">This group hasn't set its event dates yet.</div>`}
+    <p class="small muted" style="margin:0">Meals default to the Dining hall and snacks to the Aspen Lobby until you change them. Times start at the standard schedule; a changed time is flagged because a fee may apply. Organizers see the locations on their review page but can't change them.</p>
+  </div>`;
+}
+function setPlanState(t){planState=t;const el=document.getElementById("planstate");if(el)el.textContent=t}
+function planSave(){
+  setPlanState("Saving…");clearTimeout(planSaveT);
+  const code=res.code,snap={...plan,code,updatedAt:new Date().toISOString()};
+  planSaveT=setTimeout(async()=>{try{await store.putStaff(code,snap);setPlanState("Saved "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}))}
+    catch(e){setPlanState(e&&e.code==="invalid_argument"?"Only Aspen Grove staff can change meal locations":"Not saved. Check your connection.")}},500);
+}
+
+// ---------- CONFERENCE SERVICES ----------
+const PAGE_URL="https://claude.ai/artifact/9kSo7EiZ3AAYSrh96k4yud";
+let staffTab="groups", staffMsg=null, startOpen=false, kitchenInfo=null, kitchenDate="", checkResult=null, sheetCtx=null;
+const SECS_TOTAL=5;
+function progressOf(r){const s=sectionStatus(normalize(structuredClone(r)));return ["contact","room","meals","allergies","checklist"].filter(k=>s[k]).length}
+function organizerStarted(r){if(r.createdBy!=="staff")return true;return (r.history||[]).some(h=>h.role==="organizer")}
+function stateOf(r){
+  if(r.status==="locked")return {k:"locked",label:"Locked in"};
+  const dl=deadlineOf(r);if(dl&&daysBetween(TODAY,dl)<0)return {k:"overdue",label:"Past deadline"};
+  if(!organizerStarted(r))return {k:"waiting",label:"Not started"};
+  return {k:"progress",label:"In progress"};
+}
+const firstName=n=>String(n||"").trim().split(/\s+/)[0]||"there";
+const longDate=s=>fmtDate(s,{weekday:"long",month:"long",day:"numeric"});
+function datesText(r){if(!r.startDate)return "your event";return r.endDate&&r.endDate!==r.startDate?`${longDate(r.startDate)} through ${longDate(r.endDate)}`:longDate(r.startDate)}
+const linkFor=code=>`${PAGE_URL}#${code}`;
+
+function inviteText(r){const dl=deadlineOf(r);
+  return `Subject: Final details for ${r.group||"your group"} at Aspen Grove
+
+Hi ${firstName(r.contact)},
+
+We're looking forward to hosting ${r.group||"your group"} at Aspen Grove on ${datesText(r)}.
+
+Please fill in your group's final details online: meals and snacks for each day, room setup, audio/visual needs, and guest allergies. It saves as you type, so you can stop and come back any time before you lock it in. We've already filled in what we have on file.
+
+Open your form: ${linkFor(r.code)}
+Your reservation code: ${r.code}
+
+Please lock in your final details by ${dl?longDate(iso(dl)):"two weeks before you arrive"}. That gives our kitchen time to plan for every allergy.
+
+If you have any questions, just reply to this email.
+
+Thank you,
+Aspen Grove Conference Services`}
+
+function reminderText(r){const miss=missingList(normalize(structuredClone(r))),dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null;
+  const when=!dl?"soon":left<0?`as soon as you can (it was due ${longDate(iso(dl))})`:left===0?"today":`by ${longDate(iso(dl))}`;
+  return `Subject: Reminder: final details for ${r.group||"your group"}
+
+Hi ${firstName(r.contact)},
+
+A quick reminder to lock in your final details for ${r.group||"your group"} ${when}.${miss.length?`
+
+Here's what's still open on your form:
+${miss.slice(0,12).map(m=>"  - "+m).join("\n")}${miss.length>12?`\n  - and ${miss.length-12} more`:""}`:`
+
+Everything is filled in. The last step is to review and press Lock in.`}
+
+Open your form: ${linkFor(r.code)}
+Your reservation code: ${r.code}
+
+Thank you,
+Aspen Grove Conference Services`}
+
+function inviteFor(code){const r=(staffRows||[]).find(x=>x.code===code);if(!r)return;staffMsg={code,title:`Invitation for ${r.group||code}`,to:r.email,text:inviteText(r)};startOpen=false;renderStaff();window.scrollTo(0,0)}
+function remindFor(code){const r=(staffRows||[]).find(x=>x.code===code);if(!r)return;staffMsg={code,title:`Reminder for ${r.group||code}`,to:r.email,text:reminderText(r)};startOpen=false;renderStaff();window.scrollTo(0,0)}
+
+function msgCard(){const m=staffMsg;if(!m)return "";
+  return `<section class="panel msgcard" aria-label="${esc(m.title)}">
+    <div class="row" style="justify-content:space-between"><h2>${esc(m.title)}</h2><button class="btn ghost" data-closemsg>Close</button></div>
+    <p class="small" style="margin:0">Copy this into an email to the organizer. Nothing is sent automatically from the prototype.</p>
+    <div class="copyline"><span>To:</span>${m.to?`<code>${esc(m.to)}</code><button class="btn tiny" data-copylink="${esc(m.to)}">Copy</button>`:`<span class="missingval">No email on file</span>`}</div>
+    <div class="copyline"><span>Form link:</span><code>${esc(linkFor(m.code))}</code><button class="btn tiny" data-copylink="${esc(linkFor(m.code))}">Copy</button></div>
+    <label class="f" for="msgtext">Message<textarea id="msgtext">${esc(m.text)}</textarea></label>
+    <div class="row"><button class="btn primary" data-copymsg>Copy message</button></div>
+  </section>`}
+
+function startForm(){if(!startOpen)return "";
+  return `<form class="panel startform" id="startform">
+    <div class="row" style="justify-content:space-between"><h2>Start a group</h2><button class="btn ghost" type="button" data-startgroup>Cancel</button></div>
+    <p class="small muted" style="margin:0">Fill in what you already have from the booking. The organizer sees it filled in and completes the rest.</p>
+    <div class="grid2">
+      <label class="f" for="sg-group">Group name<input id="sg-group" type="text" required></label>
+      <label class="f" for="sg-head">Expected headcount<input id="sg-head" type="number" min="1"></label>
+    </div>
+    <div class="grid2">
+      <label class="f" for="sg-start">First day<input id="sg-start" type="date" required></label>
+      <label class="f" for="sg-end">Last day<input id="sg-end" type="date"></label>
+    </div>
+    <div class="grid2">
+      <label class="f" for="sg-contact">Organizer name<input id="sg-contact" type="text" required></label>
+      <label class="f" for="sg-email">Organizer email<input id="sg-email" type="email" required></label>
+      <label class="f" for="sg-phone">Organizer phone<input id="sg-phone" type="tel"></label>
+    </div>
+    <div class="row"><button class="btn primary" type="submit">Create and write the invitation</button></div>
+  </form>`}
+
+function renderStaff(){
+  view="staff";setTab("staff");
+  const nav=`<nav class="subnav" aria-label="Conference Services">${[["groups","Groups"],["kitchen","Kitchen by day"],["backup","Backup & system check"]].map(([k,l])=>`<button data-stab="${k}" aria-pressed="${staffTab===k}">${l}</button>`).join("")}</nav>`;
+  if(staffRows===null){app.innerHTML=nav+`<div class="empty">Loading reservations…</div>`;return}
+  const body=staffTab==="kitchen"?kitchenView():staffTab==="backup"?backupView():groupsView();
+  const keep={};document.querySelectorAll("#startform input,#msgtext").forEach(el=>keep[el.id]=el.value);const foc=document.activeElement&&document.activeElement.id;
+  app.innerHTML=nav+body;
+  for(const[id,v]of Object.entries(keep)){const el=document.getElementById(id);if(el)el.value=v}if(foc)document.getElementById(foc)?.focus();
+  if(staffTab==="backup")fillNames();
+}
+
+function groupsView(){
+  const rows=staffRows;
+  const sorted=[...rows].sort((a,b)=>(a.startDate||"9999").localeCompare(b.startDate||"9999"));
+  const st=rows.map(stateOf), cnt=k=>st.filter(x=>x.k===k).length;
+  return `<div class="stack">
+    <div class="stats">
+      <div class="stat"><span class="n">${rows.length}</span><span class="l">Groups</span></div>
+      <div class="stat"><span class="n">${cnt("locked")}</span><span class="l">Locked in</span></div>
+      <div class="stat"><span class="n">${cnt("progress")}</span><span class="l">Organizer working on it</span></div>
+      <div class="stat"><span class="n">${cnt("waiting")}</span><span class="l">Invited, not started</span></div>
+      <div class="stat ${cnt("overdue")?"alert":""}"><span class="n">${cnt("overdue")}</span><span class="l">Past the 14-day deadline</span></div>
+    </div>
+    ${msgCard()}${startForm()}
+    <div class="panel" style="gap:14px">
+      <div class="row" style="justify-content:space-between"><h2>Upcoming groups</h2>${startOpen?"":`<button class="btn primary" data-startgroup>+ Start a group</button>`}</div>
+      ${rows.length?`<div class="tablewrap"><table class="stafftable"><thead><tr><th>Group</th><th>Event</th><th>Guests</th><th>Form</th><th>Lock-in deadline</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+      ${sorted.map(r=>{const dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null,s=stateOf(r),locked=r.status==="locked",p=progressOf(r);
+        const dlTxt=!dl?"—":locked?fmtDate(dl):left<0?`<span style="color:var(--bad);font-weight:600">${fmtDate(dl)} · overdue</span>`:left<=7?`<span style="color:var(--warn);font-weight:600">${fmtDate(dl)} · ${left}d</span>`:`${fmtDate(dl)} · ${left}d`;
+        const sev=(r.allergies||[]).filter(isSevere).length;
+        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b> <span class="mono small muted">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span>${sev?`<br><span class="small" style="color:var(--bad);font-weight:600">${sev} critical allerg${sev===1?"y":"ies"}</span>`:""}</td>
+        <td>${r.startDate?fmtDate(r.startDate)+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate):""):"—"}</td><td class="mono">${esc(r.headcount||"—")}</td>
+        <td><div class="prog"><span class="bar"><i style="width:${p/SECS_TOTAL*100}%"></i></span>${p}/${SECS_TOTAL}</div></td>
+        <td>${dlTxt}</td><td><span class="pill ${s.k==="locked"?"locked":s.k}">${s.label}</span></td>
+        <td class="a">${pendingDelete===r.code
+          ?`<div class="acts"><span class="small" style="font-weight:600;color:var(--bad)">Delete permanently?</span><button class="btn danger" data-dodelete="${esc(r.code)}">Delete</button><button class="btn" data-canceldelete>Cancel</button></div>`
+          :`<div class="acts"><button class="btn" data-sheet="${esc(r.code)}">Final sheet</button>${locked?"":s.k==="waiting"?`<button class="btn" data-invite="${esc(r.code)}">Invitation</button>`:`<button class="btn" data-remind="${esc(r.code)}">Reminder</button>`}<button class="btn" data-open="${esc(r.code)}">Open form</button><button class="btn" data-plan="${esc(r.code)}">Locations</button>${locked?`<button class="btn ghost" data-unlock="${esc(r.code)}">Reopen</button>`:""}<button class="btn ghost danger-text" data-askdelete="${esc(r.code)}" aria-label="Delete ${esc(r.code)}">Delete</button></div>`}</td></tr>`}).join("")}
+      </tbody></table></div>`:`<div class="empty">No groups yet. Start one with the button above, or an organizer can create one from the Organizer tab.</div>`}
+      <p class="small muted" style="margin:0">The list updates live as organizers type. "Form" counts the five required parts: contact, room, meals, allergies, checklist. In a production version this view would sit behind BYU sign-in.</p>
+    </div>
+  </div>`}
+
+async function createStaffGroup(form){
+  const g=id=>form.querySelector(id).value.trim();
+  let code=newCode();for(let i=0;i<3&&await store.get(code).catch(()=>null);i++)code=newCode();
+  const r=blankRes(code);r.createdBy="staff";
+  Object.assign(r,{group:g("#sg-group"),contact:g("#sg-contact"),email:g("#sg-email"),phone:g("#sg-phone"),headcount:g("#sg-head")?Number(g("#sg-head")):"",startDate:g("#sg-start"),endDate:g("#sg-end")||g("#sg-start")});
+  if(r.endDate<r.startDate)r.endDate=r.startDate;
+  const prev=res;res=r;syncDays();res=prev;
+  const a=actingAs;actingAs="staff";logEvent(r,"Started by Conference Services");actingAs=a;
+  try{await store.put(r)}catch(e){toast("Couldn't create the group. Try again in a moment.");return}
+  if(store.mode!=="db"){staffRows=[...(staffRows||[]).filter(x=>x.code!==r.code),r]}
+  else if(!(staffRows||[]).some(x=>x.code===r.code))staffRows=[...(staffRows||[]),r];
+  startOpen=false;staffMsg={code,title:`Invitation for ${r.group}`,to:r.email,text:inviteText(r)};renderStaff();window.scrollTo(0,0);toast(`${r.group} created as ${code}`);
+}
+app.addEventListener("submit",e=>{if(e.target.id==="startform"){e.preventDefault();createStaffGroup(e.target)}});
+
+// ---------- printable final sheet ----------
+function withRes(r,fn){const p=res;res=r;try{return fn()}finally{res=p}}
+function sheetBody(r0,info){
+  const r=normalize(structuredClone(r0));info=info||{};const locs=info.locations||{},times=info.times||{};
+  const locked=r.status==="locked",ex=extras(r);
+  const dates=r.startDate?fmtDate(r.startDate,{weekday:"short",month:"long",day:"numeric",year:"numeric"})+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate,{weekday:"short",month:"long",day:"numeric"}):""):"Dates not set";
+  const v=(x,e="Not provided")=>x!==undefined&&x!==null&&String(x).trim()!==""?esc(x):`<span class="miss">${e}</span>`;
+  const where=(d,m)=>{const L=locs[slotKey(d,m.k)];return L?locLabel(L):defLoc(m)};
+  const av=r.noAV?"None needed":[...r.av,...(r.avOther?[r.avOther]:[])].join(", ");
+  const miss=locked?[]:missingList(r);
+  const sev=r.allergies.filter(isSevere).length;
+  const days=withRes(r,()=>r.days.map((d,di)=>`<div class="day"><h3>${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</h3>
+    <table><thead><tr><th style="width:110px">Meal</th><th style="width:72px">Time</th><th style="width:130px">Where</th><th style="width:56px">Guests</th><th>Menu</th><th style="width:190px">Allergies at this meal</th></tr></thead><tbody>
+    ${MEALS.map(m=>{const st=d.meals[m.k],sv=isServed(m,st);
+      if(!sv&&m.snack)return "";
+      const al=sv?allergiesAt(di,m.k):[];
+      return `<tr><th scope="row">${m.label}</th><td>${sv?fmtTime(times[slotKey(d.date,m.k)]||m.time):""}</td><td>${sv?esc(where(d.date,m)):""}</td><td class="n">${sv?mealCount(st,r):""}</td><td>${mealLine(m,st)}</td>
+      <td>${al.length?al.map(a=>`<span class="al ${isSevere(a)?"sev":""}">${esc(a.name)}: ${esc(a.allergy)}${isSevere(a)?" (severe)":""}</span>`).join(""):sv?`<span class="muted">None</span>`:""}</td></tr>`}).join("")}
+    </tbody></table></div>`).join(""));
+  return `<div class="top"><div><div class="org">Aspen Grove · Conference Final Details</div><h1>${v(r.group,"Untitled group")}</h1><div>${esc(dates)}${r.headcount?` · ${esc(r.headcount)} guests`:""} · <span style="font-family:'IBM Plex Mono',monospace">${esc(r.code)}</span></div></div>
+    <div class="stamp ${locked?"":"draft"}">${locked?"Locked in":"Draft · not final"}<span>${locked&&r.lockedAt?fmtDate(new Date(r.lockedAt),{month:"short",day:"numeric",year:"numeric"})+", "+clock(r.lockedAt):"Printed "+fmtDate(new Date(),{month:"short",day:"numeric"})+", "+clock()}</span></div></div>
+    ${miss.length?`<p class="miss" style="margin:10px 0 0">Not final: ${miss.length} item${miss.length===1?"":"s"} still open (${esc(miss.slice(0,4).join("; "))}${miss.length>4?"; …":""}).</p>`:""}
+    <h2>Group &amp; contact</h2>
+    <div class="kvs"><div><span>Organizer</span>${v(r.contact)}</div><div><span>Phone</span>${v(r.phone)}</div><div><span>Email</span>${v(r.email)}</div>
+      <div><span>On-site contact</span>${r.onsite.same?`${v(r.contact)} · ${v(r.phone)}`:`${v(r.onsite.name)} · ${v(r.onsite.phone)}`}</div><div><span>Final headcount</span>${v(r.headcount)}</div><div><span>Lock-in deadline</span>${deadlineOf(r)?fmtDate(deadlineOf(r),{month:"long",day:"numeric"}):"—"}</div></div>
+    ${r.attendeeNotes?`<p class="note" style="margin-top:8px"><b>Attendee notes:</b> ${esc(r.attendeeNotes)}</p>`:""}
+    <h2>Conference room &amp; A/V</h2>
+    <div class="kvs"><div><span>Preferred setup</span>${r.setup?SETUP_LABEL[r.setup]:v("")}</div><div><span>Changes during event</span>${r.roomChanges?(r.roomChanges==="yes"?"Yes · needs approval":"No"):v("")}</div><div><span>Audio/visual</span>${av?esc(av):v("","Not answered")}</div></div>
+    ${r.setupNotes?`<p class="note" style="margin-top:8px"><b>Setup notes:</b> ${esc(r.setupNotes)}</p>`:""}
+    <h2>Allergies &amp; restrictions${r.allergies.length?` · ${r.allergies.length} guest${r.allergies.length===1?"":"s"}${sev?`, <span class="sev">${sev} severe</span>`:""}`:""}</h2>
+    ${r.allergies.length?`<table><thead><tr><th>Guest</th><th>Allergy or restriction</th><th>Type</th><th>Severity</th></tr></thead><tbody>${r.allergies.map(a=>`<tr><td>${v(a.name)}</td><td>${v(a.allergy)}</td><td>${a.type?esc(TYPE_LABEL[a.type]||a.type):v("","Not set")}</td><td>${sevTag(a)}</td></tr>`).join("")}</tbody></table>`
+      :`<p style="margin:0">${r.noAllergies===true?"No guests with allergies or food restrictions.":`<span class="miss">Not answered yet.</span>`}</p>`}
+    <h2>Meals &amp; snacks</h2>
+    ${days||`<p class="miss" style="margin:0">Event dates not set.</p>`}
+    ${ex.lines.length?`<h2>Upgrades &amp; possible fees</h2><table><tbody>${ex.lines.map(([l,x])=>`<tr><td>${esc(l)}</td><td class="n">${x==null?"TBD":"$"+x.toFixed(2)}</td></tr>`).join("")}<tr class="tot"><td>Estimated upgrades${ex.market?" (plus market price)":""}</td><td class="n">$${ex.total.toFixed(2)}</td></tr></tbody></table>`:""}
+    <h2>Comments &amp; checklist</h2>
+    <p class="note">${r.comments?esc(r.comments):`<span class="muted">No additional comments.</span>`}</p>
+    <p style="margin:6px 0 0">Conference schedule emailed: <b>${r.checklist.schedule?"Yes":"No"}</b> · Final payment sent: <b>${r.checklist.payment?"Yes":"No"}</b></p>
+    <div class="foot"><span>Reservation ${esc(r.code)} · last changed ${r.updatedAt?fmtDate(new Date(r.updatedAt),{month:"short",day:"numeric"})+", "+clock(r.updatedAt):"—"}</span><span>Aspen Grove Conference Services</span></div>`;
+}
+async function openSheet(code){
+  let r=null,info=null;try{r=await store.get(code)}catch(e){}
+  if(!r){toast("Couldn't open "+code);return}
+  try{info=await store.getStaff(code)}catch(e){}
+  sheetCtx={r,info,from:view};renderSheet();window.scrollTo(0,0);
+}
+function renderSheet(){view="sheet";const {r,info}=sheetCtx;
+  app.innerHTML=`<div class="stack"><div class="sheetbar"><button class="btn ghost" data-sheetback>← Back</button>
+    <div class="row"><span class="small muted">Download, open the file, and print it or save it as a PDF.</span><button class="btn primary" data-sheetdl>Download to print</button></div></div>
+    <div class="sheetwrap"><article class="sheet">${sheetBody(r,info)}</article></div></div>`}
+function sheetBack(){const f=sheetCtx&&sheetCtx.from;sheetCtx=null;
+  if(f==="staff"){loadStaff();return}
+  if(res){view=f==="edit"?"edit":"review";rerender();return}
+  renderHome()}
+function printableDoc(title,inner){const css=document.getElementById("sheetcss").textContent;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>body{margin:24px;background:#fff}.noprint{display:flex;justify-content:center;margin:0 0 18px}.noprint button{font:600 15px "IBM Plex Sans",Arial,sans-serif;background:#0047ba;color:#fff;border:0;padding:10px 22px;border-radius:3px;cursor:pointer}${css}.sheet{min-width:0}</style></head>
+<body><div class="noprint"><button onclick="window.print()">Print this sheet</button></div><article class="sheet">${inner}</article></body></html>`}
+async function saveFile(filename,data,label){
+  const ns=await dlNs;
+  if(!ns){toast("Downloads aren't available in this view. Open the page in claude.ai to download.");return false}
+  try{await ns.save({filename,data});toast(label||"Saved");return true}catch(err){if(err&&err.code==="declined")return false;toast("Couldn't save the file. Try again.");return false}
+}
+function downloadSheet(){const {r,info}=sheetCtx;saveFile(`${r.code} ${(r.group||"final details").replace(/[^\w\- ]+/g,"").trim()} - final details.html`,printableDoc(`${r.group||r.code} · Final details`,sheetBody(r,info)),"Sheet saved. Open it and press Print.")}
+
+// ---------- kitchen by day ----------
+async function loadKitchen(){kitchenInfo=null;try{kitchenInfo=await store.allStaff()}catch(e){kitchenInfo={}}if(view==="staff"&&staffTab==="kitchen")renderStaff()}
+function allDates(){const s=new Set();(staffRows||[]).forEach(r=>(r.days||[]).forEach(d=>s.add(d.date)));return [...s].sort()}
+function kitchenBody(date){
+  const info=kitchenInfo||{};
+  const groups=(staffRows||[]).map(r=>normalize(structuredClone(r))).map(r=>({r,di:r.days.findIndex(d=>d.date===date)})).filter(x=>x.di>=0).sort((a,b)=>(a.r.group||"").localeCompare(b.r.group||""));
+  if(!groups.length)return `<p>No groups on site this day.</p>`;
+  const blocks=MEALS.map(m=>{
+    const rows=groups.map(({r,di})=>{const st=r.days[di].meals[m.k];if(!isServed(m,st))return null;const n=info[r.code]||{},key=slotKey(date,m.k),L=(n.locations||{})[key];
+      const al=withRes(r,()=>allergiesAt(di,m.k));const veg=!m.snack&&st.vegChoice?Number(st.vegCount)||0:0;
+      return {r,st,n:mealCount(st,r),veg,time:(n.times||{})[key]||m.time,where:L?locLabel(L):defLoc(m),al}}).filter(Boolean);
+    if(!rows.length)return "";
+    const tot=rows.reduce((a,x)=>a+x.n,0),vt=rows.reduce((a,x)=>a+x.veg,0),at=rows.reduce((a,x)=>a+x.al.length,0);
+    return `<div class="day"><h3>${m.label}</h3><table><thead><tr><th>Group</th><th style="width:72px">Time</th><th style="width:130px">Where</th><th style="width:56px">Guests</th><th>Menu</th><th style="width:200px">Allergies</th></tr></thead><tbody>
+      ${rows.map(x=>`<tr><th scope="row">${esc(x.r.group||x.r.code)}${x.r.status!=="locked"?` <span class="miss small">(draft)</span>`:""}</th><td>${fmtTime(x.time)}</td><td>${esc(x.where)}</td><td class="n">${x.n}</td><td>${mealLine(m,x.st)}</td>
+        <td>${x.al.length?x.al.map(a=>`<span class="al ${isSevere(a)?"sev":""}">${esc(a.name)}: ${esc(a.allergy)}${isSevere(a)?" (severe)":""}</span>`).join(""):`<span class="muted">None</span>`}</td></tr>`).join("")}
+      <tr class="tot"><th scope="row">Total</th><td></td><td></td><td class="n">${tot}</td><td>${m.snack?`${rows.length} snack order${rows.length===1?"":"s"}`:`${tot} plates${vt?` · includes ${vt} vegetarian`:""}`}</td><td>${at?`${at} allergy plate${at===1?"":"s"}`:""}</td></tr>
+      </tbody></table></div>`}).join("");
+  const drafts=groups.filter(g=>g.r.status!=="locked").length;
+  return `<div class="top"><div><div class="org">Aspen Grove · Kitchen production sheet</div><h1>${fmtDate(date,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1><div>${groups.length} group${groups.length===1?"":"s"} on site</div></div>
+    <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
+    ${blocks}<div class="foot"><span>Counts come straight from each group's final details form.</span><span>Aspen Grove Conference Services</span></div>`}
+function kitchenView(){
+  const dates=allDates();
+  if(!dates.length)return `<div class="empty">No groups have event dates yet.</div>`;
+  const today=iso(TODAY);if(!kitchenDate||!dates.includes(kitchenDate))kitchenDate=dates.find(d=>d>=today)||dates[dates.length-1];
+  return `<div class="stack"><div class="panel" style="gap:12px"><div class="kitchenpick">
+    <label class="f" for="kdate">Day<select id="kdate">${dates.map(d=>`<option value="${d}" ${d===kitchenDate?"selected":""}>${fmtDate(d,{weekday:"short",month:"short",day:"numeric",year:"numeric"})}</option>`).join("")}</select></label>
+    <button class="btn primary" data-kdl>Download to print</button></div>
+    <p class="small muted" style="margin:0">Every group on site that day, meal by meal, with plate counts, vegetarian plates and allergies already added up. This replaces copying numbers off the paper forms.</p></div>
+    ${kitchenInfo===null?`<div class="empty">Loading meal locations…</div>`:`<div class="sheetwrap"><article class="sheet">${kitchenBody(kitchenDate)}</article></div>`}</div>`}
+function downloadKitchen(){if(!kitchenDate)return;saveFile(`Kitchen ${kitchenDate}.html`,printableDoc(`Kitchen · ${kitchenDate}`,kitchenBody(kitchenDate)),"Kitchen sheet saved. Open it and press Print.")}
+app.addEventListener("change",e=>{if(e.target.id==="kdate"){kitchenDate=e.target.value;renderStaff()}});
+
+// ---------- backup & system check ----------
+const csvCell=x=>{const t=x==null?"":String(x);return /[",\n\r]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t};
+const csv=rows=>"﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");
+function plainMenu(m,st){if(m.snack)return st.on?st.items.join(", "):"";if(!st.choice||st.choice==="none")return st.choice==="none"?"Not needed":"";const x=m.list.find(o=>o.id===st.choice);return (x?x.name:st.choice)+(x&&x.meat?` (${st.meat||"Chicken"})`:"")}
+async function exportData(kind){
+  const rows=(staffRows||[]).map(r=>normalize(structuredClone(r)));const stamp=iso(new Date());
+  if(kind==="groups"){
+    const out=[["Code","Group","Status","Organizer","Email","Phone","On-site contact","On-site phone","First day","Last day","Headcount","Setup","A/V","Allergy guests","Severe","Form parts done","Lock-in deadline","Locked in at","Last changed"]];
+    rows.forEach(r=>out.push([r.code,r.group,stateOf(r).label,r.contact,r.email,r.phone,r.onsite.same?r.contact:r.onsite.name,r.onsite.same?r.phone:r.onsite.phone,r.startDate,r.endDate,r.headcount,SETUP_LABEL[r.setup]||"",r.noAV?"None":[...r.av,r.avOther].filter(Boolean).join("; "),r.allergies.length,r.allergies.filter(isSevere).length,`${progressOf(r)}/${SECS_TOTAL}`,deadlineOf(r)?iso(deadlineOf(r)):"",r.lockedAt||"",r.updatedAt||""]));
+    await saveFile(`Aspen Grove groups ${stamp}.csv`,csv(out),"Group list saved");
+  }else if(kind==="meals"){
+    let info={};try{info=await store.allStaff()}catch(e){}
+    const out=[["Date","Meal","Time","Location","Code","Group","Status","Guests","Menu","Vegetarian plates","Allergies"]];
+    rows.forEach(r=>r.days.forEach((d,di)=>MEALS.forEach(m=>{const st=d.meals[m.k];if(!isServed(m,st))return;const n=info[r.code]||{},key=slotKey(d.date,m.k),L=(n.locations||{})[key];
+      const al=withRes(r,()=>allergiesAt(di,m.k)).map(a=>`${a.name}: ${a.allergy}${isSevere(a)?" (severe)":""}`).join("; ");
+      out.push([d.date,m.label,(n.times||{})[key]||m.time,L?locLabel(L):defLoc(m),r.code,r.group,r.status==="locked"?"Locked in":"Draft",mealCount(st,r),plainMenu(m,st),!m.snack&&st.vegChoice?Number(st.vegCount)||0:"",al])})));
+    out.splice(1,out.length-1,...out.slice(1).sort((a,b)=>(a[0]+a[2]).localeCompare(b[0]+b[2])));
+    await saveFile(`Aspen Grove meals ${stamp}.csv`,csv(out),"Meal list saved");
+  }else{
+    let info={};try{info=await store.allStaff()}catch(e){}
+    const ok=await saveFile(`Aspen Grove backup ${stamp}.json`,JSON.stringify({exportedAt:new Date().toISOString(),reservations:staffRows,staffNotes:info},null,2),"Full backup saved");
+    if(ok)try{localStorage.setItem("aglastbackup",new Date().toISOString())}catch(e){}
+    renderStaff();
+  }
+}
+async function runCheck(){checkResult={state:"busy"};renderStaff();
+  try{const ms=await store.check();checkResult={state:"ok",ms,at:new Date()}}catch(e){checkResult={state:"bad",code:e&&e.code,at:new Date()}}
+  if(view==="staff")renderStaff()}
+function backupView(){
+  const rows=staffRows||[];let last="";try{last=localStorage.getItem("aglastbackup")||""}catch(e){}
+  const newest=rows.map(r=>r.updatedAt||"").sort().pop();
+  const recent=rows.flatMap(r=>(r.history||[]).map(h=>({...h,group:r.group||r.code}))).sort((a,b)=>b.at.localeCompare(a.at)).slice(0,10);
+  const ck=checkResult;
+  return `<div class="stack">
+    <div class="panel"><h2>Where the information lives</h2>
+      <dl class="health">
+        <div><dt>Storage</dt><dd>${store.mode==="db"?"Shared Aspen Grove record, online":"This browser only (demo mode)"}</dd></div>
+        <div><dt>Reservations</dt><dd class="mono">${rows.length}</dd></div>
+        <div><dt>Last change by anyone</dt><dd>${newest?fmtDate(new Date(newest),{month:"short",day:"numeric"})+", "+clock(newest):"—"}</dd></div>
+        <div><dt>Last backup from this computer</dt><dd>${last?fmtDate(new Date(last),{month:"short",day:"numeric"})+", "+clock(last):`<span class="missingval">None yet</span>`}</dd></div>
+      </dl>
+      <p class="small muted" style="margin:0">Every change saves to the shared record within a second, so it doesn't depend on any one computer. If an organizer's internet drops, their changes stay on their device and save as soon as it's back. Nothing is ever deleted unless Conference Services presses Delete.</p>
+      <div class="checkline"><button class="btn" data-healthcheck ${ck&&ck.state==="busy"?"disabled":""}>Run a save check</button>
+        ${!ck?`<span class="small muted">Writes a test record and reads it back.</span>`:ck.state==="busy"?`<span class="small">Checking…</span>`:ck.state==="ok"?`<span class="notice ok small">Working. Saved and read back in ${ck.ms} ms at ${clock(ck.at)}.</span>`:`<span class="notice bad small">The save check failed${ck.code?` (${esc(ck.code)})`:""}. Keep accepting paper forms until it passes, and let Matt know.</span>`}</div>
+    </div>
+    <div class="panel" style="gap:0"><h2 style="margin-bottom:6px">Download a copy</h2>
+      <div class="dlrow"><div><b>Group list</b><p class="small muted">One row per group: contacts, dates, headcount, status. Opens in Excel.</p></div><button class="btn" data-export="groups">Download spreadsheet</button></div>
+      <div class="dlrow"><div><b>Every meal</b><p class="small muted">One row per meal for every group, with counts, menu, location and allergies. Opens in Excel.</p></div><button class="btn" data-export="meals">Download spreadsheet</button></div>
+      <div class="dlrow"><div><b>Full backup</b><p class="small muted">Everything, including meal locations and change history. Keep one a week during the pilot.</p></div><button class="btn primary" data-export="backup">Download backup</button></div>
+    </div>
+    <div class="panel"><h2>Recent activity</h2>
+      ${recent.length?`<ul class="history">${recent.map(x=>`<li><time datetime="${esc(x.at)}">${fmtDate(new Date(x.at),{month:"short",day:"numeric"})} · ${clock(x.at)}</time><span><b>${esc(x.group)}</b>: ${esc(x.what)}${x.secs&&x.secs.length?` (${esc(x.secs.join(", "))})`:""} <span class="who">· ${ROLE[x.role]||"Someone"}${x.by?` <span data-uid="${esc(x.by)}"></span>`:""}</span></span></li>`).join("")}</ul>`:`<p class="small muted" style="margin:0">Activity appears here as organizers and staff make changes.</p>`}
+    </div>
+  </div>`}
+
+async function loadStaff(){
+  await ready;view="staff";setTab("staff");
+  if(store.db){
+    if(!staffUnsub)staffUnsub=store.db.collection("reservations").onSnapshot(q=>{staffRows=q.docs.map(d=>d.data());if(view==="staff")renderStaff()},()=>{staffRows=staffRows||[];if(view==="staff")renderStaff()});
+  }else{staffRows=await store.all()}
+  if(staffTab==="kitchen")loadKitchen();
+  renderStaff();
+}
+
+// ---------- example used only when no shared store is available ----------
+function localExample(){
+  const r=blankRes("AG-DEMO1");
+  const s=new Date(TODAY);s.setDate(s.getDate()+24);const e=new Date(s);e.setDate(e.getDate()+1);
+  Object.assign(r,{group:"Example: Wasatch Educators Retreat",contact:"Jordan Example",phone:"801-555-0142",email:"jordan@example.org",headcount:48,startDate:iso(s),endDate:iso(e),setup:"rounds",roomChanges:"no",av:["Projector","Screen","Microphone"],attendeeNotes:"6 guests leave before dinner on the last day."});
+  res=r;syncDays();
+  const d0=r.days[0].meals;d0.breakfast.choice="none";d0.lunch.choice="fajitas";d0.lunch.meat="Chicken";d0.lunch.vegChoice="peppers";d0.lunch.vegCount=4;d0.pmSnack.on=true;d0.pmSnack.items=["Veggie Tray","Cookie Tray"];d0.dinner.choice="grilled";
+  r.days[1].meals.dinner.choice="none";
+  d0.lunch.count=44;const d1=r.days[1].meals;d1.lunch.service="boxed";
+  r.onsite={same:false,name:"Taylor Example",phone:"801-555-0188"};
+  r.allergies=[{name:"Sam Example",allergy:"Tree nuts",type:"Allergy",severity:"Severe",mode:"all",meals:[],note:"",from:"",to:"",src:""},
+    {name:"Riley Example",allergy:"Gluten",type:"Intolerance",severity:"Mild",mode:"all",meals:[],note:"",from:"",to:"",src:""}];
+  normalize(r);res=null;return r;
+}
+
+// ---------- boot ----------
+document.getElementById("tab-org").onclick=async()=>{await saving;renderHome()};
+document.getElementById("tab-staff").onclick=async()=>{await saving;setTab("staff");loadStaff()};
+function setTab(t){document.getElementById("tab-org").setAttribute("aria-pressed",t==="org");document.getElementById("tab-staff").setAttribute("aria-pressed",t==="staff")}
+const ready=store.init();
+(async()=>{try{const u=window.claude&&claude.use?await claude.use("user"):null;if(!u)return;who.u=u;
+  try{who.id=(u.id?await u.id():"")||""}catch(e){}
+  if(!who.id){try{const me=await u.me();who.id=(me&&me.id)||""}catch(e){}}}catch(e){}})();
+function openFromHash(){const h=decodeURIComponent(location.hash.slice(1)).trim().toUpperCase();if(/^AG-[A-Z0-9]{5}$/.test(h)){actingAs="organizer";openCode(h)}}
+window.addEventListener("hashchange",openFromHash);
+renderHome();openFromHash();
+</script>
+
+</body></html>
