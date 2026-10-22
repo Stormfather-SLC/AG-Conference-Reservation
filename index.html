@@ -345,7 +345,10 @@ td input{min-width:120px}
 .sheet .serve{font-size:13px;white-space:nowrap}.sheet .serve b{font-family:"IBM Plex Mono",Menlo,monospace;font-size:15px}
 .sheet .box{display:inline-block;width:11px;height:11px;border:1.5px solid #16181c;border-radius:2px;vertical-align:-1px}
 .sheet .stf{display:block;font-family:"IBM Plex Sans",Helvetica,Arial,sans-serif;font-size:10px;color:#5a6270}
-.sheet tr.k-side td:nth-child(2),.sheet tr.k-incl td:nth-child(2){padding-left:16px}
+.sheet tr.k-side td:nth-child(2),.sheet tr.k-incl td:nth-child(2),.sheet tr.k-vegsub td:nth-child(2){padding-left:22px}
+.sheet tr.k-side td.cb,.sheet tr.k-vegsub td.cb{padding-left:18px}
+.sheet tr.k-head td{font-weight:700;padding-top:6px}
+.sheet table.ptab td.cb{width:22px}
 .sheet tr.k-spec td{background:#f4f6f9}
 .sheet tr.sphead td{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#2b3340;background:#f4f6f9;padding-top:4px}
 .sheet table.tmr th{width:120px}
@@ -1489,7 +1492,21 @@ function prodItems(m,es){
   const special=new Map();
   es.forEach(x=>{const seen=new Set();x.al.forEach(a=>{if(a.allergy==="Vegetarian")return;const lab=PLATE_LABEL[a.allergy]||a.allergy;const k=lab.toLowerCase()+"|"+a.name.trim().toLowerCase();if(seen.has(k))return;seen.add(k);
     const sp=special.get(lab.toLowerCase())||{label:lab,n:0};sp.n++;special.set(lab.toLowerCase(),sp)})});
-  return {items:[...bag.values()],special:[...special.values()].sort((a,b)=>b.n-a.n),entrees};
+  const rows=[];
+  if(m.snack)rows.push(...bag.values());
+  else{
+    entrees.forEach(e=>{rows.push({kind:"entree",label:e.label,groups:e.groups});
+      const subs=e.o.sides.split(/,\s*/).map(sd=>capFirst(sd.trim()));
+      es.forEach(x=>{const o=m.list.find(o=>o.id===x.st.choice);if(o!==e.o||(o.meat&&(x.st.meat||"Chicken")!==e.label.match(/\((\w+)\)$/)?.[1]))return;
+        if(x.st.addon&&m.k==="breakfast"&&!subs.includes("Add-on: sausage, bacon, eggs or potatoes"))subs.push("Add-on: sausage, bacon, eggs or potatoes");
+        if(x.st.second&&o.second){const l=o.meat?`2nd protein: ${(x.st.meat||"Chicken")==="Beef"?"chicken":"beef"}`:"2nd protein";if(!subs.includes(l))subs.push(l)}});
+      subs.forEach(l=>rows.push({kind:"side",label:l,groups:new Set()}))});
+    const veg=[...bag.values()].filter(i=>i.kind==="veg");
+    if(veg.length){rows.push({kind:"head",label:"Vegetarian"});veg.forEach(v=>rows.push({...v,kind:"vegsub"}))}
+    const inc=(m.incl||"").split(/,\s*/).filter(Boolean);
+    if(inc.length){rows.push({kind:"head",label:"Served with every "+m.label.toLowerCase()});inc.forEach(sd=>rows.push({kind:"side",label:capFirst(sd),groups:new Set()}))}
+  }
+  return {items:[...bag.values()],rows,special:[...special.values()].sort((a,b)=>b.n-a.n),entrees};
 }
 function prodService(date,m){
   const es=weekEntries(date,m);if(!es.length)return null;
@@ -1511,7 +1528,8 @@ function kitchenBody(date){
       const dr=g.es.filter(x=>x.r.status!=="locked").map(x=>esc(x.r.group));
       const head=`<div class="srv"><div><b>${who}</b>${dr.length?` <span class="miss small">(draft${combined?`: ${dr.join(", ")}`:""})</span>`:""}<div class="small"><span class="${g.offTime?"miss":"muted"}">${fmtTime(g.time)}</span> · <span class="${g.offPlace?"miss":"muted"}">${esc(g.where)}</span></div></div><div class="serve">Serve <b>${g.guests}</b></div></div>`;
       const showG=combined;
-      const rows=g.items.sort((a,b)=>ORDER[a.kind]-ORDER[b.kind]).map(it=>`<tr class="k-${it.kind}"><td class="cb">${box}</td><td>${it.kind==="entree"?`<b>${esc(it.label)}</b>`:esc(it.label)}${it.plates?` <span class="small">· ${it.plates} plate${it.plates===1?"":"s"}</span>`:""}${showG&&it.groups.size<g.es.length?` <span class="muted small">${esc([...it.groups].join(", "))}</span>`:""}</td><td class="pc">${par}</td></tr>`).join("");
+      const rows=g.rows.map(it=>it.kind==="head"?`<tr class="k-head"><td></td><td colspan="2">${esc(it.label)}</td></tr>`
+        :`<tr class="k-${it.kind}"><td class="cb">${box}</td><td>${it.kind==="entree"?`<b>${esc(it.label)}</b>`:esc(it.label)}${it.plates?` <span class="small">· ${it.plates} plate${it.plates===1?"":"s"}</span>`:""}${showG&&(it.kind==="entree"||it.kind==="vegsub"||it.kind==="snack")&&it.groups.size&&it.groups.size<g.es.length?` <span class="muted small">${esc([...it.groups].join(", "))}</span>`:""}</td><td class="pc">${par}</td></tr>`).join("");
       const spn=g.special.reduce((a,x)=>a+x.n,0);
       const sp=spn?`<tr class="k-spec"><td class="cb">${box}</td><td><b>Special plates</b> <span class="small">${g.special.map(x=>`${x.n} ${esc(x.label.toLowerCase())}`).join(" · ")}</span></td><td class="pc">${par}</td></tr>`:"";
       return `<div class="srvblock">${head}<table class="ptab"><thead><tr><th></th><th>Item</th><th class="pc">PAR</th></tr></thead><tbody>${rows}${sp}</tbody></table></div>`}).join("");
