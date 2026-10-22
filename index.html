@@ -308,6 +308,15 @@ td input{min-width:120px}
 .sheet .al{display:block}
 .sheet .foot{margin-top:20px;padding-top:8px;border-top:1px solid #c9ced6;font-size:10.5px;color:#5a6270;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .sheet .day{break-inside:avoid}
+.sheet.wide{max-width:none}
+.sheet table.week{table-layout:fixed}
+.sheet table.week td{font-size:11.5px;padding:4px 5px}
+.sheet table.week tbody th{white-space:normal}
+.sheet .wi{padding:3px 0;border-bottom:1px dashed #d5d9e0}.sheet .wi:last-of-type{border-bottom:0}
+.sheet .wg{font-weight:700;display:flex;justify-content:space-between;gap:4px}
+.sheet .wn{font-family:"IBM Plex Mono",Menlo,monospace}
+.sheet .wl{display:block;font-size:10.5px}
+.sheet .wt{border-top:1px solid #c9ced6;margin-top:2px;padding-top:2px;font-weight:700;text-align:right;font-size:10.5px}
 @media print{.sheet{border:0;padding:0;max-width:none;min-width:0}.noprint{display:none}}
 </style>
 
@@ -1102,7 +1111,7 @@ app.addEventListener("click",async e=>{
   if(b.dataset.sheet){await saving;openSheet(b.dataset.sheet);return}
   if(b.dataset.sheetback!==undefined){sheetBack();return}
   if(b.dataset.sheetdl!==undefined){downloadSheet();return}
-  if(b.dataset.stab){staffTab=b.dataset.stab;staffMsg=null;startOpen=false;if(staffTab==="kitchen")loadKitchen();renderStaff();return}
+  if(b.dataset.stab){staffTab=b.dataset.stab;staffMsg=null;startOpen=false;if(staffTab==="kitchen"||staffTab==="week")loadKitchen();renderStaff();return}
   if(b.dataset.startgroup!==undefined){startOpen=!startOpen;staffMsg=null;renderStaff();if(startOpen)document.getElementById("sg-group")?.focus();return}
   if(b.dataset.invite){inviteFor(b.dataset.invite);return}
   if(b.dataset.remind){remindFor(b.dataset.remind);return}
@@ -1110,6 +1119,8 @@ app.addEventListener("click",async e=>{
   if(b.dataset.copymsg!==undefined){const t=document.getElementById("msgtext");try{await navigator.clipboard.writeText(t.value);toast("Message copied. Paste it into an email.")}catch(err){t.focus();t.select();toast("Press Ctrl+C or Cmd+C to copy")}return}
   if(b.dataset.copylink!==undefined){const v=b.dataset.copylink;try{await navigator.clipboard.writeText(v);toast("Copied")}catch(err){toast("Select the text and copy it")}return}
   if(b.dataset.kdl!==undefined){downloadKitchen();return}
+  if(b.dataset.wdl!==undefined){downloadWeek();return}
+  if(b.dataset.wstep){const ws=weekStarts(),i=ws.indexOf(weekStart)+Number(b.dataset.wstep);if(ws[i]){weekStart=ws[i];renderStaff()}return}
   if(b.dataset.export){exportData(b.dataset.export);return}
   if(b.dataset.healthcheck!==undefined){runCheck();return}
   if(b.dataset.goreview!==undefined){clearTimeout(saveTimer);if(saveState==="Saving…")saveNow();confirmingLock=false;renderReview();window.scrollTo(0,0);return}
@@ -1296,9 +1307,9 @@ function startForm(){if(!startOpen)return "";
 
 function renderStaff(){
   view="staff";setTab("staff");
-  const nav=`<nav class="subnav" aria-label="Conference Services">${[["groups","Groups"],["kitchen","Kitchen by day"],["backup","Backup & system check"]].map(([k,l])=>`<button data-stab="${k}" aria-pressed="${staffTab===k}">${l}</button>`).join("")}</nav>`;
+  const nav=`<nav class="subnav" aria-label="Conference Services">${[["groups","Groups"],["kitchen","Kitchen by day"],["week","Weekly itinerary"],["backup","Backup & system check"]].map(([k,l])=>`<button data-stab="${k}" aria-pressed="${staffTab===k}">${l}</button>`).join("")}</nav>`;
   if(staffRows===null){app.innerHTML=nav+`<div class="empty">Loading reservations…</div>`;return}
-  const body=staffTab==="kitchen"?kitchenView():staffTab==="backup"?backupView():groupsView();
+  const body=staffTab==="kitchen"?kitchenView():staffTab==="week"?weekView():staffTab==="backup"?backupView():groupsView();
   const keep={};document.querySelectorAll("#startform input,#msgtext").forEach(el=>keep[el.id]=el.value);const foc=document.activeElement&&document.activeElement.id;
   app.innerHTML=nav+body;
   for(const[id,v]of Object.entries(keep)){const el=document.getElementById(id);if(el)el.value=v}if(foc)document.getElementById(foc)?.focus();
@@ -1418,7 +1429,7 @@ async function saveFile(filename,data,label){
 function downloadSheet(){const {r,info}=sheetCtx;saveFile(`${r.code} ${(r.group||"final details").replace(/[^\w\- ]+/g,"").trim()} - final details.html`,printableDoc(`${r.group||r.code} · Final details`,sheetBody(r,info)),"Sheet saved. Open it and press Print.")}
 
 // ---------- kitchen by day ----------
-async function loadKitchen(){kitchenInfo=null;try{kitchenInfo=await store.allStaff()}catch(e){kitchenInfo={}}if(view==="staff"&&staffTab==="kitchen")renderStaff()}
+async function loadKitchen(){kitchenInfo=null;try{kitchenInfo=await store.allStaff()}catch(e){kitchenInfo={}}if(view==="staff"&&(staffTab==="kitchen"||staffTab==="week"))renderStaff()}
 function allDates(){const s=new Set();(staffRows||[]).forEach(r=>(r.days||[]).forEach(d=>s.add(d.date)));return [...s].sort()}
 function kitchenBody(date){
   const info=kitchenInfo||{};
@@ -1449,7 +1460,54 @@ function kitchenView(){
     <p class="small muted" style="margin:0">Every group on site that day, meal by meal, with plate counts, vegetarian plates and allergies already added up. This replaces copying numbers off the paper forms.</p></div>
     ${kitchenInfo===null?`<div class="empty">Loading meal locations…</div>`:`<div class="sheetwrap"><article class="sheet">${kitchenBody(kitchenDate)}</article></div>`}</div>`}
 function downloadKitchen(){if(!kitchenDate)return;saveFile(`Kitchen ${kitchenDate}.html`,printableDoc(`Kitchen · ${kitchenDate}`,kitchenBody(kitchenDate)),"Kitchen sheet saved. Open it and press Print.")}
-app.addEventListener("change",e=>{if(e.target.id==="kdate"){kitchenDate=e.target.value;renderStaff()}});
+app.addEventListener("change",e=>{if(e.target.id==="kdate"){kitchenDate=e.target.value;renderStaff()}if(e.target.id==="wstart"){weekStart=e.target.value;renderStaff()}});
+
+// ---------- weekly itinerary ----------
+let weekStart="";
+function mondayOf(s){const d=parseDate(s);const x=new Date(d);x.setDate(d.getDate()-((d.getDay()+6)%7));return iso(x)}
+function addDays(s,n){const d=parseDate(s);d.setDate(d.getDate()+n);return iso(d)}
+function weekStarts(){return [...new Set(allDates().map(mondayOf))].sort()}
+function weekEntries(date,m){
+  const info=kitchenInfo||{};
+  return (staffRows||[]).map(r=>normalize(structuredClone(r))).map(r=>({r,di:r.days.findIndex(d=>d.date===date)})).filter(x=>x.di>=0)
+    .sort((a,b)=>(a.r.group||"").localeCompare(b.r.group||"")).map(({r,di})=>{const st=r.days[di].meals[m.k];if(!isServed(m,st))return null;
+      const n=info[r.code]||{},key=slotKey(date,m.k),L=(n.locations||{})[key],t=(n.times||{})[key];
+      const al=withRes(r,()=>allergiesAt(di,m.k));const veg=!m.snack&&st.vegChoice?Number(st.vegCount)||0:0;
+      return {r,st,n:mealCount(st,r),veg,time:t&&t!==m.time?t:"",where:L?locLabel(L):"",al}}).filter(Boolean)}
+function weekCell(x,m){
+  let menu;if(m.snack)menu=esc(x.st.items.join(", ")||"Items not picked");
+  else{const o=m.list.find(o=>o.id===x.st.choice);menu=`<b>${esc(o?o.name:x.st.choice)}</b>${o&&o.meat?` (${esc(x.st.meat||"Chicken")})`:""}${x.st.addon?" + add-on":""}${x.st.second?" + 2nd protein":""}`;
+    if(x.veg){const v=VEG.find(v=>v.id===x.st.vegChoice);menu+=`<span class="wl muted">${x.veg} ${esc(v?v.name:"vegetarian")}</span>`}}
+  const sev=x.al.filter(isSevere).length;
+  return `<div class="wi"><div class="wg"><span>${esc(x.r.group||x.r.code)}${x.r.status!=="locked"?` <span class="miss">(draft)</span>`:""}</span> <span class="wn">${x.n}</span></div>
+    <div>${menu}</div>${x.time||x.where?`<div class="wl miss">${[x.time?fmtTime(x.time):"",esc(x.where)].filter(Boolean).join(" · ")}</div>`:""}
+    ${x.al.length?`<div class="wl ${sev?"sev":""}">${x.al.length} allerg${x.al.length===1?"y":"ies"}${sev?` (${sev} severe)`:""}</div>`:""}</div>`}
+function weekBody(start){
+  const dates=[...Array(7)].map((_,i)=>addDays(start,i));
+  const cols=dates.filter(d=>MEALS.some(m=>weekEntries(d,m).length));
+  if(!cols.length)return `<p>No groups on site this week.</p>`;
+  const codes=new Set(),drafts=new Set();
+  const rows=MEALS.map(m=>{const cells=cols.map(d=>{const es=weekEntries(d,m);es.forEach(x=>{codes.add(x.r.code);if(x.r.status!=="locked")drafts.add(x.r.code)});
+      if(!es.length)return `<td class="muted">—</td>`;const tot=es.reduce((a,x)=>a+x.n,0);
+      return `<td>${es.map(x=>weekCell(x,m)).join("")}${es.length>1?`<div class="wt">Total ${tot}</div>`:""}</td>`}).join("");
+    return `<tr><th scope="row">${m.label}<span class="wl muted">${fmtTime(m.time)}</span></th>${cells}</tr>`}).join("");
+  return `<div class="top"><div><div class="org">Aspen Grove · Weekly meal &amp; snack itinerary</div><h1>Week of ${fmtDate(start,{month:"long",day:"numeric",year:"numeric"})}</h1><div>${codes.size} group${codes.size===1?"":"s"} on site</div></div>
+    <div class="stamp ${drafts.size?"draft":""}">${drafts.size?`${drafts.size} draft${drafts.size===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
+    <table class="week"><thead><tr><th style="width:118px"></th>${cols.map(d=>`<th>${fmtDate(d,{weekday:"short",month:"short",day:"numeric"})}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>
+    <div class="foot"><span>Number after each group is guests served. Times and places in amber differ from the standard.</span><span>Aspen Grove Conference Services</span></div>`}
+function weekView(){
+  const ws=weekStarts();
+  if(!ws.length)return `<div class="empty">No groups have event dates yet.</div>`;
+  const cur=mondayOf(iso(TODAY));if(!weekStart||!ws.includes(weekStart))weekStart=ws.find(w=>w>=cur)||ws[ws.length-1];
+  const i=ws.indexOf(weekStart);
+  return `<div class="stack"><div class="panel" style="gap:12px"><div class="kitchenpick">
+    <button class="btn ghost" data-wstep="-1" ${i<=0?"disabled":""} aria-label="Previous week">‹</button>
+    <label class="f" for="wstart">Week<select id="wstart">${ws.map(w=>`<option value="${w}" ${w===weekStart?"selected":""}>Week of ${fmtDate(w,{month:"short",day:"numeric",year:"numeric"})}</option>`).join("")}</select></label>
+    <button class="btn ghost" data-wstep="1" ${i>=ws.length-1?"disabled":""} aria-label="Next week">›</button>
+    <button class="btn primary" data-wdl>Download to print</button></div>
+    <p class="small muted" style="margin:0">Every meal and snack break for the week, by day, for every group on site. Only weeks with groups are listed.</p></div>
+    ${kitchenInfo===null?`<div class="empty">Loading meal locations…</div>`:`<div class="sheetwrap"><article class="sheet wide">${weekBody(weekStart)}</article></div>`}</div>`}
+function downloadWeek(){if(!weekStart)return;saveFile(`Itinerary week of ${weekStart}.html`,printableDoc(`Itinerary · week of ${weekStart}`,weekBody(weekStart)).replace('<article class="sheet">','<article class="sheet wide">').replace('</style></head>','@page{size:landscape;margin:.4in}</style></head>'),"Itinerary saved. Open it and press Print.")}
 
 // ---------- backup & system check ----------
 const csvCell=x=>{const t=x==null?"":String(x);return /[",\n\r]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t};
@@ -1511,7 +1569,7 @@ async function loadStaff(){
   if(store.db){
     if(!staffUnsub)staffUnsub=store.db.collection("reservations").onSnapshot(q=>{staffRows=q.docs.map(d=>d.data());if(view==="staff")renderStaff()},()=>{staffRows=staffRows||[];if(view==="staff")renderStaff()});
   }else{staffRows=await store.all()}
-  if(staffTab==="kitchen")loadKitchen();
+  if(staffTab==="kitchen"||staffTab==="week")loadKitchen();
   renderStaff();
 }
 
