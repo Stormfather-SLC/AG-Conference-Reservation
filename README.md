@@ -22,7 +22,7 @@ A prototype web form that replaces the paper **Conference Final Details** form a
 - **Final sheet:** a printable one-page summary of each group.
 - **Meal locations:** set where and when each meal is served.
 - **Kitchen by day:** every group on site for a date, meal by meal, with plate, vegetarian and allergy totals.
-- **Weekly itinerary:** every meal and snack break for a week, days across and meals down, for every group on site. Shows guests, menu, vegetarian plates, allergy counts, and any time or location that differs from the standard. Prints landscape.
+- **Weekly itinerary:** an at-a-glance page for the week, then one page per day with every meal and snack in time order. Each service lists the groups first (guests, location, dietary count) with their meal or snack underneath; shared meals are marked, and only off-schedule times and places are highlighted. Each day ends with a dietary list, one line per guest.
 - **Backup & system check:** download the group list and meal list (CSV, opens in Excel) or a full backup (JSON). Run a save check.
 
 ## How saving works

@@ -308,16 +308,29 @@ td input{min-width:120px}
 .sheet .al{display:block}
 .sheet .foot{margin-top:20px;padding-top:8px;border-top:1px solid #c9ced6;font-size:10.5px;color:#5a6270;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .sheet .day{break-inside:avoid}
-.sheet.wide{max-width:none}
-.sheet table.week{table-layout:fixed}
-.sheet table.week td{font-size:11.5px;padding:4px 5px}
-.sheet table.week tbody th{white-space:normal}
-.sheet .wi{padding:3px 0;border-bottom:1px dashed #d5d9e0}.sheet .wi:last-of-type{border-bottom:0}
-.sheet .wg{font-weight:700;display:flex;justify-content:space-between;gap:4px}
-.sheet .wn{font-family:"IBM Plex Mono",Menlo,monospace}
-.sheet .wl{display:block;font-size:10.5px}
-.sheet .wt{border-top:1px solid #c9ced6;margin-top:2px;padding-top:2px;font-weight:700;text-align:right;font-size:10.5px}
-@media print{.sheet{border:0;padding:0;max-width:none;min-width:0}.noprint{display:none}}
+.sheet .dsvc{break-inside:avoid;margin-top:8px}
+.sheet .dsvc h2{display:flex;justify-content:space-between;margin:0 0 6px}
+.sheet .dtot{font-family:"IBM Plex Mono",Menlo,monospace;letter-spacing:0;text-transform:none}
+.sheet .dm{margin:0 0 2px}
+.sheet .dmenu{margin:1px 0 0;padding:0 6px 3px 18px;border-bottom:1px solid #e3e6eb}
+.sheet table.drows th,.sheet table.drows td{border-bottom:0!important}
+.sheet .shared{display:inline-block;border:1px solid #002e5d;color:#002e5d;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:0 5px;border-radius:2px;margin-right:2px}
+.sheet table.drows th,.sheet table.drows td{border:0;border-bottom:1px solid #e3e6eb;padding:2px 6px;white-space:nowrap}
+.sheet table.drows th{width:38%;font-weight:600}
+.sheet table.drows td.n{width:44px}
+.sheet table.drows td:nth-child(3){width:64px}
+.sheet table.drows td:nth-child(4){width:150px}
+.sheet table.drows td:nth-child(5){width:150px}
+.sheet table.ddiet td,.sheet table.ddiet th{padding:2px 7px}
+.sheet table.ddiet tr.dg th{background:#f4f6f9;font-size:11.5px}
+.sheet table.ddiet td:first-child{width:26%}.sheet table.ddiet td:last-child{width:22%}
+.sheet .dpage{font-size:12.5px}
+.sheet .dpage:not(:last-child){break-after:page}
+@media screen{.sheet .dpage+.dpage{border-top:2px dashed #c9ced6;margin-top:28px;padding-top:24px}}
+.sheet .dpage .foot{margin-top:8px}
+.sheet .dpage>h2{margin-top:12px}
+.sheet .dpage .top{padding-bottom:8px}
+@media print{body{margin:0!important}.sheet{border:0;padding:0;max-width:none;min-width:0}.noprint{display:none}}
 </style>
 
 <header>
@@ -1474,27 +1487,19 @@ function weekEntries(date,m){
       const n=info[r.code]||{},key=slotKey(date,m.k),L=(n.locations||{})[key],t=(n.times||{})[key];
       const al=withRes(r,()=>allergiesAt(di,m.k));const veg=!m.snack&&st.vegChoice?Number(st.vegCount)||0:0;
       return {r,st,n:mealCount(st,r),veg,time:t&&t!==m.time?t:"",where:L?locLabel(L):"",al}}).filter(Boolean)}
-function weekCell(x,m){
-  let menu;if(m.snack)menu=esc(x.st.items.join(", ")||"Items not picked");
-  else{const o=m.list.find(o=>o.id===x.st.choice);menu=`<b>${esc(o?o.name:x.st.choice)}</b>${o&&o.meat?` (${esc(x.st.meat||"Chicken")})`:""}${x.st.addon?" + add-on":""}${x.st.second?" + 2nd protein":""}`;
-    if(x.veg){const v=VEG.find(v=>v.id===x.st.vegChoice);menu+=`<span class="wl muted">${x.veg} ${esc(v?v.name:"vegetarian")}</span>`}}
-  const sev=x.al.filter(isSevere).length;
-  return `<div class="wi"><div class="wg"><span>${esc(x.r.group||x.r.code)}${x.r.status!=="locked"?` <span class="miss">(draft)</span>`:""}</span> <span class="wn">${x.n}</span></div>
-    <div>${menu}</div>${x.time||x.where?`<div class="wl miss">${[x.time?fmtTime(x.time):"",esc(x.where)].filter(Boolean).join(" · ")}</div>`:""}
-    ${x.al.length?`<div class="wl ${sev?"sev":""}">${x.al.length} allerg${x.al.length===1?"y":"ies"}${sev?` (${sev} severe)`:""}</div>`:""}</div>`}
-function weekBody(start){
-  const dates=[...Array(7)].map((_,i)=>addDays(start,i));
-  const cols=dates.filter(d=>MEALS.some(m=>weekEntries(d,m).length));
-  if(!cols.length)return `<p>No groups on site this week.</p>`;
-  const codes=new Set(),drafts=new Set();
-  const rows=MEALS.map(m=>{const cells=cols.map(d=>{const es=weekEntries(d,m);es.forEach(x=>{codes.add(x.r.code);if(x.r.status!=="locked")drafts.add(x.r.code)});
-      if(!es.length)return `<td class="muted">—</td>`;const tot=es.reduce((a,x)=>a+x.n,0);
-      return `<td>${es.map(x=>weekCell(x,m)).join("")}${es.length>1?`<div class="wt">Total ${tot}</div>`:""}</td>`}).join("");
-    return `<tr><th scope="row">${m.label}<span class="wl muted">${fmtTime(m.time)}</span></th>${cells}</tr>`}).join("");
-  return `<div class="top"><div><div class="org">Aspen Grove · Weekly meal &amp; snack itinerary</div><h1>Week of ${fmtDate(start,{month:"long",day:"numeric",year:"numeric"})}</h1><div>${codes.size} group${codes.size===1?"":"s"} on site</div></div>
+function glanceBody(start,dates){
+  const rows=dates.map(d=>{const gs=new Map(),sv=[];MEALS.forEach(m=>{const es=weekEntries(d,m);if(es.length)sv.push(m.label.toLowerCase());es.forEach(x=>gs.set(x.r.code,x.r))});
+    const gl=[...gs.values()].sort((a,b)=>(a.group||"").localeCompare(b.group||""));const head=gl.reduce((a,r)=>a+headN(r),0);
+    return `<tr><th scope="row">${fmtDate(d,{weekday:"short",month:"short",day:"numeric"})}</th><td>${gl.map(r=>`${esc(r.group||r.code)} (${headN(r)})${r.status!=="locked"?` <span class="miss">(draft)</span>`:""}`).join("<br>")}</td><td class="n">${gl.length>1?head:""}</td><td>${sv.length?esc(sv.join(", ").replace(/^./,c=>c.toUpperCase())):`<span class="muted">No food service</span>`}</td></tr>`}).join("");
+  const all=new Set(),drafts=new Set();dates.forEach(d=>MEALS.forEach(m=>weekEntries(d,m).forEach(x=>{all.add(x.r.code);if(x.r.status!=="locked")drafts.add(x.r.code)})));
+  return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Weekly meal &amp; snack itinerary</div><h1>${fmtDate(dates[0],{weekday:"long",month:"long",day:"numeric"})} – ${fmtDate(dates[dates.length-1],{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1><div>${all.size} group${all.size===1?"":"s"} on site</div></div>
     <div class="stamp ${drafts.size?"draft":""}">${drafts.size?`${drafts.size} draft${drafts.size===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
-    <table class="week"><thead><tr><th style="width:118px"></th>${cols.map(d=>`<th>${fmtDate(d,{weekday:"short",month:"short",day:"numeric"})}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>
-    <div class="foot"><span>Number after each group is guests served. Times and places in amber differ from the standard.</span><span>Aspen Grove Conference Services</span></div>`}
+    <h2>At a glance</h2><table><thead><tr><th style="width:96px">Day</th><th>Groups on site</th><th style="width:72px">Combined</th><th>Food service</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="small muted">Each day follows on its own page.</p></div>`}
+function weekBody(start){
+  const dates=[...Array(7)].map((_,i)=>addDays(start,i)).filter(d=>MEALS.some(m=>weekEntries(d,m).length));
+  if(!dates.length)return `<p>No groups on site this week.</p>`;
+  return glanceBody(start,dates)+dates.map(dayPageBody).join("")}
 function weekView(){
   const ws=weekStarts();
   if(!ws.length)return `<div class="empty">No groups have event dates yet.</div>`;
@@ -1505,9 +1510,49 @@ function weekView(){
     <label class="f" for="wstart">Week<select id="wstart">${ws.map(w=>`<option value="${w}" ${w===weekStart?"selected":""}>Week of ${fmtDate(w,{month:"short",day:"numeric",year:"numeric"})}</option>`).join("")}</select></label>
     <button class="btn ghost" data-wstep="1" ${i>=ws.length-1?"disabled":""} aria-label="Next week">›</button>
     <button class="btn primary" data-wdl>Download to print</button></div>
-    <p class="small muted" style="margin:0">Every meal and snack break for the week, by day, for every group on site. Only weeks with groups are listed.</p></div>
-    ${kitchenInfo===null?`<div class="empty">Loading meal locations…</div>`:`<div class="sheetwrap"><article class="sheet wide">${weekBody(weekStart)}</article></div>`}</div>`}
-function downloadWeek(){if(!weekStart)return;saveFile(`Itinerary week of ${weekStart}.html`,printableDoc(`Itinerary · week of ${weekStart}`,weekBody(weekStart)).replace('<article class="sheet">','<article class="sheet wide">').replace('</style></head>','@page{size:landscape;margin:.4in}</style></head>'),"Itinerary saved. Open it and press Print.")}
+    <p class="small muted" style="margin:0">A one-page summary of the week, then one page per day with every meal and snack in time order, for every group on site. Only weeks with groups are listed.</p></div>
+    ${kitchenInfo===null?`<div class="empty">Loading meal locations…</div>`:`<div class="sheetwrap"><article class="sheet">${weekBody(weekStart)}</article></div>`}</div>`}
+function downloadWeek(){if(!weekStart)return;saveFile(`Itinerary week of ${weekStart}.html`,printableDoc(`Itinerary · week of ${weekStart}`,weekBody(weekStart)),"Itinerary saved. Open it and press Print.")}
+
+// ---------- itinerary: one page per day ----------
+function menuKey(m,st){return m.snack?st.items.join("|"):[st.choice,st.meat||"",st.addon?1:0,st.second?1:0].join("|")}
+function menuFull(m,st){
+  if(m.snack)return `<b>${esc(st.items.join(", ")||"Items not picked")}</b>`;
+  const o=m.list.find(o=>o.id===st.choice);if(!o)return esc(st.choice);
+  const extra=[st.addon?"add-on +$1.50 pp":"",st.second?"2nd protein +$3 pp":""].filter(Boolean);
+  return `<b>${esc(o.name)}${o.meat?` (${esc(st.meat||"Chicken")})`:""}</b> <span class="muted">— ${esc(o.sides.toLowerCase())}${m.incl?`; ${esc(m.incl)}`:""}</span>${extra.length?` <span class="miss">${esc(extra.join(", "))}</span>`:""}`}
+function dayPageBody(date){
+  const svc=MEALS.map(m=>({m,es:weekEntries(date,m)})).filter(x=>x.es.length);
+  if(!svc.length)return "";
+  const groups=new Map();svc.forEach(({es})=>es.forEach(x=>groups.set(x.r.code,x.r)));
+  const gl=[...groups.values()].sort((a,b)=>(a.group||"").localeCompare(b.group||""));
+  const diet=new Map();
+  const blocks=svc.map(({m,es})=>{
+    const byMenu=new Map();es.forEach(x=>{const k=menuKey(m,x.st);if(!byMenu.has(k))byMenu.set(k,[]);byMenu.get(k).push(x)});
+    const tot=es.reduce((a,x)=>a+x.n,0);
+    es.forEach(x=>x.al.forEach(a=>{const k=x.r.code+"|"+a.name.trim().toLowerCase();if(!diet.has(k))diet.set(k,{r:x.r,name:a.name,reqs:[],svc:[]});const d=diet.get(k);
+      if(!d.reqs.some(q=>q.allergy===a.allergy))d.reqs.push(a);if(!d.svc.includes(m.label))d.svc.push(m.label)}));
+    const menus=[...byMenu.values()].map(xs=>{
+      const shared=xs.length>1,sub=xs.reduce((a,x)=>a+x.n,0);
+      const veg=xs.filter(x=>x.veg).map(x=>{const v=VEG.find(v=>v.id===x.st.vegChoice);return `${x.veg} ${esc(v?v.name:"vegetarian")}${shared?` (${esc(x.r.group)})`:""}`});
+      return `<div class="dm"><table class="drows"><tbody>${xs.map(x=>{const nd=new Set(x.al.map(a=>a.name)).size;
+          const ns=new Set(x.al.filter(isSevere).map(a=>a.name)).size;
+          return `<tr><th scope="row">${esc(x.r.group||x.r.code)}${x.r.status!=="locked"?` <span class="miss">(draft)</span>`:""}</th><td class="n">${x.n}</td>
+          <td class="miss">${x.time?fmtTime(x.time):""}</td><td class="${x.where?"miss":"muted"}">${esc(x.where||defLoc(m))}</td>
+          <td class="${nd?"":"muted"}">${nd?`${nd} dietary${ns?` · <span class="sev">${ns} severe</span>`:""}`:"—"}</td></tr>`}).join("")}</tbody></table>
+        <div class="dmenu">${shared?`<span class="shared">Shared · ${sub}</span> `:""}${menuFull(m,xs[0].st)}${veg.length?`<div class="small">Vegetarian: ${veg.join("; ")}</div>`:""}</div></div>`}).join("");
+    return `<section class="dsvc"><h2><span>${m.label} · ${fmtTime(m.time)}</span><span class="dtot">${tot} guest${tot===1?"":"s"}</span></h2>${menus}</section>`}).join("");
+  const dl=[...diet.values()].sort((a,b)=>(a.r.group||"").localeCompare(b.r.group||"")||a.name.localeCompare(b.name));
+  const gsvc=code=>svc.filter(({es})=>es.some(x=>x.r.code===code)).length;
+  let lastG="";const req=a=>`<span class="${isSevere(a)?"sev":""}">${esc(a.allergy)}${a.type==="Medical"?" (medical)":isSevere(a)?" (severe)":a.type==="Preference"?` <span class="muted">(preference)</span>`:a.type==="Intolerance"?` <span class="muted">(intolerance)</span>`:""}</span>`;
+  const dietTbl=dl.length?`<table class="ddiet"><thead><tr><th>Guest</th><th>Requirement</th><th>Today</th></tr></thead><tbody>${dl.map(d=>{const g=d.r.code!==lastG?`<tr class="dg"><th colspan="3">${esc(d.r.group)}</th></tr>`:"";lastG=d.r.code;
+    return g+`<tr><td>${esc(d.name)}</td><td>${d.reqs.map(req).join("; ")}</td><td class="${d.svc.length===gsvc(d.r.code)?"muted":"miss"}">${d.svc.length===gsvc(d.r.code)?"All":esc(d.svc.join(", "))}</td></tr>`}).join("")}</tbody></table>`:`<p class="muted">None.</p>`;
+  const head=gl.reduce((a,r)=>a+headN(r),0),drafts=gl.filter(r=>r.status!=="locked").length;
+  return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Meal &amp; snack itinerary</div><h1>${fmtDate(date,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1>
+    <div>${gl.map(r=>`${esc(r.group)} (${headN(r)})`).join(" · ")}${gl.length>1?` · <b>Combined ${head}</b>`:""}</div></div>
+    <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
+    <div class="small muted" style="margin-top:6px">Times are standard unless shown in amber. Amber also marks a non-standard place, charge, or partial attendance.</div>
+    ${blocks}<h2>Dietary accommodations</h2>${dietTbl}</div>`}
 
 // ---------- backup & system check ----------
 const csvCell=x=>{const t=x==null?"":String(x);return /[",\n\r]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t};
