@@ -21,7 +21,7 @@ A prototype web form that replaces the paper **Conference Final Details** form a
 - **Groups:** start a group from booking details and get a ready-to-send invitation email. See every group's status (Not started, In progress, Locked in, Past deadline) and progress. Copy a reminder that lists what's missing. Reopen or delete a reservation.
 - **Final sheet:** a printable one-page summary of each group.
 - **Meal locations:** set where and when each meal is served.
-- **Production list:** a printable daily list for the kitchen. Every entrée, side, included item and snack is added up across groups, with checkboxes. Meals add 15 staff plates to the largest entrée and its sides; vegetarian plates come out of the entrée count. Special plates are listed once for the day by guest, with a one-line summary at each service, and a short preview of tomorrow closes the sheet.
+- **Production list:** a printable daily list for the kitchen. Every entrée, side, included item and snack is added up across groups, with checkboxes. Counts are guest plates only; vegetarian plates come out of the entrée count. Special plates are listed once for the day by guest, with a one-line summary at each service, and a short preview of tomorrow closes the sheet.
 - **Weekly itinerary:** an at-a-glance page for the week, then one page per day with every meal and snack in time order. Each service lists the groups first (guests, location, dietary count) with their meal or snack underneath; shared meals are marked, and only off-schedule times and places are highlighted. Each day ends with a dietary list, one line per guest.
 - **Backup & system check:** download the group list and meal list (CSV, opens in Excel) or a full backup (JSON). Run a save check.
 

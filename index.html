@@ -1458,7 +1458,7 @@ function downloadSheet(){const {r,info}=sheetCtx;saveFile(`${r.code} ${(r.group|
 async function loadKitchen(){kitchenInfo=null;try{kitchenInfo=await store.allStaff()}catch(e){kitchenInfo={}}if(view==="staff"&&(staffTab==="kitchen"||staffTab==="week"))renderStaff()}
 function allDates(){const s=new Set();(staffRows||[]).forEach(r=>(r.days||[]).forEach(d=>s.add(d.date)));return [...s].sort()}
 // ---------- production list (Kitchen tab) ----------
-const STAFF_MEALS=15;
+const STAFF_MEALS=15; // staff plates for the food order guide; the production list shows guest counts only
 const PLATE_LABEL={Milk:"Dairy-free",Eggs:"Egg-free",Fish:"No fish","Crustacean shellfish":"No shellfish","Tree nuts":"Tree-nut-free",Peanuts:"Peanut-free","Wheat/Gluten":"Gluten-free",Soybeans:"Soy-free",Sesame:"Sesame-free",Vegan:"Vegan"};
 const capFirst=t=>t.charAt(0).toUpperCase()+t.slice(1);
 function prodService(date,m){
@@ -1474,14 +1474,14 @@ function prodService(date,m){
       if(x.st.addon&&m.k==="breakfast")addon+=x.n;
       if(x.st.second&&o.second){const l=o.meat?`2nd protein (${meat==="Beef"?"chicken":"beef"}) for fajitas`:`2nd protein for ${o.name.toLowerCase()}`;second.set(l,(second.get(l)||0)+x.n)}
       if(x.veg){const v=VEG.find(v=>v.id===x.st.vegChoice);const l=(v?v.name:"Vegetarian plate");veg.set(l,(veg.get(l)||0)+x.veg)}});
-    entrees=[...ent.values()].sort((a,b)=>b.n-a.n);if(entrees.length)entrees[0].staff=STAFF_MEALS;
+    entrees=[...ent.values()].sort((a,b)=>b.n-a.n);
     entrees.forEach(e=>add(e.label,e.n,null,{kind:"entree",staff:e.staff}));
     entrees.forEach(e=>e.groups.forEach(g=>bag.get(e.label.toLowerCase()).groups.add(g)));
     veg.forEach((n,l)=>add(l+" (vegetarian)",n,null,{kind:"veg"}));
     entrees.forEach(e=>e.o.sides.split(/,\s*/).forEach(sd=>add(capFirst(sd.trim()),e.n,null,{kind:"side",staff:e.staff})));
     if(addon)add("Breakfast add-on (sausage, bacon, eggs or potatoes)",addon,null,{kind:"side"});
     second.forEach((n,l)=>add(capFirst(l),n,null,{kind:"side"}));
-    (m.incl||"").split(/,\s*/).filter(Boolean).forEach(sd=>add(capFirst(sd)+" (served with every "+m.label.toLowerCase()+")",guests,null,{kind:"incl",staff:STAFF_MEALS}));
+    (m.incl||"").split(/,\s*/).filter(Boolean).forEach(sd=>add(capFirst(sd)+" (served with every "+m.label.toLowerCase()+")",guests,null,{kind:"incl"}));
   }
   const special=new Map();
   es.forEach(x=>{const seen=new Set();x.al.forEach(a=>{if(a.allergy==="Vegetarian")return;const lab=PLATE_LABEL[a.allergy]||a.allergy;const k=lab.toLowerCase()+"|"+x.r.code+"|"+a.name.trim().toLowerCase();if(seen.has(k))return;seen.add(k);
@@ -1500,7 +1500,7 @@ function kitchenBody(date){
     const rows=sv.items.sort((a,b)=>ORDER[a.kind]-ORDER[b.kind]).map(it=>`<tr class="k-${it.kind}"><td class="cb">${box}</td><td>${it.kind==="entree"?`<b>${esc(it.label)}</b>`:esc(it.label)}${multi&&it.groups.size&&it.kind!=="snack"?` <span class="muted small">${esc([...it.groups].join(", "))}</span>`:""}${multi&&it.kind==="snack"&&it.groups.size<sv.es.length?` <span class="muted small">${esc([...it.groups].join(", "))}</span>`:""}</td><td class="n">${it.n+it.staff}${it.staff&&it.kind==="entree"?`<span class="stf">incl. ${it.staff} staff</span>`:""}</td></tr>`).join("");
     const spn=sv.special.reduce((a,x)=>a+x.n,0);
     const sp=spn?`<tr class="k-spec"><td class="cb">${box}</td><td><b>Special plates</b> <span class="small">${sv.special.map(x=>`${x.n} ${esc(x.label.toLowerCase())}`).join(" · ")}</span></td><td class="n">${spn}</td></tr>`:"";
-    return `<section class="dsvc"><h2><span>${m.label} · ${fmtTime(m.time)}</span><span class="dtot">${sv.guests} guest${sv.guests===1?"":"s"}${m.snack?"":` + ${STAFF_MEALS} staff`}</span></h2>
+    return `<section class="dsvc"><h2><span>${m.label} · ${fmtTime(m.time)}</span><span class="dtot">${sv.guests} guest${sv.guests===1?"":"s"}</span></h2>
       ${sv.exc.length?`<div class="pexc">${sv.exc.map(t=>`<span class="miss">${t}</span>`).join("")}</div>`:""}
       <table class="ptab"><tbody>${rows}${sp}</tbody></table></section>`}).join("");
   const sp=new Map();svc.forEach(sv=>sv.es.forEach(x=>x.al.forEach(a=>{if(a.allergy==="Vegetarian")return;const k=x.r.code+"|"+a.name.trim().toLowerCase();
@@ -1509,11 +1509,11 @@ function kitchenBody(date){
   const spl=[...sp.values()].sort((a,b)=>(b.reqs.some(isSevere)-a.reqs.some(isSevere))||(a.r.group||"").localeCompare(b.r.group||"")||a.name.localeCompare(b.name));
   const dayspec=spl.length?`<h2>Special plates today · ${spl.length} guest${spl.length===1?"":"s"}</h2><table class="ptab"><tbody>${spl.map(g=>`<tr><td class="cb">${box}</td><td>${esc(g.name)}${multi?` <span class="muted small">${esc(g.r.group)}</span>`:""}</td><td>${g.reqs.map(a=>`<span class="${isSevere(a)?"sev":""}">${esc(PLATE_LABEL[a.allergy]||a.allergy)}${a.type==="Medical"?" (medical)":isSevere(a)?" (severe)":""}</span>`).join("; ")}</td><td class="${g.svc.length===gsv(g.r.code)?"muted":"miss"} small" style="width:120px">${g.svc.length===gsv(g.r.code)?"All services":esc(g.svc.join(", "))}</td></tr>`).join("")}</tbody></table>`:"";
   const nd=addDays(date,1),nsv=MEALS.map(m=>prodService(nd,m)).filter(Boolean);
-  const prev=nsv.length?`<table class="ptab tmr"><tbody>${nsv.map(sv=>`<tr><th scope="row">${sv.m.label}</th><td>${sv.m.snack?esc(sv.items.map(i=>i.label).join(", ")):sv.entrees.map(e=>`${esc(e.label)} ${e.n+e.staff}`).concat(sv.items.filter(i=>i.kind==="veg").map(i=>`${esc(i.label)} ${i.n}`)).join(" · ")}${sv.special.length?` <span class="muted small">· ${sv.special.reduce((a,x)=>a+x.n,0)} special</span>`:""}</td><td class="n">${sv.guests}${sv.m.snack?"":`+${STAFF_MEALS}`}</td></tr>`).join("")}</tbody></table>`:`<p class="muted" style="margin:0">No food service tomorrow.</p>`;
+  const prev=nsv.length?`<table class="ptab tmr"><tbody>${nsv.map(sv=>`<tr><th scope="row">${sv.m.label}</th><td>${sv.m.snack?esc(sv.items.map(i=>i.label).join(", ")):sv.entrees.map(e=>`${esc(e.label)} ${e.n+e.staff}`).concat(sv.items.filter(i=>i.kind==="veg").map(i=>`${esc(i.label)} ${i.n}`)).join(" · ")}${sv.special.length?` <span class="muted small">· ${sv.special.reduce((a,x)=>a+x.n,0)} special</span>`:""}</td><td class="n">${sv.guests}</td></tr>`).join("")}</tbody></table>`:`<p class="muted" style="margin:0">No food service tomorrow.</p>`;
   return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Kitchen production list</div><h1>${fmtDate(date,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1>
     <div>${gl.map(r=>`${esc(r.group)} (${headN(r)})`).join(" · ")}</div></div>
     <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
-    <div class="small muted" style="margin-top:6px">Plate counts. Meals include ${STAFF_MEALS} staff plates on the largest entrée and its sides; vegetarian plates are taken out of the entrée count. Amber marks a non-standard time, place, or draft.</div>
+    <div class="small muted" style="margin-top:6px">Guest plate counts. Vegetarian plates are taken out of the entrée count. Amber marks a non-standard time, place, or draft.</div>
     ${dayspec}${blocks}
     <h2>Tomorrow · ${fmtDate(nd,{weekday:"long",month:"short",day:"numeric"})}</h2>${prev}
     <div class="pnotes"><span>Notes</span></div></div>`}
