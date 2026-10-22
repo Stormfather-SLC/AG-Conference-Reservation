@@ -1449,21 +1449,33 @@ function kitchenBody(date){
   const info=kitchenInfo||{};
   const groups=(staffRows||[]).map(r=>normalize(structuredClone(r))).map(r=>({r,di:r.days.findIndex(d=>d.date===date)})).filter(x=>x.di>=0).sort((a,b)=>(a.r.group||"").localeCompare(b.r.group||""));
   if(!groups.length)return `<p>No groups on site this day.</p>`;
+  const draft=g=>g.r.status!=="locked"?` <span class="miss small">(draft)</span>`:"";
+  // one dedicated list per group: each guest once, with the meals today they need covered
+  const alBlocks=groups.map(g=>{const {r,di}=g;const served=MEALS.filter(m=>isServed(m,r.days[di].meals[m.k]));
+    const seen=new Map();
+    served.forEach(m=>withRes(r,()=>allergiesAt(di,m.k)).forEach(a=>{const k=a.name+"|"+a.allergy+"|"+a.type;if(!seen.has(k))seen.set(k,{a,meals:[]});seen.get(k).meals.push(m.label)}));
+    const list=[...seen.values()].sort((x,y)=>(isSevere(y.a)-isSevere(x.a))||x.a.name.localeCompare(y.a.name));
+    const sev=list.filter(x=>isSevere(x.a)).length;
+    return `<div class="day"><h3>${esc(r.group||r.code)}${draft(g)}${list.length?` <span class="muted small">· ${list.length} restriction${list.length===1?"":"s"}${sev?`, <span class="sev">${sev} severe</span>`:""}</span>`:""}</h3>
+      ${list.length?`<table><thead><tr><th>Guest</th><th>Allergy or restriction</th><th style="width:150px">Type</th><th style="width:150px">Severity</th><th style="width:190px">Meals today</th></tr></thead><tbody>
+      ${list.map(({a,meals})=>`<tr><td class="${isSevere(a)?"sev":""}">${esc(a.name)}</td><td class="${isSevere(a)?"sev":""}">${esc(a.allergy)}</td><td>${esc(TYPE_LABEL[a.type]||a.type||"")}</td><td>${sevTag(a)}</td><td>${meals.length===served.length?"All meals":esc(meals.join(", "))}</td></tr>`).join("")}
+      </tbody></table>`:`<p class="muted" style="margin:0">${r.noAllergies===true?"No allergies or restrictions.":"None listed."}</p>`}</div>`}).join("");
   const blocks=MEALS.map(m=>{
     const rows=groups.map(({r,di})=>{const st=r.days[di].meals[m.k];if(!isServed(m,st))return null;const n=info[r.code]||{},key=slotKey(date,m.k),L=(n.locations||{})[key];
-      const al=withRes(r,()=>allergiesAt(di,m.k));const veg=!m.snack&&st.vegChoice?Number(st.vegCount)||0:0;
-      return {r,st,n:mealCount(st,r),veg,time:(n.times||{})[key]||m.time,where:L?locLabel(L):defLoc(m),al}}).filter(Boolean);
+      const veg=!m.snack&&st.vegChoice?Number(st.vegCount)||0:0;
+      return {r,st,n:mealCount(st,r),veg,time:(n.times||{})[key]||m.time,where:L?locLabel(L):defLoc(m),al:withRes(r,()=>allergiesAt(di,m.k)).length}}).filter(Boolean);
     if(!rows.length)return "";
-    const tot=rows.reduce((a,x)=>a+x.n,0),vt=rows.reduce((a,x)=>a+x.veg,0),at=rows.reduce((a,x)=>a+x.al.length,0);
-    return `<div class="day"><h3>${m.label}</h3><table><thead><tr><th>Group</th><th style="width:72px">Time</th><th style="width:130px">Where</th><th style="width:56px">Guests</th><th>Menu</th><th style="width:200px">Allergies</th></tr></thead><tbody>
-      ${rows.map(x=>`<tr><th scope="row">${esc(x.r.group||x.r.code)}${x.r.status!=="locked"?` <span class="miss small">(draft)</span>`:""}</th><td>${fmtTime(x.time)}</td><td>${esc(x.where)}</td><td class="n">${x.n}</td><td>${mealLine(m,x.st)}</td>
-        <td>${x.al.length?x.al.map(a=>`<span class="al ${isSevere(a)?"sev":""}">${esc(a.name)}: ${esc(a.allergy)}${isSevere(a)?" (severe)":""}</span>`).join(""):`<span class="muted">None</span>`}</td></tr>`).join("")}
-      <tr class="tot"><th scope="row">Total</th><td></td><td></td><td class="n">${tot}</td><td>${m.snack?`${rows.length} snack order${rows.length===1?"":"s"}`:`${tot} plates${vt?` · includes ${vt} vegetarian`:""}`}</td><td>${at?`${at} allergy plate${at===1?"":"s"}`:""}</td></tr>
+    const tot=rows.reduce((a,x)=>a+x.n,0),vt=rows.reduce((a,x)=>a+x.veg,0),at=rows.reduce((a,x)=>a+x.al,0);
+    return `<div class="day"><h3>${m.label}</h3><table><thead><tr><th>Group</th><th style="width:72px">Time</th><th style="width:130px">Where</th><th style="width:60px">Guests</th><th>Menu</th><th style="width:90px">Allergy plates</th></tr></thead><tbody>
+      ${rows.map(x=>`<tr><th scope="row">${esc(x.r.group||x.r.code)}${x.r.status!=="locked"?` <span class="miss small">(draft)</span>`:""}</th><td>${fmtTime(x.time)}</td><td>${esc(x.where)}</td><td class="n">${x.n}</td><td>${mealLine(m,x.st)}</td><td class="n">${x.al||""}</td></tr>`).join("")}
+      ${rows.length>1?`<tr class="tot"><th scope="row">Total</th><td></td><td></td><td class="n">${tot}</td><td>${m.snack?`${rows.length} snack orders`:`${tot} plates${vt?` · includes ${vt} vegetarian`:""}`}</td><td class="n">${at||""}</td></tr>`:""}
       </tbody></table></div>`}).join("");
   const drafts=groups.filter(g=>g.r.status!=="locked").length;
   return `<div class="top"><div><div class="org">Aspen Grove · Kitchen production sheet</div><h1>${fmtDate(date,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1><div>${groups.length} group${groups.length===1?"":"s"} on site</div></div>
     <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
-    ${blocks}<div class="foot"><span>Counts come straight from each group's final details form.</span><span>Aspen Grove Conference Services</span></div>`}
+    <h2>Allergies &amp; restrictions</h2>${alBlocks}
+    <h2>Meals</h2>${blocks}
+    <div class="foot"><span>Counts come straight from each group's final details form. Allergy plates are guests with an allergy or restriction at that meal.</span><span>Aspen Grove Conference Services</span></div>`}
 function kitchenView(){
   const dates=allDates();
   if(!dates.length)return `<div class="empty">No groups have event dates yet.</div>`;
