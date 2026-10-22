@@ -331,6 +331,18 @@ td input{min-width:120px}
 .sheet .dpage .foot{margin-top:8px}
 .sheet .dpage>h2{margin-top:12px}
 .sheet .dpage .top{padding-bottom:8px}
+.sheet table.ptab{margin-bottom:2px}
+.sheet table.ptab td,.sheet table.ptab th{border:0;border-bottom:1px solid #e3e6eb;padding:3px 6px}
+.sheet table.ptab td.cb{width:22px;padding-right:0}
+.sheet table.ptab td.n{width:110px}
+.sheet .box{display:inline-block;width:11px;height:11px;border:1.5px solid #16181c;border-radius:2px;vertical-align:-1px}
+.sheet .stf{display:block;font-family:"IBM Plex Sans",Helvetica,Arial,sans-serif;font-size:10px;color:#5a6270}
+.sheet tr.k-side td:nth-child(2),.sheet tr.k-incl td:nth-child(2){padding-left:16px}
+.sheet tr.k-spec td{background:#f4f6f9}
+.sheet tr.sphead td{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#2b3340;background:#f4f6f9;padding-top:4px}
+.sheet .pexc{display:flex;flex-direction:column;gap:1px;font-size:11.5px;margin:0 0 3px}
+.sheet table.tmr th{width:120px}
+.sheet .pnotes{margin-top:14px;border:1px solid #c9ced6;border-radius:3px;min-height:70px;padding:4px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#5a6270;font-weight:700}
 @media print{body{margin:0!important}.sheet{border:0;padding:0;max-width:none;min-width:0}.noprint{display:none}}
 </style>
 
@@ -1321,7 +1333,7 @@ function startForm(){if(!startOpen)return "";
 
 function renderStaff(){
   view="staff";setTab("staff");
-  const nav=`<nav class="subnav" aria-label="Conference Services">${[["groups","Groups"],["kitchen","Kitchen by day"],["week","Weekly itinerary"],["backup","Backup & system check"]].map(([k,l])=>`<button data-stab="${k}" aria-pressed="${staffTab===k}">${l}</button>`).join("")}</nav>`;
+  const nav=`<nav class="subnav" aria-label="Conference Services">${[["groups","Groups"],["kitchen","Production list"],["week","Weekly itinerary"],["backup","Backup & system check"]].map(([k,l])=>`<button data-stab="${k}" aria-pressed="${staffTab===k}">${l}</button>`).join("")}</nav>`;
   if(staffRows===null){app.innerHTML=nav+`<div class="empty">Loading reservations…</div>`;return}
   const body=staffTab==="kitchen"?kitchenView():staffTab==="week"?weekView():staffTab==="backup"?backupView():groupsView();
   const keep={};document.querySelectorAll("#startform input,#msgtext").forEach(el=>keep[el.id]=el.value);const foc=document.activeElement&&document.activeElement.id;
@@ -1445,37 +1457,66 @@ function downloadSheet(){const {r,info}=sheetCtx;saveFile(`${r.code} ${(r.group|
 // ---------- kitchen by day ----------
 async function loadKitchen(){kitchenInfo=null;try{kitchenInfo=await store.allStaff()}catch(e){kitchenInfo={}}if(view==="staff"&&(staffTab==="kitchen"||staffTab==="week"))renderStaff()}
 function allDates(){const s=new Set();(staffRows||[]).forEach(r=>(r.days||[]).forEach(d=>s.add(d.date)));return [...s].sort()}
+// ---------- production list (Kitchen tab) ----------
+const STAFF_MEALS=15;
+const PLATE_LABEL={Milk:"Dairy-free",Eggs:"Egg-free",Fish:"No fish","Crustacean shellfish":"No shellfish","Tree nuts":"Tree-nut-free",Peanuts:"Peanut-free","Wheat/Gluten":"Gluten-free",Soybeans:"Soy-free",Sesame:"Sesame-free",Vegan:"Vegan"};
+const capFirst=t=>t.charAt(0).toUpperCase()+t.slice(1);
+function prodService(date,m){
+  const es=weekEntries(date,m);if(!es.length)return null;
+  const guests=es.reduce((a,x)=>a+x.n,0),bag=new Map();
+  const add=(label,n,g,extra)=>{const k=label.toLowerCase();const it=bag.get(k)||{label,n:0,groups:new Set(),kind:extra&&extra.kind||"item",staff:0};it.n+=n;if(g)it.groups.add(g);if(extra&&extra.staff)it.staff+=extra.staff;bag.set(k,it)};
+  let entrees=[];
+  if(m.snack)es.forEach(x=>x.st.items.forEach(it=>add(it,x.n,x.r.group,{kind:"snack"})));
+  else{
+    const ent=new Map(),veg=new Map();let addon=0,second=new Map();
+    es.forEach(x=>{const o=m.list.find(o=>o.id===x.st.choice);if(!o)return;const meat=o.meat?(x.st.meat||"Chicken"):"";
+      const k=o.id+"|"+meat;const e=ent.get(k)||{o,label:o.name+(meat?` (${meat})`:""),n:0,groups:new Set(),staff:0};e.n+=Math.max(0,x.n-x.veg);e.groups.add(x.r.group);ent.set(k,e);
+      if(x.st.addon&&m.k==="breakfast")addon+=x.n;
+      if(x.st.second&&o.second){const l=o.meat?`2nd protein (${meat==="Beef"?"chicken":"beef"}) for fajitas`:`2nd protein for ${o.name.toLowerCase()}`;second.set(l,(second.get(l)||0)+x.n)}
+      if(x.veg){const v=VEG.find(v=>v.id===x.st.vegChoice);const l=(v?v.name:"Vegetarian plate");veg.set(l,(veg.get(l)||0)+x.veg)}});
+    entrees=[...ent.values()].sort((a,b)=>b.n-a.n);if(entrees.length)entrees[0].staff=STAFF_MEALS;
+    entrees.forEach(e=>add(e.label,e.n,null,{kind:"entree",staff:e.staff}));
+    entrees.forEach(e=>e.groups.forEach(g=>bag.get(e.label.toLowerCase()).groups.add(g)));
+    veg.forEach((n,l)=>add(l+" (vegetarian)",n,null,{kind:"veg"}));
+    entrees.forEach(e=>e.o.sides.split(/,\s*/).forEach(sd=>add(capFirst(sd.trim()),e.n,null,{kind:"side",staff:e.staff})));
+    if(addon)add("Breakfast add-on (sausage, bacon, eggs or potatoes)",addon,null,{kind:"side"});
+    second.forEach((n,l)=>add(capFirst(l),n,null,{kind:"side"}));
+    (m.incl||"").split(/,\s*/).filter(Boolean).forEach(sd=>add(capFirst(sd)+" (served with every "+m.label.toLowerCase()+")",guests,null,{kind:"incl",staff:STAFF_MEALS}));
+  }
+  const special=new Map();
+  es.forEach(x=>{const seen=new Set();x.al.forEach(a=>{if(a.allergy==="Vegetarian")return;const lab=PLATE_LABEL[a.allergy]||a.allergy;const k=lab.toLowerCase()+"|"+x.r.code+"|"+a.name.trim().toLowerCase();if(seen.has(k))return;seen.add(k);
+    const sp=special.get(lab.toLowerCase())||{label:lab,n:0,named:[]};sp.n++;if(isSevere(a))sp.named.push(`${a.name}${es.length>1?` (${x.r.group})`:""}${a.type==="Medical"?", medical":""}`);special.set(lab.toLowerCase(),sp)})});
+  const exc=es.filter(x=>x.time||x.where||x.r.status!=="locked").map(x=>`${esc(x.r.group)}: ${[x.time?fmtTime(x.time):"",x.where?esc(x.where):"",x.r.status!=="locked"?"draft, not final":""].filter(Boolean).join(" · ")}`);
+  return {m,es,guests,items:[...bag.values()],special:[...special.values()].sort((a,b)=>b.named.length-a.named.length||b.n-a.n),exc,entrees};
+}
 function kitchenBody(date){
-  const info=kitchenInfo||{};
-  const groups=(staffRows||[]).map(r=>normalize(structuredClone(r))).map(r=>({r,di:r.days.findIndex(d=>d.date===date)})).filter(x=>x.di>=0).sort((a,b)=>(a.r.group||"").localeCompare(b.r.group||""));
-  if(!groups.length)return `<p>No groups on site this day.</p>`;
-  const draft=g=>g.r.status!=="locked"?` <span class="miss small">(draft)</span>`:"";
-  // one dedicated list per group: each guest once, with the meals today they need covered
-  const alBlocks=groups.map(g=>{const {r,di}=g;const served=MEALS.filter(m=>isServed(m,r.days[di].meals[m.k]));
-    const seen=new Map();
-    served.forEach(m=>withRes(r,()=>allergiesAt(di,m.k)).forEach(a=>{const k=a.name+"|"+a.allergy+"|"+a.type;if(!seen.has(k))seen.set(k,{a,meals:[]});seen.get(k).meals.push(m.label)}));
-    const list=[...seen.values()].sort((x,y)=>(isSevere(y.a)-isSevere(x.a))||x.a.name.localeCompare(y.a.name));
-    const sev=list.filter(x=>isSevere(x.a)).length;
-    return `<div class="day"><h3>${esc(r.group||r.code)}${draft(g)}${list.length?` <span class="muted small">· ${list.length} restriction${list.length===1?"":"s"}${sev?`, <span class="sev">${sev} severe</span>`:""}</span>`:""}</h3>
-      ${list.length?`<table><thead><tr><th>Guest</th><th>Allergy or restriction</th><th style="width:150px">Type</th><th style="width:150px">Severity</th><th style="width:190px">Meals today</th></tr></thead><tbody>
-      ${list.map(({a,meals})=>`<tr><td class="${isSevere(a)?"sev":""}">${esc(a.name)}</td><td class="${isSevere(a)?"sev":""}">${esc(a.allergy)}</td><td>${esc(TYPE_LABEL[a.type]||a.type||"")}</td><td>${sevTag(a)}</td><td>${meals.length===served.length?"All meals":esc(meals.join(", "))}</td></tr>`).join("")}
-      </tbody></table>`:`<p class="muted" style="margin:0">${r.noAllergies===true?"No allergies or restrictions.":"None listed."}</p>`}</div>`}).join("");
-  const blocks=MEALS.map(m=>{
-    const rows=groups.map(({r,di})=>{const st=r.days[di].meals[m.k];if(!isServed(m,st))return null;const n=info[r.code]||{},key=slotKey(date,m.k),L=(n.locations||{})[key];
-      const veg=!m.snack&&st.vegChoice?Number(st.vegCount)||0:0;
-      return {r,st,n:mealCount(st,r),veg,time:(n.times||{})[key]||m.time,where:L?locLabel(L):defLoc(m),al:withRes(r,()=>allergiesAt(di,m.k)).length}}).filter(Boolean);
-    if(!rows.length)return "";
-    const tot=rows.reduce((a,x)=>a+x.n,0),vt=rows.reduce((a,x)=>a+x.veg,0),at=rows.reduce((a,x)=>a+x.al,0);
-    return `<div class="day"><h3>${m.label}</h3><table><thead><tr><th>Group</th><th style="width:72px">Time</th><th style="width:130px">Where</th><th style="width:60px">Guests</th><th>Menu</th><th style="width:90px">Allergy plates</th></tr></thead><tbody>
-      ${rows.map(x=>`<tr><th scope="row">${esc(x.r.group||x.r.code)}${x.r.status!=="locked"?` <span class="miss small">(draft)</span>`:""}</th><td>${fmtTime(x.time)}</td><td>${esc(x.where)}</td><td class="n">${x.n}</td><td>${mealLine(m,x.st)}</td><td class="n">${x.al||""}</td></tr>`).join("")}
-      ${rows.length>1?`<tr class="tot"><th scope="row">Total</th><td></td><td></td><td class="n">${tot}</td><td>${m.snack?`${rows.length} snack orders`:`${tot} plates${vt?` · includes ${vt} vegetarian`:""}`}</td><td class="n">${at||""}</td></tr>`:""}
-      </tbody></table></div>`}).join("");
-  const drafts=groups.filter(g=>g.r.status!=="locked").length;
-  return `<div class="top"><div><div class="org">Aspen Grove · Kitchen production sheet</div><h1>${fmtDate(date,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1><div>${groups.length} group${groups.length===1?"":"s"} on site</div></div>
+  const svc=MEALS.map(m=>prodService(date,m)).filter(Boolean);
+  if(!svc.length)return `<p>No groups on site this day.</p>`;
+  const gs=new Map();svc.forEach(sv=>sv.es.forEach(x=>gs.set(x.r.code,x.r)));const gl=[...gs.values()].sort((a,b)=>(a.group||"").localeCompare(b.group||""));
+  const multi=gl.length>1,drafts=gl.filter(r=>r.status!=="locked").length;
+  const ORDER={entree:0,veg:1,side:2,incl:3,snack:0,item:4};
+  const box=`<span class="box" aria-hidden="true"></span>`;
+  const blocks=svc.map(sv=>{const{m}=sv;
+    const rows=sv.items.sort((a,b)=>ORDER[a.kind]-ORDER[b.kind]).map(it=>`<tr class="k-${it.kind}"><td class="cb">${box}</td><td>${it.kind==="entree"?`<b>${esc(it.label)}</b>`:esc(it.label)}${multi&&it.groups.size&&it.kind!=="snack"?` <span class="muted small">${esc([...it.groups].join(", "))}</span>`:""}${multi&&it.kind==="snack"&&it.groups.size<sv.es.length?` <span class="muted small">${esc([...it.groups].join(", "))}</span>`:""}</td><td class="n">${it.n+it.staff}${it.staff&&it.kind==="entree"?`<span class="stf">incl. ${it.staff} staff</span>`:""}</td></tr>`).join("");
+    const spn=sv.special.reduce((a,x)=>a+x.n,0);
+    const sp=spn?`<tr class="k-spec"><td class="cb">${box}</td><td><b>Special plates</b> <span class="small">${sv.special.map(x=>`${x.n} ${esc(x.label.toLowerCase())}`).join(" · ")}</span></td><td class="n">${spn}</td></tr>`:"";
+    return `<section class="dsvc"><h2><span>${m.label} · ${fmtTime(m.time)}</span><span class="dtot">${sv.guests} guest${sv.guests===1?"":"s"}${m.snack?"":` + ${STAFF_MEALS} staff`}</span></h2>
+      ${sv.exc.length?`<div class="pexc">${sv.exc.map(t=>`<span class="miss">${t}</span>`).join("")}</div>`:""}
+      <table class="ptab"><tbody>${rows}${sp}</tbody></table></section>`}).join("");
+  const sp=new Map();svc.forEach(sv=>sv.es.forEach(x=>x.al.forEach(a=>{if(a.allergy==="Vegetarian")return;const k=x.r.code+"|"+a.name.trim().toLowerCase();
+    const g=sp.get(k)||{r:x.r,name:a.name,reqs:[],svc:[]};if(!g.reqs.some(q=>q.allergy===a.allergy))g.reqs.push(a);if(!g.svc.includes(sv.m.label))g.svc.push(sv.m.label);sp.set(k,g)})));
+  const gsv=code=>svc.filter(sv=>sv.es.some(x=>x.r.code===code)).length;
+  const spl=[...sp.values()].sort((a,b)=>(b.reqs.some(isSevere)-a.reqs.some(isSevere))||(a.r.group||"").localeCompare(b.r.group||"")||a.name.localeCompare(b.name));
+  const dayspec=spl.length?`<h2>Special plates today · ${spl.length} guest${spl.length===1?"":"s"}</h2><table class="ptab"><tbody>${spl.map(g=>`<tr><td class="cb">${box}</td><td>${esc(g.name)}${multi?` <span class="muted small">${esc(g.r.group)}</span>`:""}</td><td>${g.reqs.map(a=>`<span class="${isSevere(a)?"sev":""}">${esc(PLATE_LABEL[a.allergy]||a.allergy)}${a.type==="Medical"?" (medical)":isSevere(a)?" (severe)":""}</span>`).join("; ")}</td><td class="${g.svc.length===gsv(g.r.code)?"muted":"miss"} small" style="width:120px">${g.svc.length===gsv(g.r.code)?"All services":esc(g.svc.join(", "))}</td></tr>`).join("")}</tbody></table>`:"";
+  const nd=addDays(date,1),nsv=MEALS.map(m=>prodService(nd,m)).filter(Boolean);
+  const prev=nsv.length?`<table class="ptab tmr"><tbody>${nsv.map(sv=>`<tr><th scope="row">${sv.m.label}</th><td>${sv.m.snack?esc(sv.items.map(i=>i.label).join(", ")):sv.entrees.map(e=>`${esc(e.label)} ${e.n+e.staff}`).concat(sv.items.filter(i=>i.kind==="veg").map(i=>`${esc(i.label)} ${i.n}`)).join(" · ")}${sv.special.length?` <span class="muted small">· ${sv.special.reduce((a,x)=>a+x.n,0)} special</span>`:""}</td><td class="n">${sv.guests}${sv.m.snack?"":`+${STAFF_MEALS}`}</td></tr>`).join("")}</tbody></table>`:`<p class="muted" style="margin:0">No food service tomorrow.</p>`;
+  return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Kitchen production list</div><h1>${fmtDate(date,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1>
+    <div>${gl.map(r=>`${esc(r.group)} (${headN(r)})`).join(" · ")}</div></div>
     <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
-    <h2>Allergies &amp; restrictions</h2>${alBlocks}
-    <h2>Meals</h2>${blocks}
-    <div class="foot"><span>Counts come straight from each group's final details form. Allergy plates are guests with an allergy or restriction at that meal.</span><span>Aspen Grove Conference Services</span></div>`}
+    <div class="small muted" style="margin-top:6px">Plate counts. Meals include ${STAFF_MEALS} staff plates on the largest entrée and its sides; vegetarian plates are taken out of the entrée count. Amber marks a non-standard time, place, or draft.</div>
+    ${dayspec}${blocks}
+    <h2>Tomorrow · ${fmtDate(nd,{weekday:"long",month:"short",day:"numeric"})}</h2>${prev}
+    <div class="pnotes"><span>Notes</span></div></div>`}
 function kitchenView(){
   const dates=allDates();
   if(!dates.length)return `<div class="empty">No groups have event dates yet.</div>`;
@@ -1483,9 +1524,9 @@ function kitchenView(){
   return `<div class="stack"><div class="panel" style="gap:12px"><div class="kitchenpick">
     <label class="f" for="kdate">Day<select id="kdate">${dates.map(d=>`<option value="${d}" ${d===kitchenDate?"selected":""}>${fmtDate(d,{weekday:"short",month:"short",day:"numeric",year:"numeric"})}</option>`).join("")}</select></label>
     <button class="btn primary" data-kdl>Download to print</button></div>
-    <p class="small muted" style="margin:0">Every group on site that day, meal by meal, with plate counts, vegetarian plates and allergies already added up. This replaces copying numbers off the paper forms.</p></div>
+    <p class="small muted" style="margin:0">What the kitchen cooks that day: every entrée, side and snack item added up across groups, with staff plates, vegetarian plates, special plates, and a look at tomorrow.</p></div>
     ${kitchenInfo===null?`<div class="empty">Loading meal locations…</div>`:`<div class="sheetwrap"><article class="sheet">${kitchenBody(kitchenDate)}</article></div>`}</div>`}
-function downloadKitchen(){if(!kitchenDate)return;saveFile(`Kitchen ${kitchenDate}.html`,printableDoc(`Kitchen · ${kitchenDate}`,kitchenBody(kitchenDate)),"Kitchen sheet saved. Open it and press Print.")}
+function downloadKitchen(){if(!kitchenDate)return;saveFile(`Production list ${kitchenDate}.html`,printableDoc(`Production list · ${kitchenDate}`,kitchenBody(kitchenDate)),"Production list saved. Open it and press Print.")}
 app.addEventListener("change",e=>{if(e.target.id==="kdate"){kitchenDate=e.target.value;renderStaff()}if(e.target.id==="wstart"){weekStart=e.target.value;renderStaff()}});
 
 // ---------- weekly itinerary ----------
