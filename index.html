@@ -1572,7 +1572,17 @@ function weekEntries(date,m){
       const n=info[r.code]||{},key=slotKey(date,m.k),L=(n.locations||{})[key],t=(n.times||{})[key];
       const al=withRes(r,()=>allergiesAt(di,m.k));const veg=!m.snack&&st.vegChoice?Number(st.vegCount)||0:0;
       return {r,st,n:mealCount(st,r),veg,time:t&&t!==m.time?t:"",where:L?locLabel(L):"",al}}).filter(Boolean)}
-function glanceBody(start,dates){
+const dietReq=a=>`<span class="${isSevere(a)?"sev":""}">${esc(a.allergy)}${a.type==="Medical"?" (medical)":isSevere(a)?" (severe)":a.type==="Preference"?` <span class="muted">(preference)</span>`:a.type==="Intolerance"?` <span class="muted">(intolerance)</span>`:""}</span>`;
+function weekDiet(dates){
+  const groupSlots=new Map(),guests=new Map();
+  dates.forEach(d=>MEALS.forEach(m=>weekEntries(d,m).forEach(x=>{const gs=groupSlots.get(x.r.code)||new Set();gs.add(d+"|"+m.k);groupSlots.set(x.r.code,gs);
+    x.al.forEach(a=>{const k=x.r.code+"|"+a.name.trim().toLowerCase();const g=guests.get(k)||{k,r:x.r,name:a.name,reqs:[],slots:new Set(),days:new Set()};
+      if(!g.reqs.some(q=>q.allergy===a.allergy))g.reqs.push(a);g.slots.add(d+"|"+m.k);g.days.add(d);guests.set(k,g)})})));
+  const list=[...guests.values()].map(g=>({...g,partial:g.slots.size<groupSlots.get(g.r.code).size}))
+    .sort((a,b)=>(a.r.group||"").localeCompare(b.r.group||"")||a.name.localeCompare(b.name));
+  return {list,partial:new Set(list.filter(g=>g.partial).map(g=>g.k))};
+}
+function glanceBody(start,dates,diet){
   const rows=dates.map(d=>{const gs=new Map(),sv=[];MEALS.forEach(m=>{const es=weekEntries(d,m);if(es.length)sv.push(m.label.toLowerCase());es.forEach(x=>gs.set(x.r.code,x.r))});
     const gl=[...gs.values()].sort((a,b)=>(a.group||"").localeCompare(b.group||""));const head=gl.reduce((a,r)=>a+headN(r),0);
     return `<tr><th scope="row">${fmtDate(d,{weekday:"short",month:"short",day:"numeric"})}</th><td>${gl.map(r=>`${esc(r.group||r.code)} (${headN(r)})${r.status!=="locked"?` <span class="miss">(draft)</span>`:""}`).join("<br>")}</td><td class="n">${gl.length>1?head:""}</td><td>${sv.length?esc(sv.join(", ").replace(/^./,c=>c.toUpperCase())):`<span class="muted">No food service</span>`}</td></tr>`}).join("");
@@ -1580,11 +1590,16 @@ function glanceBody(start,dates){
   return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Weekly meal &amp; snack itinerary</div><h1>${fmtDate(dates[0],{weekday:"long",month:"long",day:"numeric"})} – ${fmtDate(dates[dates.length-1],{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1><div>${all.size} group${all.size===1?"":"s"} on site</div></div>
     <div class="stamp ${drafts.size?"draft":""}">${drafts.size?`${drafts.size} draft${drafts.size===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
     <h2>At a glance</h2><table><thead><tr><th style="width:96px">Day</th><th>Groups on site</th><th style="width:72px">Combined</th><th>Food service</th></tr></thead><tbody>${rows}</tbody></table>
-    <p class="small muted">Each day follows on its own page.</p></div>`}
+    <p class="small muted">Each day follows on its own page.</p>
+    <h2>Dietary accommodations${diet.list.length?` · ${diet.list.length} guest${diet.list.length===1?"":"s"}`:""}</h2>
+    ${diet.list.length?(()=>{let lastG="";return `<table class="ddiet"><thead><tr><th>Guest</th><th>Requirement</th><th>Attending</th></tr></thead><tbody>${diet.list.map(g=>{const h=g.r.code!==lastG?`<tr class="dg"><th colspan="3">${esc(g.r.group)}</th></tr>`:"";lastG=g.r.code;
+      return h+`<tr><td>${esc(g.name)}</td><td>${g.reqs.map(dietReq).join("; ")}</td><td class="${g.partial?"miss":"muted"}">${g.partial?`Certain meals: ${esc([...g.days].sort().map(d=>fmtDate(d,{weekday:"short"})).join(", "))}`:"All meals"}</td></tr>`}).join("")}</tbody></table>`})():`<p class="muted">None.</p>`}
+    ${diet.partial.size?`<p class="small muted">Guests attending certain meals are listed again on each day they attend, with the meals they'll be at.</p>`:""}</div>`}
 function weekBody(start){
   const dates=[...Array(7)].map((_,i)=>addDays(start,i)).filter(d=>MEALS.some(m=>weekEntries(d,m).length));
   if(!dates.length)return `<p>No groups on site this week.</p>`;
-  return glanceBody(start,dates)+dates.map(dayPageBody).join("")}
+  const diet=weekDiet(dates);
+  return glanceBody(start,dates,diet)+dates.map(d=>dayPageBody(d,diet.partial)).join("")}
 function weekView(){
   const ws=weekStarts();
   if(!ws.length)return `<div class="empty">No groups have event dates yet.</div>`;
@@ -1606,7 +1621,7 @@ function menuFull(m,st){
   const o=m.list.find(o=>o.id===st.choice);if(!o)return esc(st.choice);
   const extra=[st.addon?"add-on +$1.50 pp":"",st.second?"2nd protein +$3 pp":""].filter(Boolean);
   return `<b>${esc(o.name)}${o.meat?` (${esc(st.meat||"Chicken")})`:""}</b> <span class="muted">— ${esc(o.sides.toLowerCase())}${m.incl?`; ${esc(m.incl)}`:""}</span>${extra.length?` <span class="miss">${esc(extra.join(", "))}</span>`:""}`}
-function dayPageBody(date){
+function dayPageBody(date,partial){
   const svc=MEALS.map(m=>({m,es:weekEntries(date,m)})).filter(x=>x.es.length);
   if(!svc.length)return "";
   const groups=new Map();svc.forEach(({es})=>es.forEach(x=>groups.set(x.r.code,x.r)));
@@ -1627,7 +1642,7 @@ function dayPageBody(date){
           <td class="${nd?"":"muted"}">${nd?`${nd} dietary${ns?` · <span class="sev">${ns} severe</span>`:""}`:"—"}</td></tr>`}).join("")}</tbody></table>
         <div class="dmenu">${shared?`<span class="shared">Shared · ${sub}</span> `:""}${menuFull(m,xs[0].st)}${veg.length?`<div class="small">Vegetarian: ${veg.join("; ")}</div>`:""}</div></div>`}).join("");
     return `<section class="dsvc"><h2><span>${m.label} · ${fmtTime(m.time)}</span><span class="dtot">${tot} guest${tot===1?"":"s"}</span></h2>${menus}</section>`}).join("");
-  const dl=[...diet.values()].sort((a,b)=>(a.r.group||"").localeCompare(b.r.group||"")||a.name.localeCompare(b.name));
+  const dl=[...diet.values()].filter(d=>!partial||partial.has(d.r.code+"|"+d.name.trim().toLowerCase())).sort((a,b)=>(a.r.group||"").localeCompare(b.r.group||"")||a.name.localeCompare(b.name));
   const gsvc=code=>svc.filter(({es})=>es.some(x=>x.r.code===code)).length;
   let lastG="";const req=a=>`<span class="${isSevere(a)?"sev":""}">${esc(a.allergy)}${a.type==="Medical"?" (medical)":isSevere(a)?" (severe)":a.type==="Preference"?` <span class="muted">(preference)</span>`:a.type==="Intolerance"?` <span class="muted">(intolerance)</span>`:""}</span>`;
   const dietTbl=dl.length?`<table class="ddiet"><thead><tr><th>Guest</th><th>Requirement</th><th>Today</th></tr></thead><tbody>${dl.map(d=>{const g=d.r.code!==lastG?`<tr class="dg"><th colspan="3">${esc(d.r.group)}</th></tr>`:"";lastG=d.r.code;
@@ -1637,7 +1652,7 @@ function dayPageBody(date){
     <div>${gl.map(r=>`${esc(r.group)} (${headN(r)})`).join(" · ")}${gl.length>1?` · <b>Combined ${head}</b>`:""}</div></div>
     <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
     <div class="small muted" style="margin-top:6px">Times are standard unless shown in amber. Amber also marks a non-standard place, charge, or partial attendance.</div>
-    ${blocks}<h2>Dietary accommodations</h2>${dietTbl}</div>`}
+    ${blocks}${partial?(dl.length?`<h2>Dietary accommodations · attending certain meals</h2>${dietTbl}`:"")+`<p class="small muted">Dietary needs for the whole stay are listed once at the start of this itinerary.</p>`:`<h2>Dietary accommodations</h2>${dietTbl}`}</div>`}
 
 // ---------- backup & system check ----------
 const csvCell=x=>{const t=x==null?"":String(x);return /[",\n\r]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t};
