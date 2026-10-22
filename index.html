@@ -1527,7 +1527,7 @@ function kitchenBody(date){
     <div>${gl.map(r=>`${esc(r.group)} (${headN(r)})`).join(" · ")}</div></div>
     <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
     <div class="small muted" style="margin-top:6px">Groups served at the same time and place are combined under one count. Chefs fill in PAR. Amber marks a non-standard time, place, or draft.</div>
-    ${dayspec}${blocks}
+    ${blocks}${dayspec}
     <h2>Tomorrow · ${fmtDate(nd,{weekday:"long",month:"short",day:"numeric"})}</h2>${prev}
     <div class="pnotes"><span>Notes</span></div></div>`}
 function kitchenView(){
