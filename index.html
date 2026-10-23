@@ -347,6 +347,11 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .sheet table.ptab thead th{border:0;border-bottom:1px solid #c9ced6;background:none;padding:2px 6px;font-size:9.5px}
 .sheet table.ptab .pc{width:90px}
 .sheet .par{display:block;height:14px;border-bottom:1px solid #16181c;margin:0 4px}
+.sheet .rgroup{margin:6px 0 10px;break-inside:avoid}
+.sheet table.rtab th,.sheet table.rtab td{border:0;border-bottom:1px solid #e3e6eb;padding:3px 8px}
+.sheet table.rtab th{width:150px;font-weight:600;color:#2b3340;white-space:nowrap}
+.sheet .par.wide{width:220px;margin:0}
+.sheet .avlist{display:flex;flex-wrap:wrap;gap:4px 16px}
 .sheet .srvblock{margin:4px 0 8px;break-inside:avoid}
 .sheet .dpage .dsvc{break-inside:auto}
 .sheet .dsvc h2{break-after:avoid}
@@ -1183,7 +1188,7 @@ app.addEventListener("click",async e=>{
   if(b.dataset.sheet){await saving;openSheet(b.dataset.sheet);return}
   if(b.dataset.sheetback!==undefined){sheetBack();return}
   if(b.dataset.sheetdl!==undefined){downloadSheet();return}
-  if(b.dataset.stab){staffTab=b.dataset.stab;staffMsg=null;startOpen=false;if(staffTab==="kitchen"||staffTab==="week")loadKitchen();renderStaff();return}
+  if(b.dataset.stab){staffTab=b.dataset.stab;staffMsg=null;startOpen=false;if(staffTab==="kitchen"||staffTab==="week"||staffTab==="rooms")loadKitchen();renderStaff();return}
   if(b.dataset.startgroup!==undefined){startOpen=!startOpen;staffMsg=null;renderStaff();if(startOpen)document.getElementById("sg-group")?.focus();return}
   if(b.dataset.invite){inviteFor(b.dataset.invite);return}
   if(b.dataset.remind){remindFor(b.dataset.remind);return}
@@ -1192,6 +1197,8 @@ app.addEventListener("click",async e=>{
   if(b.dataset.copylink!==undefined){const v=b.dataset.copylink;try{await navigator.clipboard.writeText(v);toast("Copied")}catch(err){toast("Select the text and copy it")}return}
   if(b.dataset.kdl!==undefined){downloadKitchen();return}
   if(b.dataset.wdl!==undefined){downloadWeek();return}
+  if(b.dataset.rdl!==undefined){downloadRooms();return}
+  if(b.dataset.rstep){const ws=weekStarts(),i=ws.indexOf(roomWeek)+Number(b.dataset.rstep);if(ws[i]){roomWeek=ws[i];renderStaff()}return}
   if(b.dataset.wstep){const ws=weekStarts(),i=ws.indexOf(weekStart)+Number(b.dataset.wstep);if(ws[i]){weekStart=ws[i];renderStaff()}return}
   if(b.dataset.export){exportData(b.dataset.export);return}
   if(b.dataset.healthcheck!==undefined){runCheck();return}
@@ -1380,9 +1387,9 @@ function startForm(){if(!startOpen)return "";
 
 function renderStaff(){
   view="staff";setTab("staff");
-  const nav=`<nav class="subnav" aria-label="Conference Services">${[["groups","Groups"],["kitchen","Production list"],["week","Weekly itinerary"],["backup","Backup & system check"]].map(([k,l])=>`<button data-stab="${k}" aria-pressed="${staffTab===k}">${l}</button>`).join("")}</nav>`;
+  const nav=`<nav class="subnav" aria-label="Conference Services">${[["groups","Groups"],["kitchen","Production list"],["week","Weekly itinerary"],["rooms","Rooms & A/V"],["backup","Backup & system check"]].map(([k,l])=>`<button data-stab="${k}" aria-pressed="${staffTab===k}">${l}</button>`).join("")}</nav>`;
   if(staffRows===null){app.innerHTML=nav+`<div class="empty">Loading reservations…</div>`;return}
-  const body=staffTab==="kitchen"?kitchenView():staffTab==="week"?weekView():staffTab==="backup"?backupView():groupsView();
+  const body=staffTab==="kitchen"?kitchenView():staffTab==="week"?weekView():staffTab==="rooms"?roomsView():staffTab==="backup"?backupView():groupsView();
   const keep={};document.querySelectorAll("#startform input,#msgtext").forEach(el=>keep[el.id]=el.value);const foc=document.activeElement&&document.activeElement.id;
   app.innerHTML=nav+body;
   for(const[id,v]of Object.entries(keep)){const el=document.getElementById(id);if(el)el.value=v}if(foc)document.getElementById(foc)?.focus();
@@ -1500,7 +1507,7 @@ async function saveFile(filename,data,label){
 function downloadSheet(){const {r,info}=sheetCtx;saveFile(`${r.code} ${(r.group||"final details").replace(/[^\w\- ]+/g,"").trim()} - final details.html`,printableDoc(`${r.group||r.code} · Final details`,sheetBody(r,info)),"Sheet saved. Open it and press Print.")}
 
 // ---------- kitchen by day ----------
-async function loadKitchen(){kitchenInfo=null;try{kitchenInfo=await store.allStaff()}catch(e){kitchenInfo={}}if(view==="staff"&&(staffTab==="kitchen"||staffTab==="week"))renderStaff()}
+async function loadKitchen(){kitchenInfo=null;try{kitchenInfo=await store.allStaff()}catch(e){kitchenInfo={}}if(view==="staff"&&(staffTab==="kitchen"||staffTab==="week"||staffTab==="rooms"))renderStaff()}
 function allDates(){const s=new Set();(staffRows||[]).forEach(r=>(r.days||[]).forEach(d=>s.add(d.date)));return [...s].sort()}
 // ---------- production list (Kitchen tab) ----------
 const STAFF_MEALS=15; // staff plates for the food order guide; the production list shows guest counts only
@@ -1593,7 +1600,7 @@ function kitchenView(){
     <p class="small muted" style="margin:0">What the kitchen cooks that day: every entrée, side and snack item added up across groups, with staff plates, vegetarian plates, special plates, and a look at tomorrow.</p></div>
     ${kitchenInfo===null?`<div class="empty">Loading meal locations…</div>`:`<div class="sheetwrap"><article class="sheet">${kitchenBody(kitchenDate)}</article></div>`}</div>`}
 function downloadKitchen(){if(!kitchenDate)return;saveFile(`Production list ${kitchenDate}.html`,printableDoc(`Production list · ${kitchenDate}`,kitchenBody(kitchenDate)),"Production list saved. Open it and press Print.")}
-app.addEventListener("change",e=>{if(e.target.id==="kdate"){kitchenDate=e.target.value;renderStaff()}if(e.target.id==="wstart"){weekStart=e.target.value;renderStaff()}});
+app.addEventListener("change",e=>{if(e.target.id==="kdate"){kitchenDate=e.target.value;renderStaff()}if(e.target.id==="wstart"){weekStart=e.target.value;renderStaff()}if(e.target.id==="rstart"){roomWeek=e.target.value;renderStaff()}});
 
 // ---------- weekly itinerary ----------
 let weekStart="";
@@ -1689,6 +1696,52 @@ function dayPageBody(date,partial){
     <div class="small muted" style="margin-top:6px">Times are standard unless shown in amber. Amber also marks a non-standard place, charge, or partial attendance.</div>
     ${blocks}${partial?(dl.length?`<h2>Dietary accommodations · attending certain meals</h2>${dietTbl}`:"")+`<p class="small muted">Dietary needs for the whole stay are listed once at the start of this itinerary.</p>`:`<h2>Dietary accommodations</h2>${dietTbl}`}</div>`}
 
+// ---------- rooms & A/V (weekly) ----------
+let roomWeek="";
+function roomsBody(start){
+  const dates=[...Array(7)].map((_,i)=>addDays(start,i)),info=kitchenInfo||{};
+  const groups=(staffRows||[]).map(r=>normalize(structuredClone(r))).filter(r=>r.days.some(d=>dates.includes(d.date)))
+    .sort((a,b)=>(a.startDate||"").localeCompare(b.startDate||"")||(a.group||"").localeCompare(b.group||""));
+  if(!groups.length)return `<p>No groups on site this week.</p>`;
+  const avOf=r=>r.noAV?[]:[...r.av,...(r.avOther?[r.avOther]:[])];
+  const days=dates.filter(d=>groups.some(r=>r.days.some(x=>x.date===d)));
+  const glance=days.map(d=>{const on=groups.filter(r=>r.days.some(x=>x.date===d));const eq=new Map();on.forEach(r=>(r.noAV?[]:r.av).forEach(a=>eq.set(a,(eq.get(a)||0)+1)));
+    return `<tr><th scope="row">${fmtDate(d,{weekday:"short",month:"short",day:"numeric"})}</th><td>${on.map(r=>`${esc(r.group||r.code)} <span class="muted">· ${r.setup?SETUP_LABEL[r.setup].toLowerCase():"setup not given"}</span>`).join("<br>")}</td><td>${eq.size?[...eq].map(([a,n])=>`${esc(a)}${n>1?` ×${n}`:""}`).join(", "):`<span class="muted">None</span>`}</td></tr>`}).join("");
+  const drafts=groups.filter(r=>r.status!=="locked").length;
+  const v=(x,e="Not answered")=>x?x:`<span class="miss">${e}</span>`;
+  const blocks=groups.map(r=>{const n=info[r.code]||{},locs=n.locations||{},av=avOf(r);
+    const inWeek=r.days.filter(d=>dates.includes(d.date)).map(d=>d.date);
+    const conf=[];r.days.forEach(d=>MEALS.forEach(m=>{const L=locs[slotKey(d.date,m.k)];if(L&&L.place==="Conference room"&&isServed(m,d.meals[m.k])&&dates.includes(d.date))conf.push(`${fmtDate(d.date,{weekday:"short"})} ${m.label.toLowerCase()} ${fmtTime((n.times||{})[slotKey(d.date,m.k)]||m.time)}${L.room?` · ${esc(L.room)}`:""}`)}));
+    const os=r.onsite.same?`${esc(r.contact)}${r.phone?` · ${esc(r.phone)}`:""}`:r.onsite.name?`${esc(r.onsite.name)}${r.onsite.phone?` · ${esc(r.onsite.phone)}`:""}`:`<span class="miss">Not given</span>`;
+    return `<section class="rgroup"><div class="srv"><div><b>${esc(r.group||r.code)}</b>${r.status!=="locked"?` <span class="miss small">(draft)</span>`:""} <span class="muted small">${esc(r.code)}</span>
+      <div class="small muted">${fmtDate(r.startDate,{weekday:"short",month:"short",day:"numeric"})}${r.endDate!==r.startDate?` – ${fmtDate(r.endDate,{weekday:"short",month:"short",day:"numeric"})}`:""}${inWeek.length<r.days.length?` · this week: ${inWeek.map(d=>fmtDate(d,{weekday:"short"})).join(", ")}`:""}</div></div><div class="serve">${headN(r)||"—"} <span class="small">guests</span></div></div>
+      <table class="rtab"><tbody>
+        <tr><th scope="row">Room</th><td><span class="par wide"></span></td></tr>
+        <tr><th scope="row">Setup</th><td>${r.setup?`<b>${SETUP_LABEL[r.setup]}</b>`:v("")}</td></tr>
+        <tr><th scope="row">Changes during event</th><td>${r.roomChanges==="yes"?`<span class="miss">Yes · needs approval, fee may apply</span>`:r.roomChanges==="no"?"No":v("")}</td></tr>
+        ${r.setupNotes?`<tr><th scope="row">Setup notes</th><td class="note">${esc(r.setupNotes)}</td></tr>`:""}
+        <tr><th scope="row">A/V</th><td>${r.noAV?"None needed":av.length?`<div class="avlist">${av.map(a=>`<span><span class="box" aria-hidden="true"></span> ${esc(a)}</span>`).join("")}</div>`:v("")}</td></tr>
+        ${conf.length?`<tr><th scope="row">Food in the room</th><td class="miss">${conf.join("<br>")}</td></tr>`:""}
+        <tr><th scope="row">On-site contact</th><td>${os}</td></tr>
+      </tbody></table></section>`}).join("");
+  return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Conference rooms &amp; A/V</div><h1>Week of ${fmtDate(start,{month:"long",day:"numeric",year:"numeric"})}</h1><div>${groups.length} group${groups.length===1?"":"s"} on site</div></div>
+    <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
+    <h2>At a glance</h2><table><thead><tr><th style="width:96px">Day</th><th>Groups &amp; setup</th><th>A/V equipment out</th></tr></thead><tbody>${glance}</tbody></table>
+    <h2>By group</h2><div class="small muted" style="margin:-4px 0 6px">Write in the assigned room. Amber marks a draft, a mid-event change, or food served in the meeting room.</div>${blocks}</div>`}
+function roomsView(){
+  const ws=weekStarts();
+  if(!ws.length)return `<div class="empty">No groups have event dates yet.</div>`;
+  const cur=mondayOf(iso(TODAY));if(!roomWeek||!ws.includes(roomWeek))roomWeek=ws.find(w=>w>=cur)||ws[ws.length-1];
+  const i=ws.indexOf(roomWeek);
+  return `<div class="stack"><div class="panel" style="gap:12px"><div class="kitchenpick">
+    <button class="btn ghost" data-rstep="-1" ${i<=0?"disabled":""} aria-label="Previous week">‹</button>
+    <label class="f" for="rstart">Week<select id="rstart">${ws.map(w=>`<option value="${w}" ${w===roomWeek?"selected":""}>Week of ${fmtDate(w,{month:"short",day:"numeric",year:"numeric"})}</option>`).join("")}</select></label>
+    <button class="btn ghost" data-rstep="1" ${i>=ws.length-1?"disabled":""} aria-label="Next week">›</button>
+    <button class="btn primary" data-rdl>Download to print</button></div>
+    <p class="small muted" style="margin:0">Room setup and A/V for every group on site that week, with the equipment needed each day. For the setup crew and A/V.</p></div>
+    ${kitchenInfo===null?`<div class="empty">Loading meal locations…</div>`:`<div class="sheetwrap"><article class="sheet">${roomsBody(roomWeek)}</article></div>`}</div>`}
+function downloadRooms(){if(!roomWeek)return;saveFile(`Rooms and AV week of ${roomWeek}.html`,printableDoc(`Rooms & A/V · week of ${roomWeek}`,roomsBody(roomWeek)),"Rooms & A/V sheet saved. Open it and press Print.")}
+
 // ---------- backup & system check ----------
 const csvCell=x=>{const t=x==null?"":String(x);return /[",\n\r]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t};
 const csv=rows=>"﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");
@@ -1749,7 +1802,7 @@ async function loadStaff(){
   if(store.db){
     if(!staffUnsub)staffUnsub=store.db.collection("reservations").onSnapshot(q=>{staffRows=q.docs.map(d=>d.data());if(view==="staff")renderStaff()},()=>{staffRows=staffRows||[];if(view==="staff")renderStaff()});
   }else{staffRows=await store.all()}
-  if(staffTab==="kitchen"||staffTab==="week")loadKitchen();
+  if(staffTab==="kitchen"||staffTab==="week"||staffTab==="rooms")loadKitchen();
   renderStaff();
 }
 
