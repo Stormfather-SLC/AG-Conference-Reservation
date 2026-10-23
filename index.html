@@ -1720,7 +1720,7 @@ function roomsBody(start){
         <tr><th scope="row">Setup</th><td>${r.setup?`<b>${SETUP_LABEL[r.setup]}</b>`:v("")}</td></tr>
         <tr><th scope="row">Changes during event</th><td>${r.roomChanges==="yes"?`<span class="miss">Yes · needs approval, fee may apply</span>`:r.roomChanges==="no"?"No":v("")}</td></tr>
         ${r.setupNotes?`<tr><th scope="row">Setup notes</th><td class="note">${esc(r.setupNotes)}</td></tr>`:""}
-        <tr><th scope="row">A/V</th><td>${r.noAV?"None needed":av.length?`<div class="avlist">${av.map(a=>`<span><span class="box" aria-hidden="true"></span> ${esc(a)}</span>`).join("")}</div>`:v("")}</td></tr>
+        <tr><th scope="row">A/V Requirements</th><td>${r.noAV?"None needed":av.length?`<div class="avlist">${av.map(a=>`<span><span class="box" aria-hidden="true"></span> ${esc(a)}</span>`).join("")}</div><div class="small muted">Requested by the group. Check off each item when it's set up.</div>`:v("")}</td></tr>
         ${conf.length?`<tr><th scope="row">Food in the room</th><td class="miss">${conf.join("<br>")}</td></tr>`:""}
         <tr><th scope="row">On-site contact</th><td>${os}</td></tr>
       </tbody></table></section>`}).join("");
