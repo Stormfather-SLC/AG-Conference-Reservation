@@ -1831,6 +1831,29 @@ const ready=store.init();
   if(!who.id){try{const me=await u.me();who.id=(me&&me.id)||""}catch(e){}}}catch(e){}})();
 function openFromHash(){const h=decodeURIComponent(location.hash.slice(1)).trim().toUpperCase();if(/^AG-[A-Z0-9]{5}$/.test(h)){actingAs="organizer";openCode(h)}}
 window.addEventListener("hashchange",openFromHash);
+// ---------- browser Back / Forward ----------
+// Each screen change is recorded in the browser's history (the address stays the same), so Back returns to the previous screen instead of leaving the page.
+let restoring=false;
+function navState(){const code=view==="sheet"?(sheetCtx&&sheetCtx.r.code)||"":(view==="home"||view==="staff")?"":(res&&res.code)||"";
+  const st={v:view,tab:view==="staff"?staffTab:"",code,act:actingAs,from:view==="sheet"&&sheetCtx?sheetCtx.from:""};st.key=st.v+"|"+st.tab+"|"+st.code;return st}
+function remember(){try{const st=navState(),cur=history.state;if(cur&&cur.key===st.key)return;
+  if(restoring||!cur||!cur.key)history.replaceState(st,"");else history.pushState(st,"")}catch(e){}}
+["renderHome","renderEditor","renderReview","renderSheet","renderStaff","renderPlan"].forEach(n=>{const f=window[n];window[n]=function(...a){const out=f.apply(this,a);remember();return out}});
+async function restoreNav(st){
+  restoring=true;
+  try{
+    if(view==="edit"||view==="review"){clearTimeout(saveTimer);if(dirty)saveNow();await saving}
+    actingAs=st.act||"organizer";
+    if(st.v==="home")renderHome();
+    else if(st.v==="staff"){staffTab=st.tab||"groups";staffMsg=null;startOpen=false;pendingDelete=null;await loadStaff()}
+    else if(st.v==="edit"||st.v==="review"){
+      if(!res||res.code!==st.code){const r=await store.get(st.code).catch(()=>null);if(!r){renderHome();return}openEditor(r)}
+      if(st.v==="review")renderReview();else{view="edit";renderEditor()}window.scrollTo(0,0)}
+    else if(st.v==="sheet"){await openSheet(st.code);if(sheetCtx)sheetCtx.from=st.from||"staff"}
+    else if(st.v==="staffplan"){await openPlan(st.code)}
+  }finally{restoring=false}
+}
+window.addEventListener("popstate",e=>{if(e.state&&e.state.key)restoreNav(e.state)});
 renderHome();openFromHash();
 </script>
 
