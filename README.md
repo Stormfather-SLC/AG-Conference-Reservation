@@ -38,6 +38,8 @@ The page runs as a Claude artifact. Data is stored in the artifact's shared data
 
 See [docs/data-model.md](docs/data-model.md) for the record format.
 
+What's in this phase, what's next, and what's parked: [docs/roadmap.md](docs/roadmap.md).
+
 ## Running it
 
 `index.html` is a single self-contained page with no build step.
