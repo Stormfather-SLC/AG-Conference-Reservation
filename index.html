@@ -1447,12 +1447,10 @@ function sheetBody(r0,info){
   const miss=locked?[]:missingList(r);
   const sev=r.allergies.filter(isSevere).length;
   const days=withRes(r,()=>r.days.map((d,di)=>`<div class="day"><h3>${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</h3>
-    <table><thead><tr><th style="width:110px">Meal</th><th style="width:72px">Time</th><th style="width:130px">Where</th><th style="width:56px">Guests</th><th>Menu</th><th style="width:190px">Allergies at this meal</th></tr></thead><tbody>
+    <table><thead><tr><th style="width:110px">Meal</th><th style="width:72px">Time</th><th style="width:130px">Where</th><th style="width:56px">Guests</th><th>Menu</th></tr></thead><tbody>
     ${MEALS.map(m=>{const st=d.meals[m.k],sv=isServed(m,st);
       if(!sv&&m.snack)return "";
-      const al=sv?allergiesAt(di,m.k):[];
-      return `<tr><th scope="row">${m.label}</th><td>${sv?fmtTime(times[slotKey(d.date,m.k)]||m.time):""}</td><td>${sv?esc(where(d.date,m)):""}</td><td class="n">${sv?mealCount(st,r):""}</td><td>${mealLine(m,st)}</td>
-      <td>${al.length?al.map(a=>`<span class="al ${isSevere(a)?"sev":""}">${esc(a.name)}: ${esc(a.allergy)}${isSevere(a)?" (severe)":""}</span>`).join(""):sv?`<span class="muted">None</span>`:""}</td></tr>`}).join("")}
+      return `<tr><th scope="row">${m.label}</th><td>${sv?fmtTime(times[slotKey(d.date,m.k)]||m.time):""}</td><td>${sv?esc(where(d.date,m)):""}</td><td class="n">${sv?mealCount(st,r):""}</td><td>${mealLine(m,st)}</td></tr>`}).join("")}
     </tbody></table></div>`).join(""));
   return `<div class="top"><div><div class="org">Aspen Grove · Conference Final Details</div><h1>${v(r.group,"Untitled group")}</h1><div>${esc(dates)}${r.headcount?` · ${esc(r.headcount)} guests`:""} · <span style="font-family:'IBM Plex Mono',monospace">${esc(r.code)}</span></div></div>
     <div class="stamp ${locked?"":"draft"}">${locked?"Locked in":"Draft · not final"}<span>${locked&&r.lockedAt?fmtDate(new Date(r.lockedAt),{month:"short",day:"numeric",year:"numeric"})+", "+clock(r.lockedAt):"Printed "+fmtDate(new Date(),{month:"short",day:"numeric"})+", "+clock()}</span></div></div>
