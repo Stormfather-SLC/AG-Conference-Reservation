@@ -15,6 +15,7 @@ A prototype web form that replaces the paper **Conference Final Details** form a
 - Fill in six sections: group and contact, attendee notes, room and A/V, allergies (with an optional guest-list upload), meals and snacks by day, and comments.
 - Menu rules are built in: 3-item snack limit, vegetarian plates, fajita meat, add-ons, and an upgrade-cost estimate.
 - Review everything on one page, then lock in. The form becomes read-only.
+- Anything still missing is listed above the Lock in button. Each item links straight to the field that needs it, missing fields are outlined in red, and a "Go to next" button in the side rail steps through what's left.
 - Download a printable copy.
 
 ### Conference Services

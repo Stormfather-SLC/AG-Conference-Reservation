@@ -164,6 +164,15 @@ td input{min-width:120px}
 .extras .ln{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dotted var(--line);padding-block:4px}
 .lockbar{display:flex;flex-direction:column;gap:12px}
 .missing{margin:0;padding-left:1.2em}
+.needbox .missing{margin-top:6px;display:flex;flex-direction:column;gap:2px}
+.needlink{border:0;background:none;padding:0;color:var(--bad);font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:left}
+.needlink:hover{color:var(--fg)}
+.need{outline:2px solid var(--bad);outline-offset:2px;border-radius:6px}
+input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shadow:0 0 0 2px var(--bad-soft),0 0 0 1px var(--bad) inset}
+.daytabs button.need{border-color:var(--bad);box-shadow:0 0 0 1px var(--bad) inset}
+.needrail{display:flex;flex-direction:column;gap:6px}
+.needrail .btn{width:fit-content}
+@media (prefers-reduced-motion:no-preference){.flash{animation:needflash 1.5s ease-out}@keyframes needflash{0%,40%{box-shadow:0 0 0 6px var(--bad-soft)}100%{box-shadow:0 0 0 0 transparent}}}
 .confirm{display:flex;flex-direction:column;gap:10px;border:2px solid var(--spruce);border-radius:var(--r);padding:16px;background:var(--aspen-soft)}
 
 /* review */
@@ -548,24 +557,28 @@ function sectionStatus(r){
   s.checklist=!!r.checklist.schedule;
   return s;
 }
-function missingList(r){
-  const m=[];
-  if(!r.group)m.push("Group name");if(!r.contact)m.push("Your name");if(!r.phone)m.push("Phone number");if(!r.email)m.push("Email");
-  if(!(Number(r.headcount)>0))m.push("Final headcount");if(!r.startDate||!r.endDate)m.push("Event dates");
-  if(!r.onsite.same&&(!r.onsite.name||!r.onsite.phone))m.push("On-site contact: name and cell phone");
-
-  if(!r.setup)m.push("Preferred room setup");if(!r.roomChanges)m.push("Room changes yes/no");
-  if(!(r.noAV||r.av.length||r.avOther))m.push("A/V needs, or check “No audio/visual needs”");
-  r.days.forEach(d=>{["breakfast","lunch","dinner"].forEach(k=>{if(!d.meals[k].choice)m.push(`${fmtDate(d.date)}: ${k} selection`)});
-    ["amSnack","pmSnack"].forEach(k=>{if(d.meals[k].on&&!d.meals[k].items.length)m.push(`${fmtDate(d.date)}: pick items for the ${k==="amSnack"?"morning":"afternoon"} snack`)})});
-  m.push(...allergyIssues(r));
-  if(!r.allergies.length&&r.noAllergies!==true)m.push("List allergies, or confirm none");
-  if(!r.checklist.schedule)m.push("Confirm the conference schedule was emailed");
+// Each missing item names the field that fixes it: id = element to outline and focus, day = meal day tab, view = page it lives on.
+function missingItems(r){
+  const m=[],add=(t,id,x)=>m.push({t,id,...(x||{})});
+  if(!r.group)add("Group name","f-group");if(!r.contact)add("Your name","f-contact");if(!r.phone)add("Phone number","f-phone");if(!r.email)add("Email","f-email");
+  if(!(Number(r.headcount)>0))add("Final headcount","f-headcount");if(!r.startDate||!r.endDate)add("Event dates",!r.startDate?"f-startDate":"f-endDate");
+  if(!r.onsite.same&&(!r.onsite.name||!r.onsite.phone))add("On-site contact: name and cell phone",!r.onsite.name?"f-onsite.name":"f-onsite.phone");
+  if(!r.setup)add("Preferred room setup","seg-setup");if(!r.roomChanges)add("Room changes yes/no","seg-roomChanges");
+  if(!(r.noAV||r.av.length||r.avOther))add("A/V needs, or check “No audio/visual needs”","f-av");
+  r.days.forEach((d,di)=>{["breakfast","lunch","dinner"].forEach(k=>{if(!d.meals[k].choice)add(`${fmtDate(d.date)}: ${k} selection`,`days.${di}.meals.${k}.choice`,{day:di})});
+    ["amSnack","pmSnack"].forEach(k=>{if(d.meals[k].on&&!d.meals[k].items.length)add(`${fmtDate(d.date)}: pick items for the ${k==="amSnack"?"morning":"afternoon"} snack`,`snk-days.${di}.meals.${k}`,{day:di})})});
+  m.push(...allergyIssueItems(r));
+  if(!r.allergies.length&&r.noAllergies!==true)add("List allergies, or confirm none","f-noAllergies");
+  if(!r.checklist.schedule)add("Confirm the conference schedule was emailed","f-checklist.schedule",{view:"review"});
   return m;
 }
-function allergyIssues(r){const m=[];r.allergies.forEach((a,i)=>{const w=a.name?`Allergy row ${i+1} (${a.name})`:`Allergy row ${i+1}`;
-  if(!a.name)m.push(`${w}: add the guest's name`);if(!a.allergy)m.push(a.other?`${w}: describe the allergy or restriction`:`${w}: choose an allergy or restriction`);if(!a.type)m.push(`${w}: choose a type`);
-  if(a.type==="Allergy"&&!a.severity)m.push(`${w}: choose a severity`)});return m}
+const missingList=r=>missingItems(r).map(x=>x.t);
+function allergyIssueItems(r){const m=[];r.allergies.forEach((a,i)=>{const w=a.name?`Allergy row ${i+1} (${a.name})`:`Allergy row ${i+1}`;
+  if(!a.name)m.push({t:`${w}: add the guest's name`,id:`al-n-${i}`});
+  if(!a.allergy)m.push({t:a.other?`${w}: describe the allergy or restriction`:`${w}: choose an allergy or restriction`,id:a.other?`al-a-${i}`:`al-pick-${i}`});
+  if(!a.type)m.push({t:`${w}: choose a type`,id:`al-type-${i}`});
+  if(a.type==="Allergy"&&!a.severity)m.push({t:`${w}: choose a severity`,id:`al-severity-${i}`})});return m}
+const allergyIssues=r=>allergyIssueItems(r).map(x=>x.t);
 function extras(r){
   const n=Number(r.headcount)||0, lines=[];let total=0,market=false;
   r.days.forEach(d=>{
@@ -622,7 +635,7 @@ async function openCode(raw){
 }
 
 // ---------- EDITOR ----------
-function openEditor(r){view="edit";res=normalize(r);lastSig=sectionSig(res);dirty=false;clearTimeout(retryT);retryN=0;restoreOffer=null;
+function openEditor(r){view="edit";showNeeds=false;res=normalize(r);lastSig=sectionSig(res);dirty=false;clearTimeout(retryT);retryN=0;restoreOffer=null;
   {const b=store.mode==="db"?bakGet(res.code):null;if(b&&b.updatedAt>(res.updatedAt||"")&&res.status!=="locked")restoreOffer=b;else if(b)bakDel(res.code)}
   setSaveState(store.mode==="db"?(res.updatedAt?"Saved to Aspen Grove · "+fmtDate(new Date(res.updatedAt),{month:"short",day:"numeric"})+", "+clock(res.updatedAt):"Saved to Aspen Grove"):"Saved on this device only","ok");
   staffInfo=null;{const code=res.code;store.getStaff(code).then(x=>{if(res&&res.code===code){staffInfo=x;if(x&&(view==="review"||(view==="edit"&&x.times&&Object.keys(x.times).length)))rerender()}}).catch(()=>{})}pendingImport=null;rosterError="";showTpl=false;activeDay=Math.min(activeDay,Math.max(0,res.days.length-1));confirmingLock=false;view="edit";isLocked()?renderReview():renderEditor();window.scrollTo(0,0)}
@@ -640,7 +653,7 @@ function field(label,path,type="text",hint="",attrs=""){
   return `<label class="f" for="f-${path}">${label}
   ${type==="textarea"?`<textarea id="f-${path}" data-path="${path}" ${attrs}>${esc(v)}</textarea>`:`<input id="f-${path}" type="${type}" data-path="${path}" value="${esc(v)}" ${attrs}>`}${hint?`<span class="hint">${hint}</span>`:""}</label>`;
 }
-function seg(name,path,opts){const v=getPath(res,path);return `<div class="seg" role="radiogroup" aria-label="${name}">${opts.map(([val,l])=>`<label><input type="radio" name="${path}" data-path="${path}" value="${val}" ${v===val?"checked":""}>${l}</label>`).join("")}</div>`}
+function seg(name,path,opts){const v=getPath(res,path);return `<div class="seg" id="seg-${path}" role="radiogroup" aria-label="${name}">${opts.map(([val,l])=>`<label><input type="radio" name="${path}" data-path="${path}" value="${val}" ${v===val?"checked":""}>${l}</label>`).join("")}</div>`}
 
 function mealWarn(di,m){const st=res.days[di].meals[m.k];if(!isServed(m,st))return "";const n=mealCount(st),h=headN(),w=[];
   if(h&&n>h)w.push(`More guests than your final headcount (${h})`);
@@ -661,7 +674,7 @@ function renderMeal(d,di,m){
     return `<div class="meal"><div class="mealhead"><h3>${m.label}</h3><span class="t">${fmtTime(timeOf(d.date,m))}${st.on?` · ${mealCount(st)} guests`:""}</span></div>
       <label class="chk" style="width:fit-content"><input type="checkbox" id="${p}.on" data-path="${p}.on" ${st.on?"checked":""}> Include ${m.k==="amSnack"?"a":"an"} ${m.label.toLowerCase()} break</label>
       ${st.on?`<div class="row" style="justify-content:space-between"><span class="small muted">Choose up to 3 items across any category.</span><span class="count">${n} / 3 chosen</span></div>
-      <div class="snackcats">${Object.entries(SNACKS).map(([cat,items])=>`<div><h4>${cat}</h4><div class="checks">${items.map(it=>{const on=st.items.includes(it);const full=!on&&n>=3;return `<label class="chk${full?" full":""}"><input type="checkbox" data-snack="${p}" value="${esc(it)}" ${on?"checked":""} ${full?"disabled":""}>${esc(it)}</label>`}).join("")}</div></div>`).join("")}</div>
+      <div class="snackcats" id="snk-${p}">${Object.entries(SNACKS).map(([cat,items])=>`<div><h4>${cat}</h4><div class="checks">${items.map(it=>{const on=st.items.includes(it);const full=!on&&n>=3;return `<label class="chk${full?" full":""}"><input type="checkbox" data-snack="${p}" value="${esc(it)}" ${on?"checked":""} ${full?"disabled":""}>${esc(it)}</label>`}).join("")}</div></div>`).join("")}</div>
       <div class="grid2">${guestsField(p)}</div>`:""}
       ${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
     </div>`;
@@ -836,6 +849,7 @@ function renderEditor(){
       </div>
       ${deadlineNote}
       <nav aria-label="Sections">${secs.map(([k,l])=>`<a href="#sec-${k}">${l}${dot(k)}</a>`).join("")}</nav>
+      <div id="needrail"></div>
       <button class="btn primary" data-goreview>${locked?"View summary":"Review &amp; lock in →"}</button>
       <button class="btn ghost" id="back" style="justify-content:flex-start">${actingAs==="staff"?"← Back to groups":"← Start page"}</button>
     </aside>
@@ -861,7 +875,7 @@ function renderEditor(){
         <div class="row"><span style="font-weight:600;min-width:150px">Setup changes during event</span>${seg("Room changes","roomChanges",[["yes","Yes"],["no","No"]])}</div>
         ${r.roomChanges==="yes"?`<div class="notice warn small">Mid-event changes need approval from the operations team, and fees may apply. Describe them below.</div>`:""}
         ${field("Additional setup notes","setupNotes","textarea")}
-        <div class="f" style="gap:12px"><span>Audio/visual equipment</span>
+        <div class="f" id="f-av" style="gap:12px"><span>Audio/visual equipment</span>
           <label class="chk" style="width:fit-content"><input type="checkbox" data-path="noAV" ${r.noAV?"checked":""}> No audio/visual needs</label>
           ${r.noAV?"":`<div class="checks">${AV.map(a=>`<label class="chk"><input type="checkbox" data-av value="${esc(a)}" ${r.av.includes(a)?"checked":""}>${esc(a)}</label>`).join("")}</div>
           ${field("Other A/V or special requests","avOther")}`}
@@ -872,7 +886,7 @@ function renderEditor(){
         ${rosterBox(locked)}
         <h3>Allergies and food restrictions</h3>
         ${r.allergies.length?`<div class="tablewrap"><table class="altable"><thead><tr><th>Guest</th><th>Allergy or restriction</th><th>Type</th><th>Severity</th><th></th></tr></thead><tbody>${allergyRows(locked)}</tbody></table></div>`
-          :`<label class="chk" style="width:fit-content"><input type="checkbox" data-path="noAllergies" ${r.noAllergies===true?"checked":""}> No guests with allergies or food restrictions</label>`}
+          :`<label class="chk" style="width:fit-content"><input type="checkbox" id="f-noAllergies" data-path="noAllergies" ${r.noAllergies===true?"checked":""}> No guests with allergies or food restrictions</label>`}
         ${locked?"":`<div class="row"><button class="btn" id="addallergy">+ Add a guest</button></div>`}
         <p class="small muted" style="margin:0">We accommodate many, but not all, food restrictions. We plan for each guest's allergies at every meal and snack.</p>
       </section>
@@ -898,6 +912,7 @@ function renderEditor(){
     </div>
   </div>`;
   if(locked)document.querySelectorAll("#form input,#form select,#form textarea").forEach(el=>el.disabled=true);
+  markNeeds();
 }
 
 const SETUP_LABEL={theater:"Theater",rounds:"Round tables"};
@@ -1009,7 +1024,7 @@ function renderReview(){
 
       <section class="card" id="sec-lock"><div class="sechead"><h2><span class="num">07</span>Lock in</h2></div>
         <div class="f" style="gap:8px"><span>Checklist</span>
-          <label class="chk" style="width:fit-content"><input type="checkbox" data-path="checklist.schedule" ${r.checklist.schedule?"checked":""} ${locked?"disabled":""}> Conference schedule emailed to Aspen Grove</label>
+          <label class="chk" style="width:fit-content"><input type="checkbox" id="f-checklist.schedule" data-path="checklist.schedule" ${r.checklist.schedule?"checked":""} ${locked?"disabled":""}> Conference schedule emailed to Aspen Grove</label>
           <label class="chk" style="width:fit-content"><input type="checkbox" data-path="checklist.payment" ${r.checklist.payment?"checked":""} ${locked?"disabled":""}> Final payment sent (due two weeks before the event)</label>
         </div>
         <div class="f"><span>Menu upgrades and possible fees${ex.n?` · ${ex.n} guests`:""}</span>
@@ -1024,21 +1039,42 @@ function renderReview(){
       </section>
     </div>
   </div>`;
+  showNeeds=true;markNeeds();
   fillNames();
 }
 
 function renderLockbar(){
   if(isLocked())return `<div class="notice ok">Locked in. Questions or changes go to Aspen Grove Conference Services.</div><div class="row"><button class="btn" data-sheet="${esc(res.code)}">Get a printable copy</button></div>`;
-  const miss=missingList(res);
-  if(miss.length)return `<div class="notice info"><b>${miss.length} item${miss.length===1?"":"s"} left before you can lock in:</b><ul class="missing small">${miss.slice(0,8).map(m=>`<li>${esc(m)}</li>`).join("")}${miss.length>8?`<li>and ${miss.length-8} more</li>`:""}</ul></div>
+  const miss=missingItems(res);
+  if(miss.length)return `<div class="notice bad needbox"><b>${miss.length} item${miss.length===1?"":"s"} left before you can lock in.</b> <span class="small">Select one to go straight to it. Missing fields are outlined in red.</span><ul class="missing small">${miss.slice(0,8).map((m,i)=>`<li><button type="button" class="needlink" data-need="${i}">${esc(m.t)}</button></li>`).join("")}${miss.length>8?`<li>and ${miss.length-8} more <button type="button" class="needlink" data-need="8">Go to the next one</button></li>`:""}</ul></div>
     <div class="row"><button class="btn gold" disabled>Lock in reservation</button><span class="small muted">Your draft is saved. Come back with code <span class="mono">${esc(res.code)}</span>.</span></div>`;
   if(confirmingLock)return `<div class="confirm"><b>Lock in final details for ${esc(res.group)}?</b><span class="small">After you lock in, the form becomes read-only. Aspen Grove staff will need to reopen it for any changes.</span>
     <div class="row"><button class="btn primary" id="dolock">Yes, lock in</button><button class="btn" id="cancellock">Keep editing</button></div></div>`;
   return `<div class="notice ok">Everything required is filled in.</div><div class="row"><button class="btn gold" id="lock">Lock in reservation</button></div>`;
 }
+let showNeeds=false;
+// Outline every missing field on screen. Turned on once someone reaches the review page or follows a missing-item link.
+function markNeeds(){
+  document.querySelectorAll(".need").forEach(e=>{e.classList.remove("need");e.removeAttribute("aria-invalid")});
+  const nb=document.getElementById("needrail");
+  if(!res||isLocked()||!showNeeds){if(nb)nb.innerHTML="";return}
+  const miss=missingItems(res);
+  miss.forEach(t=>{const el=document.getElementById(t.id);if(el){el.classList.add("need");if(el.matches("input,select,textarea"))el.setAttribute("aria-invalid","true")}
+    if(t.day!=null&&t.day!==activeDay)document.querySelector(`.daytabs button[data-day="${t.day}"]`)?.classList.add("need")});
+  if(nb)nb.innerHTML=view==="edit"&&miss.length?`<div class="notice bad small needrail"><b>${miss.length} left to lock in</b><button type="button" class="btn tiny" data-need="0">Go to next</button></div>`:"";
+}
+function goNeed(i){
+  const t=missingItems(res)[i]||missingItems(res)[0];if(!t)return;showNeeds=true;
+  if(t.view==="review"){if(view!=="review")renderReview()}else{if(t.day!=null)activeDay=t.day;view="edit";renderEditor()}
+  markNeeds();
+  const el=document.getElementById(t.id);if(!el)return;
+  el.scrollIntoView({block:"center",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+  const f=el.matches("input,select,textarea")?el:el.querySelector("input:not([disabled]),select,textarea");if(f)f.focus({preventScroll:true});
+  el.classList.add("flash");setTimeout(()=>el.classList.remove("flash"),1600);
+}
 function refreshLive(){
   // update parts that depend on values without re-rendering inputs
-  const lb=document.getElementById("lockbar");if(lb)lb.innerHTML=renderLockbar();
+  const lb=document.getElementById("lockbar");if(lb)lb.innerHTML=renderLockbar();markNeeds();
   const s=sectionStatus(res);document.querySelectorAll(".rail nav a").forEach(a=>{const k=a.getAttribute("href").slice(5);const d=a.querySelector(".dot");if(d)d.classList.toggle("done",!!s[k])});
 }
 
@@ -1159,6 +1195,7 @@ app.addEventListener("click",async e=>{
   if(b.dataset.wstep){const ws=weekStarts(),i=ws.indexOf(weekStart)+Number(b.dataset.wstep);if(ws[i]){weekStart=ws[i];renderStaff()}return}
   if(b.dataset.export){exportData(b.dataset.export);return}
   if(b.dataset.healthcheck!==undefined){runCheck();return}
+  if(b.dataset.need!==undefined){goNeed(Number(b.dataset.need));return}
   if(b.dataset.goreview!==undefined){clearTimeout(saveTimer);if(saveState==="Saving…")saveNow();confirmingLock=false;renderReview();window.scrollTo(0,0);return}
   if(b.dataset.editsec){const sec=b.dataset.editsec;view="edit";renderEditor();const el=document.getElementById("sec-"+sec);if(el)el.scrollIntoView();else window.scrollTo(0,0);return}
   if(b.dataset.day){activeDay=Number(b.dataset.day);if("top" in b.dataset){renderEditor();document.getElementById("sec-meals")?.scrollIntoView()}else rerender();return}
