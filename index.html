@@ -1466,6 +1466,10 @@ function sheetBody(r0,info){
     <div class="kvs"><div><span>Organizer</span>${v(r.contact)}</div><div><span>Phone</span>${v(r.phone)}</div><div><span>Email</span>${v(r.email)}</div>
       <div><span>On-site contact</span>${r.onsite.same?`${v(r.contact)} · ${v(r.phone)}`:`${v(r.onsite.name)} · ${v(r.onsite.phone)}`}</div><div><span>Final headcount</span>${v(r.headcount)}</div><div><span>Lock-in deadline</span>${deadlineOf(r)?fmtDate(deadlineOf(r),{month:"long",day:"numeric"}):"—"}</div></div>
     ${r.attendeeNotes?`<p class="note" style="margin-top:8px"><b>Attendee notes:</b> ${esc(r.attendeeNotes)}</p>`:""}
+    ${ex.lines.length?`<h2>Upgrades &amp; possible fees</h2><table><tbody>${ex.lines.map(([l,x])=>`<tr><td>${esc(l)}</td><td class="n">${x==null?"TBD":"$"+x.toFixed(2)}</td></tr>`).join("")}<tr class="tot"><td>Estimated upgrades${ex.market?" (plus market price)":""}</td><td class="n">$${ex.total.toFixed(2)}</td></tr></tbody></table>`:""}
+    <h2>Comments &amp; checklist</h2>
+    <p class="note">${r.comments?esc(r.comments):`<span class="muted">No additional comments.</span>`}</p>
+    <p style="margin:6px 0 0">Conference schedule emailed: <b>${r.checklist.schedule?"Yes":"No"}</b> · Final payment sent: <b>${r.checklist.payment?"Yes":"No"}</b></p>
     <h2>Conference room &amp; A/V</h2>
     <div class="kvs"><div><span>Preferred setup</span>${r.setup?SETUP_LABEL[r.setup]:v("")}</div><div><span>Changes during event</span>${r.roomChanges?(r.roomChanges==="yes"?"Yes · needs approval":"No"):v("")}</div><div><span>Audio/visual</span>${av?esc(av):v("","Not answered")}</div></div>
     ${r.setupNotes?`<p class="note" style="margin-top:8px"><b>Setup notes:</b> ${esc(r.setupNotes)}</p>`:""}
@@ -1474,10 +1478,6 @@ function sheetBody(r0,info){
       :`<p style="margin:0">${r.noAllergies===true?"No guests with allergies or food restrictions.":`<span class="miss">Not answered yet.</span>`}</p>`}
     <h2>Meals &amp; snacks</h2>
     ${days||`<p class="miss" style="margin:0">Event dates not set.</p>`}
-    ${ex.lines.length?`<h2>Upgrades &amp; possible fees</h2><table><tbody>${ex.lines.map(([l,x])=>`<tr><td>${esc(l)}</td><td class="n">${x==null?"TBD":"$"+x.toFixed(2)}</td></tr>`).join("")}<tr class="tot"><td>Estimated upgrades${ex.market?" (plus market price)":""}</td><td class="n">$${ex.total.toFixed(2)}</td></tr></tbody></table>`:""}
-    <h2>Comments &amp; checklist</h2>
-    <p class="note">${r.comments?esc(r.comments):`<span class="muted">No additional comments.</span>`}</p>
-    <p style="margin:6px 0 0">Conference schedule emailed: <b>${r.checklist.schedule?"Yes":"No"}</b> · Final payment sent: <b>${r.checklist.payment?"Yes":"No"}</b></p>
     <div class="foot"><span>Reservation ${esc(r.code)} · last changed ${r.updatedAt?fmtDate(new Date(r.updatedAt),{month:"short",day:"numeric"})+", "+clock(r.updatedAt):"—"}</span><span>Aspen Grove Conference Services</span></div>`;
 }
 async function openSheet(code){
