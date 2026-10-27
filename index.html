@@ -265,6 +265,10 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .stat .n{font-family:var(--mono);font-size:1.6rem;font-weight:500;line-height:1.1}
 .stat .l{font-size:.82rem;color:var(--muted)}
 .stat.alert .n{color:var(--bad)}
+.stat-btn{font:inherit;color:inherit;text-align:left;cursor:pointer;transition:border-color .12s,background .12s}
+.stat-btn:hover{border-color:var(--spruce)}
+.stat-btn[aria-pressed="true"]{border-color:var(--spruce);background:var(--aspen-soft);box-shadow:inset 0 0 0 1px var(--spruce)}
+.stat-btn[aria-pressed="true"] .l{color:var(--fg);font-weight:600}
 .stack{display:flex;flex-direction:column;gap:18px}
 .prog{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);font-family:var(--mono)}
 .prog .bar{width:72px;height:6px;background:var(--sunk);border-radius:3px;overflow:hidden}
@@ -1272,6 +1276,7 @@ app.addEventListener("click",async e=>{
   if(b.dataset.sheetback!==undefined){sheetBack();return}
   if(b.dataset.sheetdl!==undefined){downloadSheet();return}
   if(b.dataset.dept){const d=DEPTS.find(x=>x.k===b.dataset.dept),last=prefGet("ag:lastTab:"+d.k);b.dataset.stab=d.tabs.some(([k])=>k===last)?last:d.tabs[0][0]}
+  if(b.dataset.gfilter){const k=b.dataset.gfilter;groupFilter=groupFilter===k?"all":k;renderStaff();return}
   if(b.dataset.stab){pickStaffTab(b.dataset.stab);staffMsg=null;startOpen=false;if(needsInfo())loadKitchen();renderStaff();return}
   if(b.dataset.startgroup!==undefined){startOpen=!startOpen;staffMsg=null;renderStaff();if(startOpen)document.getElementById("sg-group")?.focus();return}
   if(b.dataset.invite){inviteFor(b.dataset.invite);return}
@@ -1494,23 +1499,24 @@ function renderStaff(){
   if(staffTab==="backup")fillNames();
 }
 
+const GROUP_FILTERS={all:"Upcoming groups",locked:"Locked in",progress:"Organizer working on it",waiting:"Invited, not started",overdue:"Past the 14-day deadline"};
+let groupFilter="all";
 function groupsView(){
   const rows=staffRows;
   const sorted=[...rows].sort((a,b)=>(a.startDate||"9999").localeCompare(b.startDate||"9999"));
-  const st=rows.map(stateOf), cnt=k=>st.filter(x=>x.k===k).length;
+  const st=rows.map(stateOf), cnt=k=>k==="all"?rows.length:st.filter(x=>x.k===k).length;
+  const shown=groupFilter==="all"?sorted:sorted.filter(r=>stateOf(r).k===groupFilter);
+  const card=(k,l)=>`<button type="button" class="stat stat-btn${k==="overdue"&&cnt(k)?" alert":""}" data-gfilter="${k}" aria-pressed="${groupFilter===k}"><span class="n">${cnt(k)}</span><span class="l">${l}</span></button>`;
   return `<div class="stack">
-    <div class="stats">
-      <div class="stat"><span class="n">${rows.length}</span><span class="l">Groups</span></div>
-      <div class="stat"><span class="n">${cnt("locked")}</span><span class="l">Locked in</span></div>
-      <div class="stat"><span class="n">${cnt("progress")}</span><span class="l">Organizer working on it</span></div>
-      <div class="stat"><span class="n">${cnt("waiting")}</span><span class="l">Invited, not started</span></div>
-      <div class="stat ${cnt("overdue")?"alert":""}"><span class="n">${cnt("overdue")}</span><span class="l">Past the 14-day deadline</span></div>
+    <div class="stats" role="group" aria-label="Filter groups by status">
+      ${card("all","Groups")}${card("locked","Locked in")}${card("progress","Organizer working on it")}${card("waiting","Invited, not started")}${card("overdue","Past the 14-day deadline")}
     </div>
     ${msgCard()}${startForm()}
     <div class="panel" style="gap:14px">
-      <div class="row" style="justify-content:space-between"><h2>Upcoming groups</h2>${startOpen?"":`<button class="btn primary" data-startgroup>+ Start a group</button>`}</div>
+      <div class="row" style="justify-content:space-between"><div class="row"><h2>${groupFilter==="all"?"Upcoming groups":esc(GROUP_FILTERS[groupFilter])}</h2>${groupFilter==="all"?"":`<span class="muted small">${shown.length} of ${rows.length}</span><button class="btn ghost" type="button" data-gfilter="all">Show all groups</button>`}</div>${startOpen?"":`<button class="btn primary" data-startgroup>+ Start a group</button>`}</div>
       ${rows.length?`<div class="tablewrap"><table class="stafftable"><thead><tr><th>Group</th><th>Event</th><th>Guests</th><th>Form</th><th>Lock-in deadline</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-      ${sorted.map(r=>{const dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null,s=stateOf(r),locked=r.status==="locked",p=progressOf(r);
+      ${shown.length?"":`<tr><td colspan="7"><div class="empty">No groups ${esc(GROUP_FILTERS[groupFilter].toLowerCase())} right now.</div></td></tr>`}
+      ${shown.map(r=>{const dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null,s=stateOf(r),locked=r.status==="locked",p=progressOf(r);
         const dlTxt=!dl?"—":locked?fmtDate(dl):left<0?`<span style="color:var(--bad);font-weight:600">${fmtDate(dl)} · overdue</span>`:left<=7?`<span style="color:var(--warn);font-weight:600">${fmtDate(dl)} · ${left}d</span>`:`${fmtDate(dl)} · ${left}d`;
         const sev=(r.allergies||[]).filter(isSevere).length;
         return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b> <span class="mono small muted">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span>${sev?`<br><span class="small" style="color:var(--bad);font-weight:600">${sev} critical allerg${sev===1?"y":"ies"}</span>`:""}${wantsWalk(r)?`<br><span class="small muted">Walk-through requested</span>`:""}${r.breakoutNeed==="yes"&&r.breakouts&&r.breakouts.length?`<br><span class="small muted">${r.breakouts.length} breakout room${r.breakouts.length===1?"":"s"}</span>`:""}</td>
