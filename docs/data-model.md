@@ -5,7 +5,7 @@ The page stores data in the artifact's shared database. There are three collecti
 | Collection | Document id | Holds | Who can write |
 |---|---|---|---|
 | `reservations` | Reservation code, e.g. `AG-7KQ2M` | One group's final details | Any signed-in user of the page |
-| `staffnotes` | Reservation code | Meal locations and time changes set by Conference Services, and walk-through status set by Setup | Artifact editors only |
+| `staffnotes` | Reservation code | Meal locations and time changes set by Conference Services; assigned rooms and walk-through status set by Setup | Artifact editors only |
 | `health` | `check` | Timestamp from the last save check | Any signed-in user of the page |
 
 ## `reservations/{code}`
@@ -41,6 +41,7 @@ The page stores data in the artifact's shared database. There are three collecti
 
 | Field | Values |
 |---|---|
+| `id` | Stable id; assigned rooms are keyed by it (older rooms without one use `b0`, `b1`, …) |
 | `name` | Purpose or name, e.g. "Leadership session" |
 | `people` | number or `""` |
 | `days` | Event dates (`YYYY-MM-DD`) the room is used |
@@ -117,3 +118,14 @@ A slot key is `YYYY-MM-DD|meal`, for example `2026-11-06|lunch`.
 ## Deadline
 
 The lock-in deadline is 14 days before `startDate`.
+
+## `staffnotes/{code}`
+
+| Field | Notes |
+|---|---|
+| `locations` | `{ "YYYY-MM-DD|meal": {place, room, note} }`. `place` is Dining hall, Meeting room (their assigned main room that day), Conference room (a specific `room`), Aspen Lobby, Boxed to go, or Other (`note`) |
+| `times` | `{ "YYYY-MM-DD|meal": "HH:MM" }`, only when changed from the standard time |
+| `rooms` | `{main: {"YYYY-MM-DD": room}, bo: {breakoutId: room}}`. Assigned main room per day and room per breakout. Unassigned rooms print as a blank line |
+| `walk` | Walk-through status; see Walk above |
+
+Rooms come from the list Timp Room A, B and C, Fir, Spruce and Pine. A room used twice on the same day (by any group, or twice by one group) is flagged as double-booked; times are not compared.

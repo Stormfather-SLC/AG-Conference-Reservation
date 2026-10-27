@@ -24,10 +24,10 @@ Sections are grouped by who uses them: **Groups** (office and programs), **Kitch
 
 - **Groups:** start a group from booking details and get a ready-to-send invitation email. See every group's status (Not started, In progress, Locked in, Past deadline) and progress. Copy a reminder that lists what's missing. Reopen or delete a reservation.
 - **Final sheet:** a printable one-page summary of each group.
-- **Meal locations:** set where and when each meal is served.
 - **Kitchen → Daily production list:** a printable daily list for the kitchen. Each meal and snack is split into servings: groups served at the same time and place are combined under one "Serve" count, and groups at a different time or place get their own block and count. Every entrée, side, included item and snack has a checkbox and a blank PAR line for the chefs. Each serving has a one-line special-plates summary; after the last service, special plates are listed once for the day by guest, followed by a short preview of tomorrow.
 - **Kitchen → Weekly meal schedule:** an at-a-glance page for the week, then one page per day with every meal and snack in time order. Each service lists the groups first (guests, location, dietary count) with their meal or snack underneath; shared meals are marked, and only off-schedule times and places are highlighted. Each day ends with a dietary list, one line per guest. Dietary needs are listed once on the summary page; a guest attending only certain meals is also listed on each day they attend.
 - **Setup → Rooms & A/V:** a printable weekly sheet for the setup crew. An at-a-glance table shows each day's groups, setup style, and A/V equipment out (with counts when groups overlap). Then one block per group: a blank line to write in the assigned room, breakout rooms (each with a blank room line and its A/V checklist), setup, changes during the event, setup notes, an "A/V Requirements" checklist of what the group requested, any meals or snacks served in the meeting room, and the on-site contact.
+- **Rooms & locations** (one page per group, from Groups or Setup → Rooms & A/V): Setup assigns the main room for each day and a room for each breakout, with a warning when a room is already booked that day. Conference Services sets meal and snack locations below, including "Their meeting room", which follows the assigned room. Assigned rooms print on the Rooms & A/V sheet and Final sheet; unassigned ones print as a line to write in.
 - **Setup → Walk-throughs:** every walk-through request with the group's two preferred days, party size, and whether other groups in the system are on site those days. Mark each Scheduled (with the confirmed day and time), Done, or Couldn't schedule; the organizer sees the result on their form.
 - **Backup & system check:** download the group list and meal list (CSV, opens in Excel) or a full backup (JSON). Run a save check.
 
@@ -38,7 +38,7 @@ The page runs as a Claude artifact. Data is stored in the artifact's shared data
 - Every change saves within about a second.
 - If a save fails, a safety copy stays in that browser and the page retries on its own. If the person returns before it lands, the page offers to restore it.
 - Each reservation keeps a change history: who changed which section, and when.
-- Only artifact editors can change meal locations (database rule: `staffnotes` write = `admin`).
+- Only artifact editors can change rooms, meal locations and walk-through status (database rule: `staffnotes` write = `admin`).
 
 See [docs/data-model.md](docs/data-model.md) for the record format.
 

@@ -230,7 +230,7 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .bulk{display:flex;flex-wrap:wrap;gap:12px;align-items:end;background:var(--sunk);padding:12px 14px;border-radius:var(--r)}
 .bulk select{min-width:170px}
 .plantable{table-layout:fixed;min-width:680px}
-.plantable th:nth-child(1){width:150px}.plantable th:nth-child(2){width:150px}.plantable th:nth-child(3){width:80px}.plantable th:nth-child(5){width:210px}
+.plantable th:nth-child(1){width:150px}.plantable th:nth-child(2){width:150px}.plantable th:nth-child(3){width:80px}.plantable th:nth-child(5){width:250px}
 .plantable select{width:100%}
 .plantable th[scope=row]{text-transform:none;letter-spacing:0;font-size:.9rem;color:var(--fg);white-space:nowrap}
 .plantable tr.off th,.plantable tr.off td{color:var(--muted)}
@@ -299,6 +299,11 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .sheetwrap{overflow-x:auto}
 .kitchenpick{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
 .kitchenpick select{min-width:240px}
+.plansec{display:flex;flex-direction:column;gap:14px;border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.plansec .sechead h3{font-size:1.15rem}
+.roomtbl{table-layout:auto;min-width:0;max-width:640px}.roomtbl th[scope=row]{width:140px}.roomtbl select,.bortbl select{min-width:200px}
+.bortbl{table-layout:auto;min-width:0}.bortbl th[scope=row]{text-transform:none;letter-spacing:0;font-size:.9rem;color:var(--fg)}
+.assignrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .walktable td.g{min-width:200px}.walktable select,.walktable input[type=text]{min-width:170px}
 .wchoice+.wchoice{margin-top:6px}.wsched{margin-top:8px;gap:8px}.walknote{margin-top:8px}
 .bocard h3{font-size:1rem}
@@ -456,7 +461,7 @@ function deadlineOf(r){const d=parseDate(r.startDate);if(!d)return null;const x=
 function blankDay(date){const meals={};MEALS.forEach(m=>{meals[m.k]=m.snack?{on:false,time:m.time,items:[],count:""}:{choice:"",time:m.time,addon:false,second:false,meat:"Chicken",vegChoice:"",vegCount:0,count:"",service:"hall",location:""}});return {date,meals}}
 function blankRes(code){return {code,status:"draft",group:"",contact:"",phone:"",email:"",headcount:"",startDate:"",endDate:"",attendeeNotes:"",setup:"",roomChanges:"",setupNotes:"",noAV:false,av:[],avOther:"",days:[],allergies:[],comments:"",onsite:{same:false,name:"",phone:""},firstMeal:"",lastMeal:"",roster:null,breakoutNeed:"",breakouts:[],walk:blankWalk(),checklist:{schedule:false,payment:false},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),lockedAt:null}}
 function blankWalk(){return {want:"",choices:[{date:"",time:""},{date:"",time:""}],people:"",notes:""}}
-function blankBreakout(){return {name:"",people:"",days:[],start:"",end:"",setup:"",av:[],notes:""}}
+function blankBreakout(){return {id:"b"+Math.random().toString(36).slice(2,8),name:"",people:"",days:[],start:"",end:"",setup:"",av:[],notes:""}}
 function getPath(o,p){return p.split(".").reduce((a,k)=>a==null?a:a[k],o)}
 function setPath(o,p,v){const ks=p.split(".");let a=o;for(let i=0;i<ks.length-1;i++)a=a[ks[i]];a[ks[ks.length-1]]=v}
 
@@ -495,7 +500,7 @@ function applyWindow(){
 function normalize(r){
   r.days=r.days||[];r.av=r.av||[];r.checklist=r.checklist||{schedule:false,payment:false};
   r.onsite=r.onsite||{same:false,name:"",phone:""};r.firstMeal=r.firstMeal||"";
-  r.breakoutNeed=r.breakoutNeed||"";r.breakouts=(r.breakouts||[]).map(b=>({...blankBreakout(),...b,av:b.av||[],days:(b.days||[]).filter(d=>r.days.some(x=>x.date===d))}));
+  r.breakoutNeed=r.breakoutNeed||"";r.breakouts=(r.breakouts||[]).map((b,i)=>({...blankBreakout(),id:"b"+i,...b,av:b.av||[],days:(b.days||[]).filter(d=>r.days.some(x=>x.date===d))}));
   {const w=r.walk||{};r.walk={...blankWalk(),...w,choices:[0,1].map(i=>({date:"",time:"",...((w.choices||[])[i]||{})}))}}r.lastMeal=r.lastMeal||"";r.roster=r.roster||null;
   r.days.forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(st.count===undefined)st.count="";if(!m.snack){if(!st.service)st.service="hall";if(st.location===undefined)st.location=""}}));
   r.allergies=(r.allergies||[]).map(a=>({name:a.name||"",allergy:a.allergy||"",type:a.type||(a.allergy?"Allergy":""),severity:a.severity||"",mode:a.mode||"all",meals:Array.isArray(a.meals)?a.meals:[],note:typeof a.meals==="string"?a.meals:(a.note||""),from:a.from||"",to:a.to||"",src:a.src||"",other:a.other}));
@@ -1025,7 +1030,7 @@ function sevTag(a){if(a.type==="Medical")return `<span class="sevtag sev">Strict
 function allergyByMeal(){return res.days.map((d,di)=>{const rows=[];MEALS.forEach(m=>allergiesAt(di,m.k).forEach(a=>rows.push([m,a])));if(!rows.length)return "";
   return `<div class="sumday"><h3>${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</h3><div class="tablewrap"><table class="bymeal"><thead><tr><th>Meal</th><th>Guest</th><th>Allergy or restriction</th><th>Severity</th></tr></thead><tbody>${rows.map(([m,a])=>`<tr class="${isSevere(a)?"sevrow":""}"><td>${m.label}</td><td>${esc(a.name)}</td><td>${esc(a.allergy)}${a.type&&a.type!=="Allergy"?` <span class="muted small">(${a.type.toLowerCase()})</span>`:""}</td><td>${sevTag(a)}</td></tr>`).join("")}</tbody></table></div></div>`}).join("")}
 
-function locLine(date,m){const L=staffInfo&&staffInfo.locations&&staffInfo.locations[slotKey(date,m.k)];if(!L)return "";return `<div class="small">Location: <b>${esc(locLabel(L))}</b> <span class="muted">(set by Aspen Grove)</span></div>`}
+function locLine(date,m){const L=staffInfo&&staffInfo.locations&&staffInfo.locations[slotKey(date,m.k)];if(!L)return "";return `<div class="small">Location: <b>${esc(locLabel(L,date,staffInfo))}</b> <span class="muted">(set by Aspen Grove)</span></div>`}
 
 function renderReview(){
   view="review";
@@ -1239,6 +1244,9 @@ app.addEventListener("change",e=>{
       rerender();if(el.value==="Other")document.getElementById("locnote-"+key)?.focus();if(el.value==="Conference room")document.getElementById("room-"+key)?.focus()}
     else if(el.classList.contains("timein")){const key=el.dataset.key;if(!el.value||el.value===el.dataset.def)delete plan.times[key];else plan.times[key]=el.value;planSave();rerender()}
     else if(el.classList.contains("roomsel")){const key=el.dataset.key;const L=plan.locations[key]||{place:"Conference room",note:""};L.place="Conference room";L.room=el.value;plan.locations[key]=L;planSave();rerender()}
+    if(el.classList.contains("mainroom")){if(el.value)plan.rooms.main[el.dataset.date]=el.value;else delete plan.rooms.main[el.dataset.date];planSave();rerender();return}
+    if(el.id==="main-all"&&el.value){res.days.forEach(d=>plan.rooms.main[d.date]=el.value);planSave();rerender();toast(`${el.value} set for every day`);return}
+    if(el.classList.contains("boroom")){if(el.value)plan.rooms.bo[el.dataset.id]=el.value;else delete plan.rooms.bo[el.dataset.id];planSave();rerender();return}
     if(el.id==="bulk-room"&&el.value){el.classList.remove("need");el.removeAttribute("aria-invalid");const nt=document.getElementById("bulk-roomnote");if(nt)nt.hidden=true}
     return}if((view!=="edit"&&view!=="review")||isLocked())return;
   if(el.id==="rosterfile"){const f=el.files&&el.files[0];el.value="";handleRosterFile(f);return}
@@ -1338,9 +1346,13 @@ app.addEventListener("click",async e=>{
 });
 
 // ---------- STAFF: meal locations ----------
-const LOCS=["Dining hall","Conference room","Aspen Lobby","Boxed to go","Other"];
+const LOCS=["Dining hall","Meeting room","Conference room","Aspen Lobby","Boxed to go","Other"];
+const LOC_TEXT={"Meeting room":"Their meeting room"};
 const ROOMS=["Timp Room A","Timp Room B","Timp Room C","Fir","Spruce","Pine"];
-const locLabel=L=>L.place==="Other"?(L.note||"Other"):L.place==="Conference room"?(L.room?`Conference room · ${L.room}`:"Conference room (room not set)"):L.place;
+// n = the group's staff notes; "Meeting room" resolves to the main room assigned for that day.
+const mainRoomOn=(n,date)=>(n&&n.rooms&&n.rooms.main&&n.rooms.main[date])||"";
+const locLabel=(L,date,n)=>L.place==="Other"?(L.note||"Other"):L.place==="Meeting room"?(mainRoomOn(n,date)?`Meeting room · ${mainRoomOn(n,date)}`:"Their meeting room (not assigned yet)"):L.place==="Conference room"?(L.room?`Conference room · ${L.room}`:"Conference room (room not set)"):L.place;
+const inRoom=L=>!!L&&(L.place==="Conference room"||L.place==="Meeting room");
 const roomSelect=(cls,id,key,cur,label)=>`<select class="${cls}" id="${id}"${key?` data-key="${key}"`:""} aria-label="${label}"><option value="">Choose a room</option>${ROOMS.map(o=>`<option ${cur===o?"selected":""}>${o}</option>`).join("")}</select>`;
 const defLoc=m=>m.snack?"Aspen Lobby":"Dining hall";
 const timeOf=(date,m)=>(staffInfo&&staffInfo.times&&staffInfo.times[slotKey(date,m.k)])||m.time;
@@ -1349,7 +1361,8 @@ async function openPlan(code){
   let r=null;try{r=await store.get(code)}catch(e){}
   if(!r){toast("Couldn't open "+code);return}
   res=normalize(r);plan=null;try{plan=await store.getStaff(code)}catch(e){}
-  plan=plan||{code,locations:{}};plan.locations=plan.locations||{};plan.times=plan.times||{};planState="";
+  plan=plan||{code,locations:{}};plan.locations=plan.locations||{};plan.times=plan.times||{};plan.rooms={main:{},bo:{},...(plan.rooms||{})};plan.rooms.main=plan.rooms.main||{};plan.rooms.bo=plan.rooms.bo||{};planState="";
+  planAll=null;planRows=null;try{planAll=await store.allStaff();planRows=staffRows||await store.all()}catch(e){planAll=planAll||{};planRows=planRows||[]}
   renderPlan();window.scrollTo(0,0);
 }
 const locOf=(key,m)=>plan.locations[key]||{place:defLoc(m),note:"",room:""};
@@ -1363,11 +1376,12 @@ function menuShort(m,st){
 function renderPlan(){
   view="staffplan";const r=res,locked=r.status==="locked";
   const dates=r.startDate?fmtDate(r.startDate,{weekday:"short",month:"long",day:"numeric"})+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate,{weekday:"short",month:"long",day:"numeric"}):""):"Dates not set";
-  const opt=(list,none)=>`${none?`<option value="">No change</option>`:""}${list.map(o=>`<option>${o}</option>`).join("")}`;
+  const opt=(list,none)=>`${none?`<option value="">No change</option>`:""}${list.map(o=>`<option value="${o}">${LOC_TEXT[o]||o}</option>`).join("")}`;
   app.innerHTML=`<div class="panel plan">
-    <div class="row" style="justify-content:space-between"><button class="btn ghost" data-backstaff>← Upcoming groups</button><span class="save" id="planstate">${esc(planState)}</span></div>
-    <div class="reviewhead"><span class="eyebrow">Meal locations · staff only</span><h2 class="rtitle">${esc(r.group||"Untitled group")}</h2>
+    <div class="row" style="justify-content:space-between"><button class="btn ghost" data-backstaff>← ${staffTab==="rooms"||staffTab==="walks"?"Rooms &amp; A/V":"Upcoming groups"}</button><span class="save" id="planstate">${esc(planState)}</span></div>
+    <div class="reviewhead"><span class="eyebrow">Rooms &amp; locations · staff only</span><h2 class="rtitle">${esc(r.group||"Untitled group")}</h2>
       <p class="muted" style="margin:0"><span class="mono">${esc(r.code)}</span> · ${esc(dates)}${r.headcount?` · ${esc(r.headcount)} guests`:""} · <span class="pill ${locked?"locked":"draft"}">${locked?"Locked in":"Draft"}</span></p></div>
+    ${roomsSection(r)}
     ${r.days.length?`<div class="bulk">
       <label class="f" for="bulk-meal">Set every meal to<select id="bulk-meal">${opt(LOCS.filter(o=>o!=="Other"),true)}</select></label>
       <label class="f" for="bulk-snack">Set every snack to<select id="bulk-snack">${opt(LOCS.filter(o=>o!=="Other"),true)}</select></label>
@@ -1377,17 +1391,42 @@ function renderPlan(){
       <div class="tablewrap"><table class="plantable"><thead><tr><th>Meal</th><th>Time</th><th>Guests</th><th>Menu</th><th>Location</th></tr></thead><tbody>
       ${MEALS.map(m=>{const st=d.meals[m.k],key=slotKey(d.date,m.k),sv=isPlanned(m,st),L=locOf(key,m);
         return `<tr class="${sv?"":"off"}"><th scope="row">${m.label}</th><td>${sv?(()=>{const t=plan.times[key]||m.time,ch=t!==m.time;return `<input type="time" class="timein" id="time-${key}" data-key="${key}" data-def="${m.time}" value="${t}" aria-label="Time for ${fmtDate(d.date)} ${m.label}">${ch?`<span class="warnline">Fee may apply (standard: ${fmtTime(m.time)})</span>`:""}`})():""}</td><td class="mono">${sv?mealCount(st):""}</td><td>${sv?menuShort(m,st):`<span class="muted">Not served</span>`}</td>
-        <td>${sv?`<select class="locsel" id="loc-${key}" data-key="${key}" aria-label="Location for ${fmtDate(d.date)} ${m.label}">${LOCS.map(o=>`<option ${L.place===o?"selected":""}>${o}</option>`).join("")}</select>${L.place==="Conference room"?roomSelect("roomsel","room-"+key,key,L.room||"","Conference room for "+fmtDate(d.date)+" "+m.label)+(L.room?"":`<span class="warnline">Choose a room</span>`):""}${L.place==="Other"?`<input type="text" class="locnote" id="locnote-${key}" data-key="${key}" value="${esc(L.note)}" placeholder="Where?" aria-label="Other location">`:""}`:""}</td></tr>`}).join("")}
+        <td>${sv?`<select class="locsel" id="loc-${key}" data-key="${key}" aria-label="Location for ${fmtDate(d.date)} ${m.label}">${LOCS.map(o=>`<option value="${o}" ${L.place===o?"selected":""}>${o==="Meeting room"?`Their meeting room${mainRoomOn(plan,d.date)?" ("+mainRoomOn(plan,d.date)+")":""}`:o}</option>`).join("")}</select>${L.place==="Conference room"?roomSelect("roomsel","room-"+key,key,L.room||"","Conference room for "+fmtDate(d.date)+" "+m.label)+(L.room?"":`<span class="warnline">Choose a room</span>`):""}${L.place==="Other"?`<input type="text" class="locnote" id="locnote-${key}" data-key="${key}" value="${esc(L.note)}" placeholder="Where?" aria-label="Other location">`:""}`:""}</td></tr>`}).join("")}
       </tbody></table></div></div>`).join("")}`:`<div class="empty">This group hasn't set its event dates yet.</div>`}
-    <p class="small muted" style="margin:0">Meals default to the Dining hall and snacks to the Aspen Lobby until you change them. Times start at the standard schedule; a changed time is flagged because a fee may apply. Organizers see the locations on their review page but can't change them.</p>
+    <p class="small muted" style="margin:0">Meals default to the Dining hall and snacks to the Aspen Lobby until you change them. Times start at the standard schedule; a changed time is flagged because a fee may apply. Organizers see the locations on their review page but can't change them. “Their meeting room” follows the main room assigned above for that day.</p></section>
   </div>`;
 }
+function roomBookings(){
+  const out=[],rows=(planRows||staffRows||[]).filter(x=>!res||x.code!==res.code).map(x=>({r:normalize(structuredClone(x)),n:(planAll||kitchenInfo||{})[x.code]||{}}));
+  if(res&&view==="staffplan")rows.push({r:res,n:plan});
+  rows.forEach(({r,n})=>{const R=n.rooms||{};
+    r.days.forEach(d=>{const rm=(R.main||{})[d.date];if(rm)out.push({date:d.date,room:rm,code:r.code,group:r.group||r.code,what:"main room",tag:"main"})});
+    if(hasBreakouts(r))r.breakouts.forEach((b,i)=>{const rm=(R.bo||{})[b.id];if(rm)b.days.forEach(date=>out.push({date,room:rm,code:r.code,group:r.group||r.code,what:`breakout: ${b.name||"room "+(i+1)}${b.start?" "+fmtTime(b.start)+(b.end?"–"+fmtTime(b.end):""):""}`,tag:b.id}))})});
+  return out}
+// Other bookings of the same room on the same day (another group, or another use by this group).
+function clashes(all,date,room,code,tag){return room?all.filter(x=>x.date===date&&x.room===room&&!(x.code===code&&x.tag===tag)):[]}
+const clashText=c=>c.map(x=>`${x.code===res.code?"this group":esc(x.group)} (${esc(x.what)})`).join("; ");
+function roomsSection(r){
+  const all=roomBookings(),R=plan.rooms,opts=cur=>`<option value="">Not assigned yet</option>${ROOMS.map(o=>`<option ${cur===o?"selected":""}>${o}</option>`).join("")}`;
+  const mainRows=r.days.map(d=>{const cur=R.main[d.date]||"",c=clashes(all,d.date,cur,r.code,"main");
+    return `<tr><th scope="row">${fmtDate(d.date,{weekday:"short",month:"short",day:"numeric"})}</th><td><select class="mainroom" id="main-${d.date}" data-date="${d.date}" aria-label="Main room ${fmtDate(d.date)}">${opts(cur)}</select>${c.length?`<span class="warnline">Also booked: ${clashText(c)}</span>`:""}</td></tr>`}).join("");
+  const bo=hasBreakouts(r)?r.breakouts.map((b,i)=>{const cur=R.bo[b.id]||"",c=b.days.flatMap(date=>clashes(all,date,cur,r.code,b.id).map(x=>({...x,on:date})));
+    return `<tr><th scope="row">${esc(b.name||"Breakout room "+(i+1))}<div class="small muted" style="font-weight:400">${b.people?esc(b.people)+" people · ":""}${b.setup?SETUP_LABEL[b.setup]:"setup not given"}</div></th><td class="small">${b.days.length?esc(boWhen(b)):"Days not chosen"}</td>
+      <td><select class="boroom" id="bo-${esc(b.id)}" data-id="${esc(b.id)}" aria-label="Room for ${esc(b.name||"breakout room "+(i+1))}">${opts(cur)}</select>${c.length?`<span class="warnline">Also booked ${c.map(x=>`${fmtDate(x.on,{weekday:"short"})}: ${x.code===r.code?"this group":esc(x.group)} (${esc(x.what)})`).join("; ")}</span>`:""}</td></tr>`}).join(""):"";
+  return `<section class="plansec"><div class="sechead"><h3>Meeting rooms</h3><span class="small muted">Set by Setup</span></div>
+    <p class="small muted" style="margin:0">Main room setup: <b>${r.setup?SETUP_LABEL[r.setup]:"not given"}</b>${r.headcount?` for ${esc(r.headcount)} guests`:""}. A room booked more than once on the same day is flagged; times aren't compared, so check whether they overlap. Rooms left unassigned print as a blank line to write in.</p>
+    ${r.days.length?`<div class="tablewrap"><table class="plantable roomtbl"><thead><tr><th>Day</th><th>Main room</th></tr></thead><tbody>${mainRows}</tbody></table></div>
+    ${r.days.length>1?`<div class="row"><label class="f" for="main-all" style="flex-direction:row;align-items:center;gap:10px;white-space:nowrap">Same room every day<select id="main-all"><option value="">Choose a room</option>${ROOMS.map(o=>`<option>${o}</option>`).join("")}</select></label></div>`:""}`:`<div class="empty">This group hasn't set its event dates yet.</div>`}
+    <h3 style="margin-top:6px">Breakout rooms</h3>
+    ${bo?`<div class="tablewrap"><table class="plantable bortbl"><thead><tr><th>Breakout</th><th>When</th><th>Room</th></tr></thead><tbody>${bo}</tbody></table></div>`:`<p class="small muted" style="margin:0">${r.breakoutNeed==="no"?"No breakout rooms requested.":r.breakoutNeed==="yes"?"Breakout rooms requested, but none described yet.":"The organizer hasn't answered the breakout room question yet."}</p>`}
+  </section>
+  <section class="plansec"><div class="sechead"><h3>Meal locations</h3><span class="small muted">Set by Conference Services</span></div>`}
 function setPlanState(t){planState=t;const el=document.getElementById("planstate");if(el)el.textContent=t}
 function planSave(){
   setPlanState("Saving…");clearTimeout(planSaveT);
   const code=res.code,snap={...plan,code,updatedAt:new Date().toISOString()};
   planSaveT=setTimeout(async()=>{try{await store.putStaff(code,snap);setPlanState("Saved "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}))}
-    catch(e){setPlanState(e&&e.code==="invalid_argument"?"Only Aspen Grove staff can change meal locations":"Not saved. Check your connection.")}},500);
+    catch(e){setPlanState(e&&e.code==="invalid_argument"?"Only Aspen Grove staff can change rooms and locations":"Not saved. Check your connection.")}},500);
 }
 
 // ---------- CONFERENCE SERVICES ----------
@@ -1502,7 +1541,7 @@ function renderStaff(){
 }
 
 const GROUP_FILTERS={all:"Upcoming groups",locked:"Locked in",progress:"Organizer working on it",waiting:"Invited, not started",overdue:"Past the 14-day deadline"};
-let groupFilter="all";
+let groupFilter="all", planAll=null, planRows=null;
 function groupsView(){
   const rows=staffRows;
   const sorted=[...rows].sort((a,b)=>(a.startDate||"9999").localeCompare(b.startDate||"9999"));
@@ -1527,7 +1566,7 @@ function groupsView(){
         <td>${dlTxt}</td><td><span class="pill ${s.k==="locked"?"locked":s.k}">${s.label}</span></td>
         <td class="a">${pendingDelete===r.code
           ?`<div class="acts"><span class="small" style="font-weight:600;color:var(--bad)">Delete permanently?</span><button class="btn danger" data-dodelete="${esc(r.code)}">Delete</button><button class="btn" data-canceldelete>Cancel</button></div>`
-          :`<div class="acts"><button class="btn" data-sheet="${esc(r.code)}">Final sheet</button>${locked?"":s.k==="waiting"?`<button class="btn" data-invite="${esc(r.code)}">Invitation</button>`:`<button class="btn" data-remind="${esc(r.code)}">Reminder</button>`}<button class="btn" data-open="${esc(r.code)}">Open form</button><button class="btn" data-plan="${esc(r.code)}">Locations</button>${locked?`<button class="btn ghost" data-unlock="${esc(r.code)}">Reopen</button>`:""}<button class="btn ghost danger-text" data-askdelete="${esc(r.code)}" aria-label="Delete ${esc(r.code)}">Delete</button></div>`}</td></tr>`}).join("")}
+          :`<div class="acts"><button class="btn" data-sheet="${esc(r.code)}">Final sheet</button>${locked?"":s.k==="waiting"?`<button class="btn" data-invite="${esc(r.code)}">Invitation</button>`:`<button class="btn" data-remind="${esc(r.code)}">Reminder</button>`}<button class="btn" data-open="${esc(r.code)}">Open form</button><button class="btn" data-plan="${esc(r.code)}">Rooms &amp; locations</button>${locked?`<button class="btn ghost" data-unlock="${esc(r.code)}">Reopen</button>`:""}<button class="btn ghost danger-text" data-askdelete="${esc(r.code)}" aria-label="Delete ${esc(r.code)}">Delete</button></div>`}</td></tr>`}).join("")}
       </tbody></table></div>`:`<div class="empty">No groups yet. Start one with the button above, or an organizer can create one from the Organizer tab.</div>`}
       <p class="small muted" style="margin:0">The list updates live as organizers type. "Form" counts the five required parts: contact, room, meals, allergies, checklist. In a production version this view would sit behind BYU sign-in.</p>
     </div>
@@ -1555,7 +1594,7 @@ function sheetBody(r0,info){
   const locked=r.status==="locked",ex=extras(r);
   const dates=r.startDate?fmtDate(r.startDate,{weekday:"short",month:"long",day:"numeric",year:"numeric"})+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate,{weekday:"short",month:"long",day:"numeric"}):""):"Dates not set";
   const v=(x,e="Not provided")=>x!==undefined&&x!==null&&String(x).trim()!==""?esc(x):`<span class="miss">${e}</span>`;
-  const where=(d,m)=>{const L=locs[slotKey(d,m.k)];return L?locLabel(L):defLoc(m)};
+  const where=(d,m)=>{const L=locs[slotKey(d,m.k)];return L?locLabel(L,d,info):defLoc(m)};
   const av=r.noAV?"None needed":[...r.av,...(r.avOther?[r.avOther]:[])].join(", ");
   const miss=locked?[]:missingList(r);
   const sev=r.allergies.filter(isSevere).length;
@@ -1577,9 +1616,9 @@ function sheetBody(r0,info){
     <p class="note">${r.comments?esc(r.comments):`<span class="muted">No additional comments.</span>`}</p>
     <p style="margin:6px 0 0">Conference schedule emailed: <b>${r.checklist.schedule?"Yes":"No"}</b> · Final payment sent: <b>${r.checklist.payment?"Yes":"No"}</b></p>
     <h2>Conference rooms &amp; A/V</h2>
-    <div class="kvs"><div><span>Preferred setup</span>${r.setup?SETUP_LABEL[r.setup]:v("")}</div><div><span>Changes during event</span>${r.roomChanges?(r.roomChanges==="yes"?"Yes · needs approval":"No"):v("")}</div><div><span>Audio/visual</span>${av?esc(av):v("","Not answered")}</div></div>
+    <div class="kvs"><div><span>Preferred setup</span>${r.setup?SETUP_LABEL[r.setup]:v("")}</div><div><span>Changes during event</span>${r.roomChanges?(r.roomChanges==="yes"?"Yes · needs approval":"No"):v("")}</div><div><span>Audio/visual</span>${av?esc(av):v("","Not answered")}</div><div><span>Assigned room</span>${(()=>{const R=(info.rooms||{}).main||{},xs=r.days.map(d=>R[d.date]||"");if(!xs.some(Boolean))return `<span class="muted">Not assigned yet</span>`;if(xs.every(x=>x===xs[0]))return esc(xs[0]);return r.days.map((d,k)=>`${fmtDate(d.date,{weekday:"short"})} ${xs[k]?esc(xs[k]):"—"}`).join(" · ")})()}</div></div>
     ${r.setupNotes?`<p class="note" style="margin-top:8px"><b>Setup notes:</b> ${esc(r.setupNotes)}</p>`:""}
-    ${hasBreakouts(r)?`<h3>Breakout rooms · ${r.breakouts.length}</h3><table><thead><tr><th>Room</th><th style="width:56px">People</th><th>When</th><th style="width:96px">Setup</th><th>A/V &amp; notes</th></tr></thead><tbody>${r.breakouts.map((b,i)=>`<tr><td>${esc(b.name||"Breakout room "+(i+1))}</td><td class="n">${b.people?esc(b.people):v("")}</td><td>${b.days.length?esc(boWhen(b)):v("","Days not chosen")}</td><td>${b.setup?SETUP_LABEL[b.setup]:v("")}</td><td>${esc([...b.av,b.notes].filter(Boolean).join(", "))||"None"}</td></tr>`).join("")}</tbody></table>`
+    ${hasBreakouts(r)?`<h3>Breakout rooms · ${r.breakouts.length}</h3><table><thead><tr><th>Room</th><th style="width:56px">People</th><th>When</th><th style="width:96px">Setup</th><th>A/V &amp; notes</th></tr></thead><tbody>${r.breakouts.map((b,i)=>`<tr><td>${esc(b.name||"Breakout room "+(i+1))}${((info.rooms||{}).bo||{})[b.id]?`<br><span class="small">Room: <b>${esc(info.rooms.bo[b.id])}</b></span>`:""}</td><td class="n">${b.people?esc(b.people):v("")}</td><td>${b.days.length?esc(boWhen(b)):v("","Days not chosen")}</td><td>${b.setup?SETUP_LABEL[b.setup]:v("")}</td><td>${esc([...b.av,b.notes].filter(Boolean).join(", "))||"None"}</td></tr>`).join("")}</tbody></table>`
       :`<p style="margin:8px 0 0"><b>Breakout rooms:</b> ${r.breakoutNeed==="no"?"None needed":v("","Not answered")}</p>`}
     <p style="margin:8px 0 0"><b>Walk-through:</b> ${wantsWalk(r)?`${esc(walkStatus(r,info.walk))} <span class="muted">· ${esc(walkRequestText(r))}</span>`:r.walk.want==="no"?"Not requested":`<span class="muted">Not requested</span>`}</p>
     <h2>Allergies &amp; restrictions${r.allergies.length?` · ${r.allergies.length} guest${r.allergies.length===1?"":"s"}${sev?`, <span class="sev">${sev} severe</span>`:""}`:""}</h2>
@@ -1722,7 +1761,7 @@ function weekEntries(date,m){
     .sort((a,b)=>(a.r.group||"").localeCompare(b.r.group||"")).map(({r,di})=>{const st=r.days[di].meals[m.k];if(!isServed(m,st))return null;
       const n=info[r.code]||{},key=slotKey(date,m.k),L=(n.locations||{})[key],t=(n.times||{})[key];
       const al=withRes(r,()=>allergiesAt(di,m.k));const veg=!m.snack&&st.vegChoice?Number(st.vegCount)||0:0;
-      return {r,st,n:mealCount(st,r),veg,time:t&&t!==m.time?t:"",where:L?locLabel(L):"",al}}).filter(Boolean)}
+      return {r,st,n:mealCount(st,r),veg,time:t&&t!==m.time?t:"",where:L?locLabel(L,date,n):"",al}}).filter(Boolean)}
 const dietReq=a=>`<span class="${isSevere(a)?"sev":""}">${esc(a.allergy)}${a.type==="Medical"?" (medical)":isSevere(a)?" (severe)":a.type==="Preference"?` <span class="muted">(preference)</span>`:a.type==="Intolerance"?` <span class="muted">(intolerance)</span>`:""}</span>`;
 function weekDiet(dates){
   const groupSlots=new Map(),guests=new Map();
@@ -1815,31 +1854,37 @@ function roomsBody(start){
   const avOf=r=>r.noAV?[]:[...r.av,...(r.avOther?[r.avOther]:[])];
   const days=dates.filter(d=>groups.some(r=>r.days.some(x=>x.date===d)));
   const bosOn=(r,d)=>hasBreakouts(r)?r.breakouts.filter(b=>b.days.includes(d)):[];
+  const RM=r=>(info[r.code]||{}).rooms||{},mainOn=(r,d)=>(RM(r).main||{})[d]||"",boRoom=(r,b)=>(RM(r).bo||{})[b.id]||"";
+  const booked=new Map();groups.forEach(r=>{r.days.forEach(d=>{const x=mainOn(r,d.date);if(x)booked.set(d.date+"|"+x,(booked.get(d.date+"|"+x)||0)+1)});if(hasBreakouts(r))r.breakouts.forEach(b=>{const x=boRoom(r,b);if(x)b.days.forEach(d=>booked.set(d+"|"+x,(booked.get(d+"|"+x)||0)+1))})});
+  const dbl=(d,x)=>x&&(booked.get(d+"|"+x)||0)>1?` <span class="miss">(double-booked)</span>`:"";
   const glance=days.map(d=>{const on=groups.filter(r=>r.days.some(x=>x.date===d));const eq=new Map();on.forEach(r=>[...(r.noAV?[]:r.av),...bosOn(r,d).flatMap(b=>b.av)].forEach(a=>eq.set(a,(eq.get(a)||0)+1)));
-    return `<tr><th scope="row">${fmtDate(d,{weekday:"short",month:"short",day:"numeric"})}</th><td>${on.map(r=>{const bo=bosOn(r,d);return `${esc(r.group||r.code)} <span class="muted">· ${r.setup?SETUP_LABEL[r.setup].toLowerCase():"setup not given"}</span>${bo.length?`<br><span class="small">+ ${bo.length} breakout${bo.length===1?"":"s"}: ${bo.map(b=>`${b.setup?SETUP_LABEL[b.setup].toLowerCase():"setup not given"}${b.people?" for "+b.people:""}`).map(esc).join(", ")}</span>`:""}`}).join("<br>")}</td><td>${eq.size?[...eq].map(([a,n])=>`${esc(a)}${n>1?` ×${n}`:""}`).join(", "):`<span class="muted">None</span>`}</td></tr>`}).join("");
+    return `<tr><th scope="row">${fmtDate(d,{weekday:"short",month:"short",day:"numeric"})}</th><td>${on.map(r=>{const bo=bosOn(r,d);return `${esc(r.group||r.code)}${mainOn(r,d)?` · <b>${esc(mainOn(r,d))}</b>${dbl(d,mainOn(r,d))}`:""} <span class="muted">· ${r.setup?SETUP_LABEL[r.setup].toLowerCase():"setup not given"}</span>${bo.length?`<br><span class="small">+ ${bo.length} breakout${bo.length===1?"":"s"}: ${bo.map(b=>`${boRoom(r,b)?`<b>${esc(boRoom(r,b))}</b>${dbl(d,boRoom(r,b))} `:""}${esc(b.setup?SETUP_LABEL[b.setup].toLowerCase():"setup not given")}${b.people?" for "+esc(b.people):""}`).join(", ")}</span>`:""}`}).join("<br>")}</td><td>${eq.size?[...eq].map(([a,n])=>`${esc(a)}${n>1?` ×${n}`:""}`).join(", "):`<span class="muted">None</span>`}</td></tr>`}).join("");
   const drafts=groups.filter(r=>r.status!=="locked").length;
   const v=(x,e="Not answered")=>x?x:`<span class="miss">${e}</span>`;
   const blocks=groups.map(r=>{const n=info[r.code]||{},locs=n.locations||{},av=avOf(r);
     const inWeek=r.days.filter(d=>dates.includes(d.date)).map(d=>d.date);
-    const conf=[];r.days.forEach(d=>MEALS.forEach(m=>{const L=locs[slotKey(d.date,m.k)];if(L&&L.place==="Conference room"&&isServed(m,d.meals[m.k])&&dates.includes(d.date))conf.push(`${fmtDate(d.date,{weekday:"short"})} ${m.label.toLowerCase()} ${fmtTime((n.times||{})[slotKey(d.date,m.k)]||m.time)}${L.room?` · ${esc(L.room)}`:""}`)}));
+    const conf=[];r.days.forEach(d=>MEALS.forEach(m=>{const L=locs[slotKey(d.date,m.k)];if(inRoom(L)&&isServed(m,d.meals[m.k])&&dates.includes(d.date)){const rm=L.place==="Meeting room"?mainRoomOn(n,d.date)||"their meeting room":L.room;conf.push(`${fmtDate(d.date,{weekday:"short"})} ${m.label.toLowerCase()} ${fmtTime((n.times||{})[slotKey(d.date,m.k)]||m.time)}${rm?` · ${esc(rm)}`:""}`)}}));
     const os=r.onsite.same?`${esc(r.contact)}${r.phone?` · ${esc(r.phone)}`:""}`:r.onsite.name?`${esc(r.onsite.name)}${r.onsite.phone?` · ${esc(r.onsite.phone)}`:""}`:`<span class="miss">Not given</span>`;
     return `<section class="rgroup"><div class="srv"><div><b>${esc(r.group||r.code)}</b>${r.status!=="locked"?` <span class="miss small">(draft)</span>`:""} <span class="muted small">${esc(r.code)}</span>
       <div class="small muted">${fmtDate(r.startDate,{weekday:"short",month:"short",day:"numeric"})}${r.endDate!==r.startDate?` – ${fmtDate(r.endDate,{weekday:"short",month:"short",day:"numeric"})}`:""}${inWeek.length<r.days.length?` · this week: ${inWeek.map(d=>fmtDate(d,{weekday:"short"})).join(", ")}`:""}</div></div><div class="serve">${headN(r)||"—"} <span class="small">guests</span></div></div>
       <table class="rtab"><tbody>
-        <tr class="wr"><th scope="row">Room</th><td><span class="par wide"></span></td></tr>
+        ${(()=>{const rs=inWeek.map(d=>({d,x:mainOn(r,d)}));const all=rs.every(o=>o.x),same=all&&rs.every(o=>o.x===rs[0].x);
+          if(same){const dd=rs.filter(o=>dbl(o.d,o.x)).map(o=>fmtDate(o.d,{weekday:"short"}));return `<tr><th scope="row">Room</th><td><b>${esc(rs[0].x)}</b>${dd.length?` <span class="miss">(double-booked${rs.length>1?" "+dd.join(", "):""})</span>`:""}</td></tr>`}
+          if(!rs.some(o=>o.x))return `<tr class="wr"><th scope="row">Room</th><td><span class="par wide"></span></td></tr>`;
+          return `<tr><th scope="row">Room</th><td>${rs.map(o=>`<div class="borow"><span style="min-width:44px">${fmtDate(o.d,{weekday:"short"})}</span>${o.x?`<b>${esc(o.x)}</b>${dbl(o.d,o.x)}`:`<span class="par inl" style="margin:0"></span>`}</div>`).join("")}</td></tr>`})()}
         <tr><th scope="row">Setup</th><td>${r.setup?`<b>${SETUP_LABEL[r.setup]}</b>`:v("")}</td></tr>
         <tr><th scope="row">Changes during event</th><td>${r.roomChanges==="yes"?`<span class="miss">Yes · needs approval, fee may apply</span>`:r.roomChanges==="no"?"No":v("")}</td></tr>
         ${r.setupNotes?`<tr><th scope="row">Setup notes</th><td class="note">${esc(r.setupNotes)}</td></tr>`:""}
         <tr><th scope="row">A/V Requirements</th><td>${r.noAV?"None needed":av.length?`<div class="avlist">${av.map(a=>`<span><span class="box" aria-hidden="true"></span> ${esc(a)}</span>`).join("")}</div><div class="small muted">Requested by the group. Check off each item when it's set up.</div>`:v("")}</td></tr>
         ${hasBreakouts(r)&&r.breakouts.some(b=>b.days.some(d=>dates.includes(d)))?`<tr><th scope="row">Breakout rooms</th><td>${r.breakouts.filter(b=>b.days.some(d=>dates.includes(d))).map((b,i)=>`<div class="bo"><b>${esc(b.name||"Breakout room "+(i+1))}</b> · ${b.people?esc(b.people)+" people":`<span class="miss">people not given</span>`} · ${esc(boWhen(b,dates))} · ${b.setup?`<b>${SETUP_LABEL[b.setup]}</b>`:`<span class="miss">setup not given</span>`}
-          <div class="borow"><span>Room <span class="par inl"></span></span>${b.av.length?`<span class="avlist">${b.av.map(a=>`<span><span class="box" aria-hidden="true"></span> ${esc(a)}</span>`).join("")}</span>`:`<span class="muted">No A/V</span>`}</div>${b.notes?`<div class="small note">${esc(b.notes)}</div>`:""}</div>`).join("")}</td></tr>`:""}
+          <div class="borow"><span>Room ${boRoom(r,b)?`<b>${esc(boRoom(r,b))}</b>${b.days.filter(d=>dates.includes(d)).map(d=>dbl(d,boRoom(r,b))).find(Boolean)||""}`:`<span class="par inl"></span>`}</span>${b.av.length?`<span class="avlist">${b.av.map(a=>`<span><span class="box" aria-hidden="true"></span> ${esc(a)}</span>`).join("")}</span>`:`<span class="muted">No A/V</span>`}</div>${b.notes?`<div class="small note">${esc(b.notes)}</div>`:""}</div>`).join("")}</td></tr>`:""}
         ${conf.length?`<tr><th scope="row">Food in the room</th><td class="miss">${conf.join("<br>")}</td></tr>`:""}
         <tr><th scope="row">On-site contact</th><td>${os}</td></tr>
       </tbody></table></section>`}).join("");
   return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Conference rooms &amp; A/V</div><h1>Week of ${fmtDate(start,{month:"long",day:"numeric",year:"numeric"})}</h1><div>${groups.length} group${groups.length===1?"":"s"} on site</div></div>
     <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
     <h2>At a glance</h2><table><thead><tr><th style="width:96px">Day</th><th>Groups &amp; setup</th><th>A/V equipment out</th></tr></thead><tbody>${glance}</tbody></table>
-    <h2>By group</h2><div class="small muted" style="margin:-4px 0 6px">Write in the assigned rooms, including breakouts. Amber marks a draft, a mid-event change, or food served in the meeting room.</div>${blocks}</div>`}
+    <h2>By group</h2><div class="small muted" style="margin:-4px 0 6px">Rooms assigned on the page are printed; write in any that aren't, including breakouts. Amber marks a draft, a mid-event change, or food served in the meeting room.</div>${blocks}</div>`}
 function roomsView(){
   const ws=weekStarts();
   if(!ws.length)return `<div class="empty">No groups have event dates yet.</div>`;
@@ -1850,7 +1895,9 @@ function roomsView(){
     <label class="f" for="rstart">Week<select id="rstart">${ws.map(w=>`<option value="${w}" ${w===roomWeek?"selected":""}>Week of ${fmtDate(w,{month:"short",day:"numeric",year:"numeric"})}</option>`).join("")}</select></label>
     <button class="btn ghost" data-rstep="1" ${i>=ws.length-1?"disabled":""} aria-label="Next week">›</button>
     <button class="btn primary" data-rdl>Download to print</button></div>
-    <p class="small muted" style="margin:0">Room setup and A/V for every group on site that week, with the equipment needed each day. For the setup crew and A/V.</p></div>
+    <p class="small muted" style="margin:0">Room setup and A/V for every group on site that week, with the equipment needed each day. For the setup crew and A/V.</p>
+    ${(()=>{const dts=[...Array(7)].map((_,k)=>addDays(roomWeek,k)),gs=(staffRows||[]).filter(r=>(r.days||[]).some(d=>dts.includes(d.date))).sort((a,b)=>(a.startDate||"").localeCompare(b.startDate||""));
+      return gs.length?`<div class="assignrow"><span class="small" style="font-weight:600">Assign rooms:</span>${gs.map(r=>`<button class="btn tiny" data-plan="${esc(r.code)}">${esc(r.group||r.code)}</button>`).join("")}</div>`:""})()}</div>
     ${kitchenInfo===null?`<div class="empty">Loading meal locations…</div>`:`<div class="sheetwrap"><article class="sheet">${roomsBody(roomWeek)}</article></div>`}</div>`}
 function walksView(){
   if(kitchenInfo===null)return `<div class="empty">Loading walk-throughs…</div>`;
@@ -1892,15 +1939,16 @@ function plainMenu(m,st){if(m.snack)return st.on?st.items.join(", "):"";if(!st.c
 async function exportData(kind){
   const rows=(staffRows||[]).map(r=>normalize(structuredClone(r)));const stamp=iso(new Date());
   if(kind==="groups"){
-    const out=[["Code","Group","Status","Organizer","Email","Phone","On-site contact","On-site phone","First day","Last day","Headcount","Setup","A/V","Breakout rooms","Walk-through","Allergy guests","Severe","Form parts done","Lock-in deadline","Locked in at","Last changed"]];
-    rows.forEach(r=>out.push([r.code,r.group,stateOf(r).label,r.contact,r.email,r.phone,r.onsite.same?r.contact:r.onsite.name,r.onsite.same?r.phone:r.onsite.phone,r.startDate,r.endDate,r.headcount,SETUP_LABEL[r.setup]||"",r.noAV?"None":[...r.av,r.avOther].filter(Boolean).join("; "),hasBreakouts(r)?r.breakouts.map(b=>`${b.name||"Breakout"} (${b.people||"?"}, ${SETUP_LABEL[b.setup]||"setup not given"})`).join("; "):r.breakoutNeed==="no"?"None":"",wantsWalk(r)?walkRequestText(r):r.walk.want==="no"?"No":"",r.allergies.length,r.allergies.filter(isSevere).length,`${progressOf(r)}/${SECS_TOTAL}`,deadlineOf(r)?iso(deadlineOf(r)):"",r.lockedAt||"",r.updatedAt||""]));
+    let gInfo={};try{gInfo=await store.allStaff()}catch(e){}
+    const out=[["Code","Group","Status","Organizer","Email","Phone","On-site contact","On-site phone","First day","Last day","Headcount","Setup","Assigned room","A/V","Breakout rooms","Walk-through","Allergy guests","Severe","Form parts done","Lock-in deadline","Locked in at","Last changed"]];
+    rows.forEach(r=>out.push([r.code,r.group,stateOf(r).label,r.contact,r.email,r.phone,r.onsite.same?r.contact:r.onsite.name,r.onsite.same?r.phone:r.onsite.phone,r.startDate,r.endDate,r.headcount,SETUP_LABEL[r.setup]||"",[...new Set(r.days.map(d=>(((gInfo[r.code]||{}).rooms||{}).main||{})[d.date]).filter(Boolean))].join("; "),r.noAV?"None":[...r.av,r.avOther].filter(Boolean).join("; "),hasBreakouts(r)?r.breakouts.map(b=>`${b.name||"Breakout"} (${b.people||"?"}, ${SETUP_LABEL[b.setup]||"setup not given"})`).join("; "):r.breakoutNeed==="no"?"None":"",wantsWalk(r)?walkRequestText(r):r.walk.want==="no"?"No":"",r.allergies.length,r.allergies.filter(isSevere).length,`${progressOf(r)}/${SECS_TOTAL}`,deadlineOf(r)?iso(deadlineOf(r)):"",r.lockedAt||"",r.updatedAt||""]));
     await saveFile(`Aspen Grove groups ${stamp}.csv`,csv(out),"Group list saved");
   }else if(kind==="meals"){
     let info={};try{info=await store.allStaff()}catch(e){}
     const out=[["Date","Meal","Time","Location","Code","Group","Status","Guests","Menu","Vegetarian plates","Allergies"]];
     rows.forEach(r=>r.days.forEach((d,di)=>MEALS.forEach(m=>{const st=d.meals[m.k];if(!isServed(m,st))return;const n=info[r.code]||{},key=slotKey(d.date,m.k),L=(n.locations||{})[key];
       const al=withRes(r,()=>allergiesAt(di,m.k)).map(a=>`${a.name}: ${a.allergy}${isSevere(a)?" (severe)":""}`).join("; ");
-      out.push([d.date,m.label,(n.times||{})[key]||m.time,L?locLabel(L):defLoc(m),r.code,r.group,r.status==="locked"?"Locked in":"Draft",mealCount(st,r),plainMenu(m,st),!m.snack&&st.vegChoice?Number(st.vegCount)||0:"",al])})));
+      out.push([d.date,m.label,(n.times||{})[key]||m.time,L?locLabel(L,d.date,n):defLoc(m),r.code,r.group,r.status==="locked"?"Locked in":"Draft",mealCount(st,r),plainMenu(m,st),!m.snack&&st.vegChoice?Number(st.vegCount)||0:"",al])})));
     out.splice(1,out.length-1,...out.slice(1).sort((a,b)=>(a[0]+a[2]).localeCompare(b[0]+b[2])));
     await saveFile(`Aspen Grove meals ${stamp}.csv`,csv(out),"Meal list saved");
   }else{

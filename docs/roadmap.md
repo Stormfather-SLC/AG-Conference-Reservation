@@ -13,8 +13,9 @@ Replace the PDF clients fill out with a web page that collects the same informat
   - Daily production list (kitchen)
   - Rooms & A/V (setup crew, weekly). Added Oct 23 by Matt's decision; room setup and A/V had been on the parking lot.
   - Walk-throughs (setup). See below.
+- **Room assignment on the page** (added Oct 27 by Matt's decision). Setup assigns the main room per day and each breakout's room, with double-booking warnings; meals can be served in "their meeting room", which follows the assignment. Unassigned rooms still print as a write-in line.
 - **Breakout rooms and walk-through requests.** Moved up from Phase 2 on Oct 27 by Matt's decision, at Nate's request (Programs manager, responsible for Setup). These go beyond the paper form.
-  - The organizer says whether they need breakout rooms and, for each: purpose, people, days, times, setup style (theater, round tables, classroom, boardroom, U-shape), A/V and notes. Aspen Grove assigns the rooms; the Rooms & A/V sheet has a blank line to write each one in.
+  - The organizer says whether they need breakout rooms and, for each: purpose, people, days, times, setup style (theater, round tables, classroom, boardroom, U-shape), A/V and notes. Aspen Grove assigns the rooms, on the page or by writing them on the Rooms & A/V sheet.
   - The organizer can request a walk-through with two preferred days and times of day. The form says plainly that these depend on what else is happening at camp and aren't guaranteed. Setup staff mark each request Scheduled (with the confirmed day and time), Done, or Couldn't schedule; the organizer sees the result on their form.
 - Hosting assumed at aspengrove.byu.edu.
 
@@ -25,7 +26,8 @@ Built Oct 27 with these defaults; adjust after Nate reviews it.
 1. **Setup styles** for breakout rooms: theater, round tables, classroom, boardroom, U-shape. Right list?
 2. **Fees.** No fee note is shown for breakout rooms or walk-throughs. Should there be one, like mid-event room changes?
 3. **Walk-through timing.** The form suggests before the 14-day lock-in deadline but allows any day before the event.
-4. **Who updates walk-throughs.** Status is saved with the staff notes, which only artifact editors can change. Nate or his team need edit access, or this moves to its own permission.
+4. **Who updates rooms and walk-throughs.** Both save with the staff notes, which only artifact editors can change. Nate or his team need edit access, or these move to their own permission.
+5. **When rooms get decided.** Room assignment on the page assumes Setup decides rooms ahead of the event week. If it's usually decided day-of, the printed write-in line remains the fallback.
 
 ## Phase 2
 
