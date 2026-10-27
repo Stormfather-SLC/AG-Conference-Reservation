@@ -280,6 +280,8 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .acts .btn{padding:5px 10px;font-size:.85rem}
 .stafftable td.a{white-space:normal;min-width:190px}
 .nowrap{white-space:nowrap}
+.acts .reviewbtn{flex-basis:100%;justify-content:center;background:var(--warn-soft);border-color:var(--warn);color:var(--fg)}
+.acts .reviewbtn:hover{border-color:var(--fg)}
 .amenu{position:relative}
 .amenu summary{list-style:none;padding:5px 12px;font-size:.85rem}.amenu summary::-webkit-details-marker{display:none}
 .amenu[open] summary{border-color:var(--spruce);background:var(--sunk)}
@@ -1664,7 +1666,7 @@ function groupsView(){
       ${shown.length?"":`<tr><td colspan="7"><div class="empty">No groups ${esc(GROUP_FILTERS[groupFilter].toLowerCase())} right now.</div></td></tr>`}
       ${shown.map(r=>{const dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null,s=stateOf(r),locked=r.status==="locked",p=progressOf(r);
         const dlTxt=!dl?"—":locked?fmtDate(dl):left<0?`<span style="color:var(--bad);font-weight:600">${fmtDate(dl)} · overdue</span>`:left<=7?`<span style="color:var(--warn);font-weight:600">${fmtDate(dl)} · ${left}d</span>`:`${fmtDate(dl)} · ${left}d`;
-        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b><br><span class="mono small muted nowrap">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span>${(()=>{const n=pendingReqs(r,(kitchenInfo||{})[r.code]).length;return n?`<br><button type="button" class="linkbtn warnlink" data-treview="${esc(r.code)}">${n} time change request${n===1?"":"s"} to review</button>`:""})()}</td>
+        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b><br><span class="mono small muted nowrap">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span></td>
         <td>${r.startDate?fmtDate(r.startDate)+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate):""):"—"}</td><td class="mono">${esc(r.headcount||"—")}</td>
         <td><div class="prog"><span class="bar"><i style="width:${p/SECS_TOTAL*100}%"></i></span>${p}/${SECS_TOTAL}</div></td>
         <td>${dlTxt}</td><td><span class="pill ${s.k==="locked"?"locked":s.k}">${s.label}</span></td>
@@ -1676,7 +1678,7 @@ function groupsView(){
             <button role="menuitem" data-plan="${esc(r.code)}">Rooms &amp; locations</button>
             ${locked?"":s.k==="waiting"?`<button role="menuitem" data-invite="${esc(r.code)}">Invitation email</button>`:`<button role="menuitem" data-remind="${esc(r.code)}">Reminder email</button>`}
             ${locked?`<button role="menuitem" data-unlock="${esc(r.code)}">Reopen for changes</button>`:""}
-          </div></details><button class="btn ghost danger-text" data-askdelete="${esc(r.code)}" aria-label="Delete ${esc(r.code)}">Delete</button></div>`}</td></tr>`}).join("")}
+          </div></details><button class="btn ghost danger-text" data-askdelete="${esc(r.code)}" aria-label="Delete ${esc(r.code)}">Delete</button>${(()=>{const n=pendingReqs(r,(kitchenInfo||{})[r.code]).length;return n?`<button type="button" class="btn reviewbtn" data-treview="${esc(r.code)}">Review ${n} time change${n===1?"":"s"}</button>`:""})()}</div>`}</td></tr>`}).join("")}
       </tbody></table></div>`:`<div class="empty">No groups yet. Start one with the button above, or an organizer can create one from the Organizer tab.</div>`}
       <p class="small muted" style="margin:0">The list updates live as organizers type. "Form" counts the five required parts: contact, room, meals, allergies, checklist. In a production version this view would sit behind BYU sign-in.</p>
     </div>
