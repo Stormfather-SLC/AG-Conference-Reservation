@@ -41,3 +41,4 @@ Built Oct 27 with these defaults; adjust after Nate reviews it.
 - Billing integration. At most a selections report to billing.
 - Food order guide: plate counts across the week, with 15 staff meals added to the largest entrée at breakfast, lunch and dinner (not snacks). Moved out of Phase 1 on Oct 27 by Matt's decision. The staff meal count is already set in the app (`STAFF_MEALS`).
 - Units or yields (pans, trays) on the production list and order guide.
+- **Time-aware room bookings.** Give each room booking a start and end time and check conflicts by overlapping time, not just same day. This would allow splitting a group's main room within a day (e.g. Timp A in the morning, Fir in the afternoon) and stop flagging a room a group reuses at different times as double-booked. Parked Oct 27; build it if either case comes up in real bookings.
