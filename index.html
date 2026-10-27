@@ -736,7 +736,7 @@ function timeReviewHTML(){
       <span class="small muted">${mealCount(x.st,r)} guests · ${x.m.snack?esc(x.st.items.join(", ")):menuShort(x.m,x.st)}</span></div>
       <div class="tdchange"><span>${fmtTime(cur)}</span> → <b>${fmtTime(x.st.timeReq.time)}</b>${x.st.timeReq.time===x.m.time?` <span class="small muted">(back to standard)</span>`:cur!==x.m.time?` <span class="small muted">(standard ${fmtTime(x.m.time)})</span>`:""}</div>
       ${x.st.timeReq.note?`<p class="small" style="margin:0">Reason: “${esc(x.st.timeReq.note)}”</p>`:""}
-      <p class="small muted" style="margin:0">Approving tells the kitchen right away: the new time shows on the production list and meal schedule. A fee may apply.</p>
+      <p class="small muted" style="margin:0">Approving tells the kitchen right away: the new time shows on the production list and meal schedule.</p>
       <div class="row"><button class="btn primary" data-trapprove="${x.key}">Approve ${fmtTime(x.st.timeReq.time)}</button><button class="btn" data-trdecline="${x.key}">Decline, keep ${fmtTime(cur)}</button></div></div>`}).join("")
     :`<div class="notice ok">All requests for this group have been reviewed.</div><div class="row"><button class="btn primary" data-trclose>Done</button></div>`}`}
 function openTimeReview(code){trCode=code;let d=document.getElementById("tdlg");
