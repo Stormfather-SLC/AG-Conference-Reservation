@@ -13,6 +13,7 @@ A prototype web form that replaces the paper **Conference Final Details** form a
 ### Organizers
 - Create a reservation, or open one from an invitation link (`…#AG-XXXXX`).
 - Fill in six sections: group and contact, attendee notes, rooms and A/V (including breakout rooms and an optional walk-through request), allergies (with an optional guest-list upload), meals and snacks by day, and comments.
+- Allergies are entered one card per guest, with one or more restrictions each (every restriction has its own type and severity). Typing a name that's already listed offers to add the restriction to that guest instead.
 - Menu rules are built in: 3-item snack limit, vegetarian plates, fajita meat, add-ons, and an upgrade-cost estimate.
 - Review everything on one page, then lock in. The form becomes read-only.
 - Anything still missing is listed above the Lock in button. Each item links straight to the field that needs it, missing fields are outlined in red, and a "Go to next" button in the side rail steps through what's left.
