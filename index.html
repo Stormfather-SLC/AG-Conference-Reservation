@@ -354,15 +354,16 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .sheet table.ptab td.n{width:110px}
 .sheet table.ptab thead th{border:0;border-bottom:1px solid #c9ced6;background:none;padding:2px 6px;font-size:9.5px}
 .sheet table.ptab .pc{width:90px}
-.sheet .par{display:block;height:14px;border-bottom:1px solid #16181c;margin:0 4px}
+.sheet .par{display:block;height:24px;border-bottom:1px solid #16181c;margin:0 4px}
+.sheet tr.wr th,.sheet tr.wr td{vertical-align:bottom}
 .sheet .rgroup{margin:6px 0 10px;break-inside:avoid}
 .sheet table.rtab th,.sheet table.rtab td{border:0;border-bottom:1px solid #e3e6eb;padding:3px 8px}
 .sheet table.rtab th{width:150px;font-weight:600;color:#2b3340;white-space:nowrap}
-.sheet .par.wide{width:220px;margin:0}
+.sheet .par.wide{width:240px;height:32px;margin:0}
 .sheet .avlist{display:flex;flex-wrap:wrap;gap:4px 16px}
 .sheet .bo{padding:4px 0 6px;border-bottom:1px dashed #d5dae1}.sheet .bo:last-child{border-bottom:0}
 .sheet .borow{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:flex-end;margin-top:4px}
-.sheet .par.inl{display:inline-block;width:170px;vertical-align:bottom;margin:0 0 0 4px}
+.sheet .par.inl{display:inline-block;width:200px;height:30px;vertical-align:bottom;margin:0 0 0 4px}
 .sheet .srvblock{margin:4px 0 8px;break-inside:avoid}
 .sheet .dpage .dsvc{break-inside:auto}
 .sheet .dsvc h2{break-after:avoid}
@@ -1817,7 +1818,7 @@ function roomsBody(start){
     return `<section class="rgroup"><div class="srv"><div><b>${esc(r.group||r.code)}</b>${r.status!=="locked"?` <span class="miss small">(draft)</span>`:""} <span class="muted small">${esc(r.code)}</span>
       <div class="small muted">${fmtDate(r.startDate,{weekday:"short",month:"short",day:"numeric"})}${r.endDate!==r.startDate?` – ${fmtDate(r.endDate,{weekday:"short",month:"short",day:"numeric"})}`:""}${inWeek.length<r.days.length?` · this week: ${inWeek.map(d=>fmtDate(d,{weekday:"short"})).join(", ")}`:""}</div></div><div class="serve">${headN(r)||"—"} <span class="small">guests</span></div></div>
       <table class="rtab"><tbody>
-        <tr><th scope="row">Room</th><td><span class="par wide"></span></td></tr>
+        <tr class="wr"><th scope="row">Room</th><td><span class="par wide"></span></td></tr>
         <tr><th scope="row">Setup</th><td>${r.setup?`<b>${SETUP_LABEL[r.setup]}</b>`:v("")}</td></tr>
         <tr><th scope="row">Changes during event</th><td>${r.roomChanges==="yes"?`<span class="miss">Yes · needs approval, fee may apply</span>`:r.roomChanges==="no"?"No":v("")}</td></tr>
         ${r.setupNotes?`<tr><th scope="row">Setup notes</th><td class="note">${esc(r.setupNotes)}</td></tr>`:""}
