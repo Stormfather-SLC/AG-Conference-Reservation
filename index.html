@@ -294,6 +294,9 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .amenu-list{position:fixed;z-index:30;min-width:200px;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 10px 28px rgba(0,0,0,.18);padding:4px}
 .amenu-list button{border:0;background:none;text-align:left;padding:8px 12px;border-radius:3px;font:inherit;font-size:.9rem;color:var(--fg);cursor:pointer}
 .amenu-list button:hover,.amenu-list button:focus-visible{background:var(--sunk);color:var(--spruce)}
+.amenu-list .danger-item,.amenu-list .danger-item:hover,.amenu-list .danger-item:focus-visible{color:var(--bad)}
+.amenu-list .danger-item:hover,.amenu-list .danger-item:focus-visible{background:var(--bad-soft)}
+.amenu-sep{border:0;border-top:1px solid var(--line);margin:4px 0}
 .msgcard{border:2px solid var(--spruce);background:var(--aspen-soft)}
 .msgcard textarea{min-height:230px;font-size:.9rem;line-height:1.5;background:var(--surface)}
 .copyline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.9rem}
@@ -1696,7 +1699,8 @@ function groupsView(){
             <button role="menuitem" data-plan="${esc(r.code)}">Rooms &amp; locations</button>
             ${locked?"":s.k==="waiting"?`<button role="menuitem" data-invite="${esc(r.code)}">Invitation email</button>`:`<button role="menuitem" data-remind="${esc(r.code)}">Reminder email</button>`}
             ${locked?`<button role="menuitem" data-unlock="${esc(r.code)}">Reopen for changes</button>`:""}
-          </div></details><button class="btn ghost danger-text" data-askdelete="${esc(r.code)}" aria-label="Delete ${esc(r.code)}">Delete</button>${(()=>{const n=pendingReqs(r,(kitchenInfo||{})[r.code]).length;return n?`<button type="button" class="btn reviewbtn" data-treview="${esc(r.code)}">Review ${n} time change${n===1?"":"s"}</button>`:""})()}</div>`}</td></tr>`}).join("")}
+            <hr class="amenu-sep"><button role="menuitem" class="danger-item" data-askdelete="${esc(r.code)}" aria-label="Delete ${esc(r.code)}">Delete</button>
+          </div></details>${(()=>{const n=pendingReqs(r,(kitchenInfo||{})[r.code]).length;return n?`<button type="button" class="btn reviewbtn" data-treview="${esc(r.code)}">Review ${n} time change${n===1?"":"s"}</button>`:""})()}</div>`}</td></tr>`}).join("")}
       </tbody></table></div>`:`<div class="empty">No groups yet. Start one with the button above, or an organizer can create one from the Organizer tab.</div>`}
       <p class="small muted" style="margin:0">The list updates live as organizers type. "Form" counts the five required parts: contact, room, meals, allergies, checklist. In a production version this view would sit behind BYU sign-in.</p>
     </div>
