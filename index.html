@@ -278,11 +278,15 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .pill.progress{background:var(--aspen-soft);color:var(--spruce)}
 .acts{display:flex;flex-wrap:wrap;gap:6px;white-space:normal}
 .acts .btn{padding:5px 10px;font-size:.85rem}
-.stafftable td.a{white-space:normal;min-width:190px}
+.stafftable td.a{white-space:normal;min-width:136px;width:1%}
+.stafftable td.a .acts{flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:4px}
+.stafftable td.a .acts>*{width:100%}
+.stafftable td.a .amenu summary{justify-content:space-between;width:100%}
+.stafftable td.wrapc{white-space:normal;min-width:96px}
 .nowrap{white-space:nowrap}
 .newdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--spruce);margin-right:7px;vertical-align:1px}
 .stafftable td.upd{color:var(--spruce);font-weight:600}
-.acts .reviewbtn{flex-basis:100%;justify-content:center;background:var(--warn-soft);border-color:var(--warn);color:var(--fg)}
+.acts .reviewbtn{justify-content:center;white-space:normal;text-align:center;line-height:1.25;background:var(--warn-soft);border-color:var(--warn);color:var(--fg)}
 .acts .reviewbtn:hover{border-color:var(--fg)}
 .amenu{position:relative}
 .amenu summary{list-style:none;padding:5px 12px;font-size:.85rem}.amenu summary::-webkit-details-marker{display:none}
@@ -1678,12 +1682,12 @@ function groupsView(){
       ${rows.length?`<div class="tablewrap"><table class="stafftable"><thead><tr><th>Group</th><th>Event</th><th>Guests</th><th>Form</th><th>Lock-in deadline</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead><tbody>
       ${shown.length?"":`<tr><td colspan="8"><div class="empty">No groups ${esc(GROUP_FILTERS[groupFilter].toLowerCase())} right now.</div></td></tr>`}
       ${shown.map(r=>{const dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null,s=stateOf(r),locked=r.status==="locked",p=progressOf(r);
-        const dlTxt=!dl?"—":locked?fmtDate(dl):left<0?`<span style="color:var(--bad);font-weight:600">${fmtDate(dl)} · overdue</span>`:left<=7?`<span style="color:var(--warn);font-weight:600">${fmtDate(dl)} · ${left}d</span>`:`${fmtDate(dl)} · ${left}d`;
+        const dlTxt=!dl?"—":locked?fmtDate(dl):left<0?`<span style="color:var(--bad);font-weight:600">${fmtDate(dl)}<br>overdue</span>`:left<=7?`<span style="color:var(--warn);font-weight:600">${fmtDate(dl)}<br>${left} days left</span>`:`${fmtDate(dl)}<br><span class="muted small">${left} days left</span>`;
         const fresh=isNewToMe(r,seen);
         return `<tr${fresh?' class="fresh"':""}><td class="g">${fresh?`<span class="newdot" title="Updated by the organizer since you last opened this group" aria-label="Updated"></span>`:""}<b>${esc(r.group||"Untitled group")}</b><br><span class="mono small muted nowrap">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span></td>
-        <td>${r.startDate?fmtDate(r.startDate)+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate):""):"—"}</td><td class="mono">${esc(r.headcount||"—")}</td>
+        <td class="wrapc">${r.startDate?`<span class="nowrap">${fmtDate(r.startDate)}</span>`+(r.endDate&&r.endDate!==r.startDate?`<br><span class="nowrap">– ${fmtDate(r.endDate)}</span>`:""):"—"}</td><td class="mono">${esc(r.headcount||"—")}</td>
         <td><div class="prog"><span class="bar"><i style="width:${p/SECS_TOTAL*100}%"></i></span>${p}/${SECS_TOTAL}</div></td>
-        <td>${dlTxt}</td><td><span class="pill ${s.k==="locked"?"locked":s.k}">${s.label}</span></td><td class="nowrap${fresh?" upd":""}">${whenText(r.updatedAt)}</td>
+        <td class="wrapc">${dlTxt}</td><td><span class="pill ${s.k==="locked"?"locked":s.k}">${s.label}</span></td><td class="nowrap${fresh?" upd":""}">${whenText(r.updatedAt)}</td>
         <td class="a">${pendingDelete===r.code
           ?`<div class="acts"><span class="small" style="font-weight:600;color:var(--bad)">Delete permanently?</span><button class="btn danger" data-dodelete="${esc(r.code)}">Delete</button><button class="btn" data-canceldelete>Cancel</button></div>`
           :`<div class="acts"><details class="amenu"><summary class="btn" aria-label="Actions for ${esc(r.group||r.code)}">Actions <span aria-hidden="true">▾</span></summary><div class="amenu-list" role="menu">
