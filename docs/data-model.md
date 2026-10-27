@@ -5,7 +5,7 @@ The page stores data in the artifact's shared database. There are three collecti
 | Collection | Document id | Holds | Who can write |
 |---|---|---|---|
 | `reservations` | Reservation code, e.g. `AG-7KQ2M` | One group's final details | Any signed-in user of the page |
-| `staffnotes` | Reservation code | Meal locations and time changes set by Conference Services | Artifact editors only |
+| `staffnotes` | Reservation code | Meal locations and time changes set by Conference Services, and walk-through status set by Setup | Artifact editors only |
 | `health` | `check` | Timestamp from the last save check | Any signed-in user of the page |
 
 ## `reservations/{code}`
@@ -20,11 +20,14 @@ The page stores data in the artifact's shared database. There are three collecti
 | `startDate`, `endDate` | `YYYY-MM-DD` | Up to 7 days |
 | `onsite` | `{same, name, phone}` | On-site contact; `same: true` means the organizer |
 | `attendeeNotes` | string | Partial attendance, arrivals and departures |
-| `setup` | `"theater"`, `"rounds"` or `""` | Preferred room setup |
+| `setup` | `"theater"`, `"rounds"` or `""` | Preferred setup for the main room |
 | `roomChanges` | `"yes"`, `"no"` or `""` | Setup changes during the event |
 | `setupNotes`, `avOther`, `comments` | string | |
 | `noAV` | boolean | |
 | `av` | string[] | From Projector, Screen, Whiteboard, Microphone, Speakers / sound, Easel & flip chart |
+| `breakoutNeed` | `"yes"`, `"no"` or `""` | Whether the group needs breakout rooms |
+| `breakouts` | Breakout[] | See below. Used only when `breakoutNeed` is `"yes"` |
+| `walk` | Walk | Walk-through request; see below |
 | `allergies` | Allergy[] | See below |
 | `noAllergies` | boolean | Organizer confirmed there are none |
 | `roster` | array or null | Imported guest list rows `{name, diet, allergy, type, severity}` |
@@ -33,6 +36,30 @@ The page stores data in the artifact's shared database. There are three collecti
 | `checklist` | `{schedule, payment}` | Booleans |
 | `history` | Event[] | Change history, newest last, capped at 80 |
 | `createdAt`, `updatedAt`, `lockedAt` | ISO timestamp | `lockedAt` is null until locked |
+
+### Breakout
+
+| Field | Values |
+|---|---|
+| `name` | Purpose or name, e.g. "Leadership session" |
+| `people` | number or `""` |
+| `days` | Event dates (`YYYY-MM-DD`) the room is used |
+| `start`, `end` | `HH:MM` or `""` |
+| `setup` | `"theater"`, `"rounds"`, `"classroom"`, `"boardroom"`, `"ushape"` or `""` |
+| `av` | string[], same list as the main room |
+| `notes` | Other A/V or setup notes |
+
+To lock in, each breakout needs `people`, at least one day, and `setup`.
+
+### Walk
+
+`{want, choices: [{date, time}, {date, time}], people, notes}`
+
+- `want`: `"yes"`, `"no"` or `""` (not answered; optional)
+- `choices`: two preferred days; `time` is `"Morning"`, `"Afternoon"`, `"Any time"` or `""`. Not guaranteed.
+- To lock in with `want: "yes"`, the first choice needs a date.
+
+The staff side lives in `staffnotes/{code}.walk`: `{status, date, time, note}`, where `status` is `"requested"`, `"scheduled"`, `"done"` or `"cant"` (couldn't schedule). `date` and `time` are the confirmed walk-through.
 
 ### Allergy
 

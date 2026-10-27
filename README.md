@@ -12,7 +12,7 @@ A prototype web form that replaces the paper **Conference Final Details** form a
 
 ### Organizers
 - Create a reservation, or open one from an invitation link (`…#AG-XXXXX`).
-- Fill in six sections: group and contact, attendee notes, room and A/V, allergies (with an optional guest-list upload), meals and snacks by day, and comments.
+- Fill in six sections: group and contact, attendee notes, rooms and A/V (including breakout rooms and an optional walk-through request), allergies (with an optional guest-list upload), meals and snacks by day, and comments.
 - Menu rules are built in: 3-item snack limit, vegetarian plates, fajita meat, add-ons, and an upgrade-cost estimate.
 - Review everything on one page, then lock in. The form becomes read-only.
 - Anything still missing is listed above the Lock in button. Each item links straight to the field that needs it, missing fields are outlined in red, and a "Go to next" button in the side rail steps through what's left.
@@ -20,14 +20,15 @@ A prototype web form that replaces the paper **Conference Final Details** form a
 
 ### Conference Services
 
-Sections are grouped by who uses them: **Groups** (office and programs), **Kitchen**, and **Setup**, with Backup & system check off to the side. Each browser remembers its last section, so each team lands on its own view.
+Sections are grouped by who uses them: **Groups** (office and programs), **Kitchen**, and **Setup** (Rooms & A/V, Walk-throughs), with Backup & system check off to the side. Each browser remembers its last section, so each team lands on its own view.
 
 - **Groups:** start a group from booking details and get a ready-to-send invitation email. See every group's status (Not started, In progress, Locked in, Past deadline) and progress. Copy a reminder that lists what's missing. Reopen or delete a reservation.
 - **Final sheet:** a printable one-page summary of each group.
 - **Meal locations:** set where and when each meal is served.
 - **Kitchen → Daily production list:** a printable daily list for the kitchen. Each meal and snack is split into servings: groups served at the same time and place are combined under one "Serve" count, and groups at a different time or place get their own block and count. Every entrée, side, included item and snack has a checkbox and a blank PAR line for the chefs. Each serving has a one-line special-plates summary; after the last service, special plates are listed once for the day by guest, followed by a short preview of tomorrow.
 - **Kitchen → Weekly meal schedule:** an at-a-glance page for the week, then one page per day with every meal and snack in time order. Each service lists the groups first (guests, location, dietary count) with their meal or snack underneath; shared meals are marked, and only off-schedule times and places are highlighted. Each day ends with a dietary list, one line per guest. Dietary needs are listed once on the summary page; a guest attending only certain meals is also listed on each day they attend.
-- **Setup → Rooms & A/V:** a printable weekly sheet for the setup crew. An at-a-glance table shows each day's groups, setup style, and A/V equipment out (with counts when groups overlap). Then one block per group: a blank line to write in the assigned room, setup, changes during the event, setup notes, an "A/V Requirements" checklist of what the group requested, any meals or snacks served in the meeting room, and the on-site contact.
+- **Setup → Rooms & A/V:** a printable weekly sheet for the setup crew. An at-a-glance table shows each day's groups, setup style, and A/V equipment out (with counts when groups overlap). Then one block per group: a blank line to write in the assigned room, breakout rooms (each with a blank room line and its A/V checklist), setup, changes during the event, setup notes, an "A/V Requirements" checklist of what the group requested, any meals or snacks served in the meeting room, and the on-site contact.
+- **Setup → Walk-throughs:** every walk-through request with the group's two preferred days, party size, and whether other groups in the system are on site those days. Mark each Scheduled (with the confirmed day and time), Done, or Couldn't schedule; the organizer sees the result on their form.
 - **Backup & system check:** download the group list and meal list (CSV, opens in Excel) or a full backup (JSON). Run a save check.
 
 ## How saving works

@@ -295,6 +295,9 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .sheetwrap{overflow-x:auto}
 .kitchenpick{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
 .kitchenpick select{min-width:240px}
+.walktable td.g{min-width:200px}.walktable select,.walktable input[type=text]{min-width:170px}
+.wchoice+.wchoice{margin-top:6px}.wsched{margin-top:8px;gap:8px}.walknote{margin-top:8px}
+.bocard h3{font-size:1rem}
 </style>
 <style id="sheetcss">
 /* Printable sheets: deliberately paper-white in both themes, so what staff see on screen matches what prints. */
@@ -357,6 +360,9 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .sheet table.rtab th{width:150px;font-weight:600;color:#2b3340;white-space:nowrap}
 .sheet .par.wide{width:220px;margin:0}
 .sheet .avlist{display:flex;flex-wrap:wrap;gap:4px 16px}
+.sheet .bo{padding:4px 0 6px;border-bottom:1px dashed #d5dae1}.sheet .bo:last-child{border-bottom:0}
+.sheet .borow{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:flex-end;margin-top:4px}
+.sheet .par.inl{display:inline-block;width:170px;vertical-align:bottom;margin:0 0 0 4px}
 .sheet .srvblock{margin:4px 0 8px;break-inside:avoid}
 .sheet .dpage .dsvc{break-inside:auto}
 .sheet .dsvc h2{break-after:avoid}
@@ -443,7 +449,9 @@ function newCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i
 function normCode(s){s=(s||"").trim().toUpperCase().replace(/\s+/g,"");if(s&&!s.startsWith("AG-"))s="AG-"+s.replace(/^AG/,"");return s}
 function deadlineOf(r){const d=parseDate(r.startDate);if(!d)return null;const x=new Date(d);x.setDate(x.getDate()-DEADLINE_DAYS);return x}
 function blankDay(date){const meals={};MEALS.forEach(m=>{meals[m.k]=m.snack?{on:false,time:m.time,items:[],count:""}:{choice:"",time:m.time,addon:false,second:false,meat:"Chicken",vegChoice:"",vegCount:0,count:"",service:"hall",location:""}});return {date,meals}}
-function blankRes(code){return {code,status:"draft",group:"",contact:"",phone:"",email:"",headcount:"",startDate:"",endDate:"",attendeeNotes:"",setup:"",roomChanges:"",setupNotes:"",noAV:false,av:[],avOther:"",days:[],allergies:[],comments:"",onsite:{same:false,name:"",phone:""},firstMeal:"",lastMeal:"",roster:null,checklist:{schedule:false,payment:false},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),lockedAt:null}}
+function blankRes(code){return {code,status:"draft",group:"",contact:"",phone:"",email:"",headcount:"",startDate:"",endDate:"",attendeeNotes:"",setup:"",roomChanges:"",setupNotes:"",noAV:false,av:[],avOther:"",days:[],allergies:[],comments:"",onsite:{same:false,name:"",phone:""},firstMeal:"",lastMeal:"",roster:null,breakoutNeed:"",breakouts:[],walk:blankWalk(),checklist:{schedule:false,payment:false},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),lockedAt:null}}
+function blankWalk(){return {want:"",choices:[{date:"",time:""},{date:"",time:""}],people:"",notes:""}}
+function blankBreakout(){return {name:"",people:"",days:[],start:"",end:"",setup:"",av:[],notes:""}}
 function getPath(o,p){return p.split(".").reduce((a,k)=>a==null?a:a[k],o)}
 function setPath(o,p,v){const ks=p.split(".");let a=o;for(let i=0;i<ks.length-1;i++)a=a[ks[i]];a[ks[ks.length-1]]=v}
 
@@ -481,7 +489,9 @@ function applyWindow(){
 }
 function normalize(r){
   r.days=r.days||[];r.av=r.av||[];r.checklist=r.checklist||{schedule:false,payment:false};
-  r.onsite=r.onsite||{same:false,name:"",phone:""};r.firstMeal=r.firstMeal||"";r.lastMeal=r.lastMeal||"";r.roster=r.roster||null;
+  r.onsite=r.onsite||{same:false,name:"",phone:""};r.firstMeal=r.firstMeal||"";
+  r.breakoutNeed=r.breakoutNeed||"";r.breakouts=(r.breakouts||[]).map(b=>({...blankBreakout(),...b,av:b.av||[],days:(b.days||[]).filter(d=>r.days.some(x=>x.date===d))}));
+  {const w=r.walk||{};r.walk={...blankWalk(),...w,choices:[0,1].map(i=>({date:"",time:"",...((w.choices||[])[i]||{})}))}}r.lastMeal=r.lastMeal||"";r.roster=r.roster||null;
   r.days.forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(st.count===undefined)st.count="";if(!m.snack){if(!st.service)st.service="hall";if(st.location===undefined)st.location=""}}));
   r.allergies=(r.allergies||[]).map(a=>({name:a.name||"",allergy:a.allergy||"",type:a.type||(a.allergy?"Allergy":""),severity:a.severity||"",mode:a.mode||"all",meals:Array.isArray(a.meals)?a.meals:[],note:typeof a.meals==="string"?a.meals:(a.note||""),from:a.from||"",to:a.to||"",src:a.src||"",other:a.other}));
   r.allergies.forEach(a=>{if(a.other===undefined){const m=matchRestriction(a.allergy);if(a.allergy&&RESTRICT_OPTS.includes(a.allergy))a.other=false;else if(a.allergy&&m&&a.allergy.trim().toLowerCase()===m.toLowerCase()){a.allergy=m;a.other=false}else a.other=!!a.allergy}if(!a.other&&a.allergy==="Wheat")a.allergy="Wheat/Gluten";if(a.other&&/^\s*(gluten|wheat)\s*$/i.test(a.allergy)){a.allergy="Wheat/Gluten";a.other=false}if(isDietRow(a)){if(a.type!=="Medical")a.type="Preference";a.severity=""}else if(!a.other&&a.allergy&&noSeverity(a))a.type="";});
@@ -561,7 +571,7 @@ function isLocked(){return res&&res.status==="locked"}
 function sectionStatus(r){
   const s={};
   s.contact=!!(r.group&&r.contact&&r.phone&&r.email&&Number(r.headcount)>0&&r.startDate&&r.endDate&&(r.onsite.same||(r.onsite.name&&r.onsite.phone)));
-  s.room=!!(r.setup&&r.roomChanges&&(r.noAV||r.av.length||r.avOther));
+  s.room=!!(r.setup&&r.roomChanges&&(r.noAV||r.av.length||r.avOther))&&(r.breakoutNeed==="no"||(r.breakoutNeed==="yes"&&r.breakouts.length>0&&r.breakouts.every(boOK)))&&(!wantsWalk(r)||!!r.walk.choices[0].date);
   s.meals=r.days.length>0&&r.days.every(d=>["breakfast","lunch","dinner"].every(k=>d.meals[k].choice)&&["amSnack","pmSnack"].every(k=>!d.meals[k].on||d.meals[k].items.length>0));
   s.allergies=allergyIssues(r).length===0&&(r.allergies.length>0||r.noAllergies===true);
   s.checklist=!!r.checklist.schedule;
@@ -575,6 +585,13 @@ function missingItems(r){
   if(!r.onsite.same&&(!r.onsite.name||!r.onsite.phone))add("On-site contact: name and cell phone",!r.onsite.name?"f-onsite.name":"f-onsite.phone");
   if(!r.setup)add("Preferred room setup","seg-setup");if(!r.roomChanges)add("Room changes yes/no","seg-roomChanges");
   if(!(r.noAV||r.av.length||r.avOther))add("A/V needs, or check “No audio/visual needs”","f-av");
+  if(!r.breakoutNeed)add("Breakout rooms: yes or no","seg-breakoutNeed");
+  else if(r.breakoutNeed==="yes"){if(!r.breakouts.length)add("Breakout rooms: add at least one room","addbo");
+    r.breakouts.forEach((b,i)=>{const w=`Breakout room ${i+1}${b.name?` (${b.name})`:""}`;
+      if(!(Number(b.people)>0))add(`${w}: number of people`,`f-breakouts.${i}.people`);
+      if(!b.days.length)add(`${w}: which days`,`bodays-${i}`);
+      if(!b.setup)add(`${w}: setup style`,`seg-breakouts.${i}.setup`)})}
+  if(wantsWalk(r)&&!r.walk.choices[0].date)add("Walk-through: your first choice of day","f-walk.choices.0.date");
   r.days.forEach((d,di)=>{["breakfast","lunch","dinner"].forEach(k=>{if(!d.meals[k].choice)add(`${fmtDate(d.date)}: ${k} selection`,`days.${di}.meals.${k}.choice`,{day:di})});
     ["amSnack","pmSnack"].forEach(k=>{if(d.meals[k].on&&!d.meals[k].items.length)add(`${fmtDate(d.date)}: pick items for the ${k==="amSnack"?"morning":"afternoon"} snack`,`snk-days.${di}.meals.${k}`,{day:di})})});
   m.push(...allergyIssueItems(r));
@@ -648,7 +665,7 @@ async function openCode(raw){
 function openEditor(r){view="edit";showNeeds=false;res=normalize(r);lastSig=sectionSig(res);dirty=false;clearTimeout(retryT);retryN=0;restoreOffer=null;
   {const b=store.mode==="db"?bakGet(res.code):null;if(b&&b.updatedAt>(res.updatedAt||"")&&res.status!=="locked")restoreOffer=b;else if(b)bakDel(res.code)}
   setSaveState(store.mode==="db"?(res.updatedAt?"Saved to Aspen Grove · "+fmtDate(new Date(res.updatedAt),{month:"short",day:"numeric"})+", "+clock(res.updatedAt):"Saved to Aspen Grove"):"Saved on this device only","ok");
-  staffInfo=null;{const code=res.code;store.getStaff(code).then(x=>{if(res&&res.code===code){staffInfo=x;if(x&&(view==="review"||(view==="edit"&&x.times&&Object.keys(x.times).length)))rerender()}}).catch(()=>{})}pendingImport=null;rosterError="";showTpl=false;activeDay=Math.min(activeDay,Math.max(0,res.days.length-1));confirmingLock=false;view="edit";isLocked()?renderReview():renderEditor();window.scrollTo(0,0)}
+  staffInfo=null;{const code=res.code;store.getStaff(code).then(x=>{if(res&&res.code===code){staffInfo=x;if(x&&(view==="review"||(view==="edit"&&((x.times&&Object.keys(x.times).length)||x.walk))))rerender()}}).catch(()=>{})}pendingImport=null;rosterError="";showTpl=false;activeDay=Math.min(activeDay,Math.max(0,res.days.length-1));confirmingLock=false;view="edit";isLocked()?renderReview():renderEditor();window.scrollTo(0,0)}
 
 function syncDays(){
   const s=parseDate(res.startDate),e=parseDate(res.endDate);
@@ -841,7 +858,7 @@ function renderEditor(){
   const r=res, locked=isLocked(), s=sectionStatus(r), dl=deadlineOf(r);
   const daysLeft=dl?daysBetween(TODAY,dl):null;
   const ex=extras(r);
-  const secs=[["contact","Group & contact"],["attendees","Attendee notes"],["room","Room & A/V"],["allergies","Attendees & allergies"],["meals","Meals & snacks"],["comments","Comments"]];
+  const secs=[["contact","Group & contact"],["attendees","Attendee notes"],["room","Rooms & A/V"],["allergies","Attendees & allergies"],["meals","Meals & snacks"],["comments","Comments"]];
   const dot=k=>k in s?`<span class="dot ${s[k]?"done":""}"></span>`:"";
   let deadlineNote="";
   if(dl&&!locked){
@@ -880,7 +897,7 @@ function renderEditor(){
         ${field("Partial attendees or unusual guest information","attendeeNotes","textarea","For example: 12 guests arrive Friday lunch, 4 leave before Saturday dinner")}
       </section>
 
-      <section class="card" id="sec-room"><div class="sechead"><h2><span class="num">03</span>Conference room &amp; A/V</h2><span class="small muted">Room assigned by Aspen Grove</span></div>
+      <section class="card" id="sec-room"><div class="sechead"><h2><span class="num">03</span>Conference rooms &amp; A/V</h2><span class="small muted">Rooms assigned by Aspen Grove</span></div>
         <div class="row"><span style="font-weight:600;min-width:150px">Preferred setup</span>${seg("Preferred setup","setup",[["theater","Theater"],["rounds","Round tables"]])}</div>
         <div class="row"><span style="font-weight:600;min-width:150px">Setup changes during event</span>${seg("Room changes","roomChanges",[["yes","Yes"],["no","No"]])}</div>
         ${r.roomChanges==="yes"?`<div class="notice warn small">Mid-event changes need approval from the operations team, and fees may apply. Describe them below.</div>`:""}
@@ -890,6 +907,8 @@ function renderEditor(){
           ${r.noAV?"":`<div class="checks">${AV.map(a=>`<label class="chk"><input type="checkbox" data-av value="${esc(a)}" ${r.av.includes(a)?"checked":""}>${esc(a)}</label>`).join("")}</div>
           ${field("Other A/V or special requests","avOther")}`}
         </div>
+        ${breakoutBlock(r,locked)}
+        ${walkBlock(r,locked)}
       </section>
 
       <section class="card" id="sec-allergies"><div class="sechead"><h2><span class="num">04</span>Attendees &amp; allergies</h2><span class="small muted">Must be received ${DEADLINE_DAYS} days before your event</span></div>
@@ -925,7 +944,57 @@ function renderEditor(){
   markNeeds();
 }
 
-const SETUP_LABEL={theater:"Theater",rounds:"Round tables"};
+const SETUP_LABEL={theater:"Theater",rounds:"Round tables",classroom:"Classroom",boardroom:"Boardroom",ushape:"U-shape"};
+// ---------- breakout rooms & walk-through ----------
+const BO_SETUPS=[["theater","Theater"],["rounds","Round tables"],["classroom","Classroom"],["boardroom","Boardroom"],["ushape","U-shape"]];
+const WALK_TIMES=["Morning","Afternoon","Any time"];
+const WALK_STATUS={requested:"Requested",scheduled:"Scheduled",done:"Done",cant:"Couldn't schedule"};
+const WALK_NOTE="We're happy to show you around camp and the spaces you've reserved before your event. Walk-throughs depend on what else is happening at camp. When other groups are on site, the spaces you'd see may be in use, so we may not be able to offer the days or times you choose. Give us your top two choices and we'll call or email to confirm a time that works, or to suggest another.";
+const boOK=b=>Number(b.people)>0&&b.days.length>0&&!!b.setup;
+const hasBreakouts=r=>r.breakoutNeed==="yes"&&(r.breakouts||[]).length>0;
+const wantsWalk=r=>!!(r.walk&&r.walk.want==="yes");
+const shortDay=d=>fmtDate(d,{weekday:"short",month:"short",day:"numeric"});
+function boWhen(b,only){const ds=[...b.days].sort().filter(d=>!only||only.includes(d));return ds.map(shortDay).join(", ")+(b.start?` · ${fmtTime(b.start)}${b.end?"–"+fmtTime(b.end):""}`:"")}
+function walkChoice(c){return c&&c.date?`${shortDay(c.date)}${c.time?", "+c.time.toLowerCase():""}`:""}
+// What the walk-through looks like right now, in plain words. st = Aspen Grove's staff note for the group.
+function walkStatus(r,st){
+  if(r.walk.want==="no")return "Not requested";if(!wantsWalk(r))return "";
+  const w=st||{};
+  if(w.status==="scheduled"&&w.date)return `Scheduled: ${shortDay(w.date)}${w.time?" at "+fmtTime(w.time):""}`;
+  if(w.status==="done")return "Done";
+  if(w.status==="cant")return "Couldn't offer the requested times. Aspen Grove will follow up";
+  return "Requested, not yet confirmed";
+}
+function walkRequestText(r){const c=r.walk.choices.map(walkChoice).filter(Boolean);
+  return `${c.length?"Preferred: "+c.join(" or "):"No days chosen"}${r.walk.people?` · ${r.walk.people} ${Number(r.walk.people)===1?"person":"people"}`:""}`}
+function breakoutBlock(r,locked){
+  return `<div class="subhead" id="sub-breakouts">Breakout rooms</div>
+  <div class="row"><span style="font-weight:600;min-width:150px">Need breakout rooms?</span>${seg("Need breakout rooms","breakoutNeed",[["yes","Yes"],["no","No"]])}</div>
+  ${r.breakoutNeed==="yes"?`${r.breakouts.map((b,i)=>boCard(r,b,i,locked)).join("")}
+  ${locked?"":`<div class="row"><button class="btn" id="addbo" type="button">+ Add ${r.breakouts.length?"another":"a"} breakout room</button></div>`}
+  <p class="small muted" style="margin:0">Aspen Grove assigns breakout rooms based on group size and what else is on site.</p>`:""}`}
+function boCard(r,b,i,locked){
+  return `<div class="meal bocard"><div class="mealhead"><h3>Breakout room ${i+1}</h3>${locked?"":`<button class="btn ghost danger-text" type="button" data-delbo="${i}">Remove</button>`}</div>
+    <div class="grid2">${field("Purpose or name",`breakouts.${i}.name`,"text","For example: Leadership session")}${field("Number of people",`breakouts.${i}.people`,"number","","min=\"1\"")}</div>
+    <div class="f" id="bodays-${i}" style="gap:8px"><span>Which days</span><div class="checks">${r.days.length?r.days.map(d=>`<label class="chk"><input type="checkbox" data-bodays="${i}" value="${d.date}" ${b.days.includes(d.date)?"checked":""}>${fmtDate(d.date)}</label>`).join(""):`<span class="small muted">Enter your event dates above first.</span>`}</div></div>
+    <div class="grid2">${field("Start time",`breakouts.${i}.start`,"time")}${field("End time",`breakouts.${i}.end`,"time")}</div>
+    <div class="row"><span style="font-weight:600;min-width:150px">Setup</span>${seg(`Breakout room ${i+1} setup`,`breakouts.${i}.setup`,BO_SETUPS)}</div>
+    <div class="f" style="gap:8px"><span>Audio/visual</span><div class="checks">${AV.map(a=>`<label class="chk"><input type="checkbox" data-boav="${i}" value="${esc(a)}" ${b.av.includes(a)?"checked":""}>${esc(a)}</label>`).join("")}</div></div>
+    ${field("Other A/V or setup notes",`breakouts.${i}.notes`)}
+  </div>`}
+function walkBlock(r,locked){
+  const w=r.walk,dl=deadlineOf(r),maxD=r.startDate?addDays(r.startDate,-1):"",st=walkStatus(r,staffInfo&&staffInfo.walk),sched=staffInfo&&staffInfo.walk&&staffInfo.walk.status==="scheduled";
+  const lim=`min="${iso(TODAY)}"${maxD?` max="${maxD}"`:""}`;
+  return `<div class="subhead" id="sub-walk">Walk-through before your event</div>
+  <div class="row"><span style="font-weight:600;min-width:150px">Would you like a walk-through?</span>${seg("Would you like a walk-through","walk.want",[["yes","Yes"],["no","No"]])}</div>
+  ${w.want==="yes"?`<div class="notice info small">${WALK_NOTE}</div>
+    ${[0,1].map(k=>`<div class="grid2">${field(`${k?"Second":"First"} choice: day`,`walk.choices.${k}.date`,"date",`Preferred day${k?", optional":""}. Not guaranteed`,lim)}
+      <label class="f" for="f-walk.choices.${k}.time">${k?"Second":"First"} choice: time of day<select id="f-walk.choices.${k}.time" data-path="walk.choices.${k}.time"><option value="">No preference</option>${WALK_TIMES.map(t=>`<option ${w.choices[k].time===t?"selected":""}>${t}</option>`).join("")}</select><span class="hint">Not guaranteed</span></label></div>`).join("")}
+    <div class="grid2">${field("How many people are coming","walk.people","number","","min=\"1\"")}</div>
+    ${field("Anything you'd especially like to see","walk.notes","textarea")}
+    ${dl?`<p class="small muted" style="margin:0">Best before ${fmtDate(dl,{month:"long",day:"numeric"})}, your lock-in deadline, so anything you decide on the walk-through can still go on this form.</p>`:""}
+    <div class="notice ${sched?"ok":"warn"} small"><b>Walk-through:</b> ${esc(st)}</div>`:""}`}
+
 function val(v,empty="Not provided"){return v!==undefined&&v!==null&&String(v).trim()!==""?esc(v):`<span class="missingval">${empty}</span>`}
 function mealLine(m,st){
   if(m.snack){
@@ -1003,13 +1072,18 @@ function renderReview(){
         <p class="prose">${r.attendeeNotes?esc(r.attendeeNotes):`<span class="muted">None</span>`}</p>
       </section>
 
-      <section class="card">${sumHead("03","Conference room &amp; A/V","room",locked)}
+      <section class="card">${sumHead("03","Conference rooms &amp; A/V","room",locked)}
         <dl class="kv">
           <div><dt>Preferred setup</dt><dd>${r.setup?SETUP_LABEL[r.setup]:val("")}</dd></div>
           <div><dt>Changes during event</dt><dd>${r.roomChanges?(r.roomChanges==="yes"?"Yes · needs approval":"No"):val("")}</dd></div>
           <div><dt>Audio/visual</dt><dd>${av?esc(av):val("","Not answered")}</dd></div>
         </dl>
         ${r.setupNotes?`<p class="prose"><span class="small muted">Setup notes: </span>${esc(r.setupNotes)}</p>`:""}
+        <div class="subhead">Breakout rooms</div>
+        ${hasBreakouts(r)?`<div class="tablewrap"><table class="sumtable botable"><thead><tr><th>Room</th><th>People</th><th>When</th><th>Setup</th><th>A/V &amp; notes</th></tr></thead><tbody>${r.breakouts.map((b,i)=>`<tr><td>${esc(b.name||"Breakout room "+(i+1))}</td><td class="mono">${b.people?esc(b.people):val("")}</td><td>${b.days.length?esc(boWhen(b)):val("","Days not chosen")}</td><td>${b.setup?SETUP_LABEL[b.setup]:val("")}</td><td>${esc([...b.av,b.notes].filter(Boolean).join(", "))||`<span class="muted">None</span>`}</td></tr>`).join("")}</tbody></table></div>`
+          :`<p class="prose">${r.breakoutNeed==="no"?"None needed":val("","Not answered")}</p>`}
+        <div class="subhead">Walk-through</div>
+        <p class="prose">${r.walk.want?`<b>${esc(walkStatus(r,staffInfo&&staffInfo.walk))}</b>${wantsWalk(r)?`<br><span class="small muted">${esc(walkRequestText(r))}${r.walk.notes?" · "+esc(r.walk.notes):""}</span>`:""}`:`<span class="muted">Not requested</span>`}</p>
       </section>
 
       <section class="card">${sumHead("04","Attendees &amp; allergies","allergies",locked)}
@@ -1124,7 +1198,7 @@ window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.return
 
 // ---------- change history ----------
 const who={id:"",name:"",u:null};
-const SECTION_FIELDS={"Group & contact":["group","contact","phone","email","headcount","startDate","endDate","onsite"],"Attendee notes":["attendeeNotes"],"Room & A/V":["setup","roomChanges","setupNotes","noAV","av","avOther"],"Allergies":["allergies","noAllergies","roster"],"Meals & snacks":["days","firstMeal","lastMeal"],"Comments":["comments"],"Checklist":["checklist"]};
+const SECTION_FIELDS={"Group & contact":["group","contact","phone","email","headcount","startDate","endDate","onsite"],"Attendee notes":["attendeeNotes"],"Room & A/V":["setup","roomChanges","setupNotes","noAV","av","avOther"],"Breakout rooms":["breakoutNeed","breakouts"],"Walk-through":["walk"],"Allergies":["allergies","noAllergies","roster"],"Meals & snacks":["days","firstMeal","lastMeal"],"Comments":["comments"],"Checklist":["checklist"]};
 function sectionSig(r){const o={};for(const[k,fs]of Object.entries(SECTION_FIELDS))o[k]=JSON.stringify(fs.map(f=>r[f]));return o}
 let lastSig=null, actingAs="organizer";
 function logEvent(r,what,extra){r.history=r.history||[];r.history.push({at:new Date().toISOString(),role:actingAs,by:who.id||"",what,...(extra||{})});if(r.history.length>80)r.history=r.history.slice(-80)}
@@ -1170,10 +1244,13 @@ app.addEventListener("change",e=>{
   if(el.dataset.snack!==undefined){const p=el.dataset.snack;const arr=getPath(res,p+".items");
     if(el.checked){if(arr.length<3)arr.push(el.value)}else{const i=arr.indexOf(el.value);if(i>=0)arr.splice(i,1)}
     rerender();scheduleSave();return}
+  if(el.dataset.bodays!==undefined||el.dataset.boav!==undefined){const b=res.breakouts[+(el.dataset.bodays??el.dataset.boav)],arr=el.dataset.bodays!==undefined?b.days:b.av,i=arr.indexOf(el.value);
+    if(el.checked&&i<0)arr.push(el.value);if(!el.checked&&i>=0)arr.splice(i,1);b.days.sort();scheduleSave();refreshLive();return}
   if(el.dataset.av!==undefined){const i=res.av.indexOf(el.value);if(el.checked&&i<0)res.av.push(el.value);if(!el.checked&&i>=0)res.av.splice(i,1);scheduleSave();refreshLive();return}
   if(!el.dataset.path)return;
   let v=el.type==="checkbox"?el.checked:el.type==="number"?(el.value===""||(/\.count$/.test(el.dataset.path)&&Number(el.value)===headN())?"":Number(el.value)):el.value;
   setPath(res,el.dataset.path,v);
+  if(el.dataset.path==="breakoutNeed"&&v==="yes"&&!res.breakouts.length)res.breakouts.push(blankBreakout());
   if(el.dataset.path==="startDate"||el.dataset.path==="endDate"){
     if(el.dataset.path==="startDate"&&(!res.endDate||res.endDate<res.startDate))res.endDate=res.startDate;
     syncDays();
@@ -1194,7 +1271,7 @@ app.addEventListener("click",async e=>{
   if(b.dataset.sheetback!==undefined){sheetBack();return}
   if(b.dataset.sheetdl!==undefined){downloadSheet();return}
   if(b.dataset.dept){const d=DEPTS.find(x=>x.k===b.dataset.dept),last=prefGet("ag:lastTab:"+d.k);b.dataset.stab=d.tabs.some(([k])=>k===last)?last:d.tabs[0][0]}
-  if(b.dataset.stab){pickStaffTab(b.dataset.stab);staffMsg=null;startOpen=false;if(staffTab==="kitchen"||staffTab==="week"||staffTab==="rooms")loadKitchen();renderStaff();return}
+  if(b.dataset.stab){pickStaffTab(b.dataset.stab);staffMsg=null;startOpen=false;if(needsInfo())loadKitchen();renderStaff();return}
   if(b.dataset.startgroup!==undefined){startOpen=!startOpen;staffMsg=null;renderStaff();if(startOpen)document.getElementById("sg-group")?.focus();return}
   if(b.dataset.invite){inviteFor(b.dataset.invite);return}
   if(b.dataset.remind){remindFor(b.dataset.remind);return}
@@ -1222,6 +1299,8 @@ app.addEventListener("click",async e=>{
   if(b.dataset.rosterremove!==undefined){res.roster=null;res.rosterFile="";res.rosterAt=null;rerender();scheduleSave();toast("Guest list removed. Allergies from it stay in the table.");return}
   if(b.dataset.usecount){const[di,k,c]=b.dataset.usecount.split("|");res.days[+di].meals[k].count=+c;rerender();scheduleSave();return}
   if(b.id==="addallergy"){res.allergies.push({name:"",allergy:"",type:"",severity:"",mode:"all",meals:[],note:"",from:"",to:"",src:"",other:false});res.noAllergies=false;rerender();document.getElementById("al-n-"+(res.allergies.length-1))?.focus();scheduleSave();return}
+  if(b.id==="addbo"){res.breakouts.push(blankBreakout());rerender();scheduleSave();document.getElementById(`f-breakouts.${res.breakouts.length-1}.name`)?.focus();return}
+  if(b.dataset.delbo){res.breakouts.splice(Number(b.dataset.delbo),1);rerender();scheduleSave();return}
   if(b.dataset.delallergy){res.allergies.splice(Number(b.dataset.delallergy),1);rerender();scheduleSave();return}
   if(b.id==="lock"){confirmingLock=true;refreshLive();return}
   if(b.id==="cancellock"){confirmingLock=false;refreshLive();return}
@@ -1308,8 +1387,9 @@ const PAGE_URL="https://claude.ai/artifact/9kSo7EiZ3AAYSrh96k4yud";
 // Sections are grouped by who uses them. Each browser remembers its last section, so the kitchen, setup crew and office each land on their own view.
 const DEPTS=[{k:"groups",label:"Groups",tabs:[["groups","Groups"]]},
  {k:"kitchen",label:"Kitchen",tabs:[["kitchen","Daily production list"],["week","Weekly meal schedule"]]},
- {k:"setup",label:"Setup",tabs:[["rooms","Rooms & A/V"]]}];
-const STAFF_TABS=["groups","kitchen","week","rooms","backup"];
+ {k:"setup",label:"Setup",tabs:[["rooms","Rooms & A/V"],["walks","Walk-throughs"]]}];
+const STAFF_TABS=["groups","kitchen","week","rooms","walks","backup"];
+const needsInfo=()=>["kitchen","week","rooms","walks"].includes(staffTab);
 const deptOf=t=>(DEPTS.find(d=>d.tabs.some(([k])=>k===t))||{k:t}).k;
 function prefGet(k){try{return localStorage.getItem(k)||""}catch(e){return ""}}
 function prefSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
@@ -1406,7 +1486,7 @@ function renderStaff(){
   const nav=`<nav class="subnav" aria-label="Conference Services">${DEPTS.map(d=>`<button data-dept="${d.k}" aria-pressed="${cur===d.k}">${d.label}</button>`).join("")}<button class="admin" data-stab="backup" aria-pressed="${staffTab==="backup"}">Backup &amp; system check</button></nav>`
     +(dept&&dept.tabs.length>1?`<div class="reportnav" role="group" aria-label="${dept.label} reports">${dept.tabs.map(([k,l])=>`<button data-stab="${k}" aria-pressed="${staffTab===k}">${l}</button>`).join("")}</div>`:"");
   if(staffRows===null){app.innerHTML=nav+`<div class="empty">Loading reservations…</div>`;return}
-  const body=staffTab==="kitchen"?kitchenView():staffTab==="week"?weekView():staffTab==="rooms"?roomsView():staffTab==="backup"?backupView():groupsView();
+  const body=staffTab==="kitchen"?kitchenView():staffTab==="week"?weekView():staffTab==="rooms"?roomsView():staffTab==="walks"?walksView():staffTab==="backup"?backupView():groupsView();
   const keep={};document.querySelectorAll("#startform input,#msgtext").forEach(el=>keep[el.id]=el.value);const foc=document.activeElement&&document.activeElement.id;
   app.innerHTML=nav+body;
   for(const[id,v]of Object.entries(keep)){const el=document.getElementById(id);if(el)el.value=v}if(foc)document.getElementById(foc)?.focus();
@@ -1432,7 +1512,7 @@ function groupsView(){
       ${sorted.map(r=>{const dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null,s=stateOf(r),locked=r.status==="locked",p=progressOf(r);
         const dlTxt=!dl?"—":locked?fmtDate(dl):left<0?`<span style="color:var(--bad);font-weight:600">${fmtDate(dl)} · overdue</span>`:left<=7?`<span style="color:var(--warn);font-weight:600">${fmtDate(dl)} · ${left}d</span>`:`${fmtDate(dl)} · ${left}d`;
         const sev=(r.allergies||[]).filter(isSevere).length;
-        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b> <span class="mono small muted">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span>${sev?`<br><span class="small" style="color:var(--bad);font-weight:600">${sev} critical allerg${sev===1?"y":"ies"}</span>`:""}</td>
+        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b> <span class="mono small muted">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span>${sev?`<br><span class="small" style="color:var(--bad);font-weight:600">${sev} critical allerg${sev===1?"y":"ies"}</span>`:""}${wantsWalk(r)?`<br><span class="small muted">Walk-through requested</span>`:""}${r.breakoutNeed==="yes"&&r.breakouts&&r.breakouts.length?`<br><span class="small muted">${r.breakouts.length} breakout room${r.breakouts.length===1?"":"s"}</span>`:""}</td>
         <td>${r.startDate?fmtDate(r.startDate)+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate):""):"—"}</td><td class="mono">${esc(r.headcount||"—")}</td>
         <td><div class="prog"><span class="bar"><i style="width:${p/SECS_TOTAL*100}%"></i></span>${p}/${SECS_TOTAL}</div></td>
         <td>${dlTxt}</td><td><span class="pill ${s.k==="locked"?"locked":s.k}">${s.label}</span></td>
@@ -1487,9 +1567,12 @@ function sheetBody(r0,info){
     <h2>Comments &amp; checklist</h2>
     <p class="note">${r.comments?esc(r.comments):`<span class="muted">No additional comments.</span>`}</p>
     <p style="margin:6px 0 0">Conference schedule emailed: <b>${r.checklist.schedule?"Yes":"No"}</b> · Final payment sent: <b>${r.checklist.payment?"Yes":"No"}</b></p>
-    <h2>Conference room &amp; A/V</h2>
+    <h2>Conference rooms &amp; A/V</h2>
     <div class="kvs"><div><span>Preferred setup</span>${r.setup?SETUP_LABEL[r.setup]:v("")}</div><div><span>Changes during event</span>${r.roomChanges?(r.roomChanges==="yes"?"Yes · needs approval":"No"):v("")}</div><div><span>Audio/visual</span>${av?esc(av):v("","Not answered")}</div></div>
     ${r.setupNotes?`<p class="note" style="margin-top:8px"><b>Setup notes:</b> ${esc(r.setupNotes)}</p>`:""}
+    ${hasBreakouts(r)?`<h3>Breakout rooms · ${r.breakouts.length}</h3><table><thead><tr><th>Room</th><th style="width:56px">People</th><th>When</th><th style="width:96px">Setup</th><th>A/V &amp; notes</th></tr></thead><tbody>${r.breakouts.map((b,i)=>`<tr><td>${esc(b.name||"Breakout room "+(i+1))}</td><td class="n">${b.people?esc(b.people):v("")}</td><td>${b.days.length?esc(boWhen(b)):v("","Days not chosen")}</td><td>${b.setup?SETUP_LABEL[b.setup]:v("")}</td><td>${esc([...b.av,b.notes].filter(Boolean).join(", "))||"None"}</td></tr>`).join("")}</tbody></table>`
+      :`<p style="margin:8px 0 0"><b>Breakout rooms:</b> ${r.breakoutNeed==="no"?"None needed":v("","Not answered")}</p>`}
+    <p style="margin:8px 0 0"><b>Walk-through:</b> ${wantsWalk(r)?`${esc(walkStatus(r,info.walk))} <span class="muted">· ${esc(walkRequestText(r))}</span>`:r.walk.want==="no"?"Not requested":`<span class="muted">Not requested</span>`}</p>
     <h2>Allergies &amp; restrictions${r.allergies.length?` · ${r.allergies.length} guest${r.allergies.length===1?"":"s"}${sev?`, <span class="sev">${sev} severe</span>`:""}`:""}</h2>
     ${r.allergies.length?`<table><thead><tr><th>Guest</th><th>Allergy or restriction</th><th>Type</th><th>Severity</th></tr></thead><tbody>${r.allergies.map(a=>`<tr><td>${v(a.name)}</td><td>${v(a.allergy)}</td><td>${a.type?esc(TYPE_LABEL[a.type]||a.type):v("","Not set")}</td><td>${sevTag(a)}</td></tr>`).join("")}</tbody></table>`
       :`<p style="margin:0">${r.noAllergies===true?"No guests with allergies or food restrictions.":`<span class="miss">Not answered yet.</span>`}</p>`}
@@ -1524,7 +1607,7 @@ async function saveFile(filename,data,label){
 function downloadSheet(){const {r,info}=sheetCtx;saveFile(`${r.code} ${(r.group||"final details").replace(/[^\w\- ]+/g,"").trim()} - final details.html`,printableDoc(`${r.group||r.code} · Final details`,sheetBody(r,info)),"Sheet saved. Open it and press Print.")}
 
 // ---------- kitchen by day ----------
-async function loadKitchen(){kitchenInfo=null;try{kitchenInfo=await store.allStaff()}catch(e){kitchenInfo={}}if(view==="staff"&&(staffTab==="kitchen"||staffTab==="week"||staffTab==="rooms"))renderStaff()}
+async function loadKitchen(){kitchenInfo=null;try{kitchenInfo=await store.allStaff()}catch(e){kitchenInfo={}}if(view==="staff"&&(needsInfo()))renderStaff()}
 function allDates(){const s=new Set();(staffRows||[]).forEach(r=>(r.days||[]).forEach(d=>s.add(d.date)));return [...s].sort()}
 // ---------- daily production list (Kitchen) ----------
 const STAFF_MEALS=15; // staff plates for the food order guide; the production list shows guest counts only
@@ -1722,8 +1805,9 @@ function roomsBody(start){
   if(!groups.length)return `<p>No groups on site this week.</p>`;
   const avOf=r=>r.noAV?[]:[...r.av,...(r.avOther?[r.avOther]:[])];
   const days=dates.filter(d=>groups.some(r=>r.days.some(x=>x.date===d)));
-  const glance=days.map(d=>{const on=groups.filter(r=>r.days.some(x=>x.date===d));const eq=new Map();on.forEach(r=>(r.noAV?[]:r.av).forEach(a=>eq.set(a,(eq.get(a)||0)+1)));
-    return `<tr><th scope="row">${fmtDate(d,{weekday:"short",month:"short",day:"numeric"})}</th><td>${on.map(r=>`${esc(r.group||r.code)} <span class="muted">· ${r.setup?SETUP_LABEL[r.setup].toLowerCase():"setup not given"}</span>`).join("<br>")}</td><td>${eq.size?[...eq].map(([a,n])=>`${esc(a)}${n>1?` ×${n}`:""}`).join(", "):`<span class="muted">None</span>`}</td></tr>`}).join("");
+  const bosOn=(r,d)=>hasBreakouts(r)?r.breakouts.filter(b=>b.days.includes(d)):[];
+  const glance=days.map(d=>{const on=groups.filter(r=>r.days.some(x=>x.date===d));const eq=new Map();on.forEach(r=>[...(r.noAV?[]:r.av),...bosOn(r,d).flatMap(b=>b.av)].forEach(a=>eq.set(a,(eq.get(a)||0)+1)));
+    return `<tr><th scope="row">${fmtDate(d,{weekday:"short",month:"short",day:"numeric"})}</th><td>${on.map(r=>{const bo=bosOn(r,d);return `${esc(r.group||r.code)} <span class="muted">· ${r.setup?SETUP_LABEL[r.setup].toLowerCase():"setup not given"}</span>${bo.length?`<br><span class="small">+ ${bo.length} breakout${bo.length===1?"":"s"}: ${bo.map(b=>`${b.setup?SETUP_LABEL[b.setup].toLowerCase():"setup not given"}${b.people?" for "+b.people:""}`).map(esc).join(", ")}</span>`:""}`}).join("<br>")}</td><td>${eq.size?[...eq].map(([a,n])=>`${esc(a)}${n>1?` ×${n}`:""}`).join(", "):`<span class="muted">None</span>`}</td></tr>`}).join("");
   const drafts=groups.filter(r=>r.status!=="locked").length;
   const v=(x,e="Not answered")=>x?x:`<span class="miss">${e}</span>`;
   const blocks=groups.map(r=>{const n=info[r.code]||{},locs=n.locations||{},av=avOf(r);
@@ -1738,13 +1822,15 @@ function roomsBody(start){
         <tr><th scope="row">Changes during event</th><td>${r.roomChanges==="yes"?`<span class="miss">Yes · needs approval, fee may apply</span>`:r.roomChanges==="no"?"No":v("")}</td></tr>
         ${r.setupNotes?`<tr><th scope="row">Setup notes</th><td class="note">${esc(r.setupNotes)}</td></tr>`:""}
         <tr><th scope="row">A/V Requirements</th><td>${r.noAV?"None needed":av.length?`<div class="avlist">${av.map(a=>`<span><span class="box" aria-hidden="true"></span> ${esc(a)}</span>`).join("")}</div><div class="small muted">Requested by the group. Check off each item when it's set up.</div>`:v("")}</td></tr>
+        ${hasBreakouts(r)&&r.breakouts.some(b=>b.days.some(d=>dates.includes(d)))?`<tr><th scope="row">Breakout rooms</th><td>${r.breakouts.filter(b=>b.days.some(d=>dates.includes(d))).map((b,i)=>`<div class="bo"><b>${esc(b.name||"Breakout room "+(i+1))}</b> · ${b.people?esc(b.people)+" people":`<span class="miss">people not given</span>`} · ${esc(boWhen(b,dates))} · ${b.setup?`<b>${SETUP_LABEL[b.setup]}</b>`:`<span class="miss">setup not given</span>`}
+          <div class="borow"><span>Room <span class="par inl"></span></span>${b.av.length?`<span class="avlist">${b.av.map(a=>`<span><span class="box" aria-hidden="true"></span> ${esc(a)}</span>`).join("")}</span>`:`<span class="muted">No A/V</span>`}</div>${b.notes?`<div class="small note">${esc(b.notes)}</div>`:""}</div>`).join("")}</td></tr>`:""}
         ${conf.length?`<tr><th scope="row">Food in the room</th><td class="miss">${conf.join("<br>")}</td></tr>`:""}
         <tr><th scope="row">On-site contact</th><td>${os}</td></tr>
       </tbody></table></section>`}).join("");
   return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Conference rooms &amp; A/V</div><h1>Week of ${fmtDate(start,{month:"long",day:"numeric",year:"numeric"})}</h1><div>${groups.length} group${groups.length===1?"":"s"} on site</div></div>
     <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
     <h2>At a glance</h2><table><thead><tr><th style="width:96px">Day</th><th>Groups &amp; setup</th><th>A/V equipment out</th></tr></thead><tbody>${glance}</tbody></table>
-    <h2>By group</h2><div class="small muted" style="margin:-4px 0 6px">Write in the assigned room. Amber marks a draft, a mid-event change, or food served in the meeting room.</div>${blocks}</div>`}
+    <h2>By group</h2><div class="small muted" style="margin:-4px 0 6px">Write in the assigned rooms, including breakouts. Amber marks a draft, a mid-event change, or food served in the meeting room.</div>${blocks}</div>`}
 function roomsView(){
   const ws=weekStarts();
   if(!ws.length)return `<div class="empty">No groups have event dates yet.</div>`;
@@ -1757,6 +1843,37 @@ function roomsView(){
     <button class="btn primary" data-rdl>Download to print</button></div>
     <p class="small muted" style="margin:0">Room setup and A/V for every group on site that week, with the equipment needed each day. For the setup crew and A/V.</p></div>
     ${kitchenInfo===null?`<div class="empty">Loading meal locations…</div>`:`<div class="sheetwrap"><article class="sheet">${roomsBody(roomWeek)}</article></div>`}</div>`}
+function walksView(){
+  if(kitchenInfo===null)return `<div class="empty">Loading walk-throughs…</div>`;
+  const all=(staffRows||[]).map(r=>normalize(structuredClone(r)));
+  const rows=all.filter(wantsWalk).sort((a,b)=>(a.startDate||"").localeCompare(b.startDate||"")||(a.group||"").localeCompare(b.group||""));
+  const stOf=r=>({status:"requested",date:"",time:"",note:"",...((kitchenInfo[r.code]||{}).walk||{})});
+  const open=rows.filter(r=>stOf(r).status==="requested").length,sch=rows.filter(r=>stOf(r).status==="scheduled").length;
+  const busy=(r,date)=>{const o=all.filter(x=>x.code!==r.code&&x.days.some(d=>d.date===date));
+    return o.length?`<span class="warnline">${o.length} other group${o.length===1?"":"s"} on site: ${o.map(x=>esc(x.group||x.code)).join(", ")}</span>`:`<span class="small muted">No other groups booked in this system</span>`};
+  return `<div class="stack"><div class="stats"><div class="stat"><span class="n">${rows.length}</span><span class="l">Walk-through requests</span></div><div class="stat${open?" alert":""}"><span class="n">${open}</span><span class="l">Waiting to be scheduled</span></div><div class="stat"><span class="n">${sch}</span><span class="l">Scheduled</span></div></div>
+  <div class="panel" style="gap:12px"><h2>Walk-through requests</h2>
+    <p class="small muted">Organizers pick two preferred days. Those aren't promised: the form tells them a walk-through depends on what else is happening at camp. Mark a request Scheduled and add the confirmed day and time. The organizer sees it on their form. "Other groups on site" only knows about groups using this form, so check the camp calendar too.</p>
+    ${rows.length?`<div class="tablewrap"><table class="stafftable walktable"><thead><tr><th>Group</th><th>Event</th><th>Their choices</th><th>People</th><th>Status</th></tr></thead><tbody>
+    ${rows.map(r=>{const st=stOf(r),c=r.code;return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b> <span class="mono small muted">${esc(c)}</span><br><span class="small muted">${esc(r.contact||"")}${r.phone?" · "+esc(r.phone):""}${r.email?"<br>"+esc(r.email):""}</span></td>
+      <td>${r.startDate?shortDay(r.startDate):"—"}</td>
+      <td class="g">${r.walk.choices.filter(x=>x.date).map((x,k)=>`<div class="wchoice"><b>${k?"2nd":"1st"}:</b> ${esc(walkChoice(x))}<br>${busy(r,x.date)}</div>`).join("")||`<span class="missingval">No days chosen</span>`}${r.walk.notes?`<div class="small muted">Wants to see: ${esc(r.walk.notes)}</div>`:""}</td>
+      <td class="mono">${r.walk.people?esc(r.walk.people):"—"}</td>
+      <td class="g"><select class="walkst" data-code="${esc(c)}" aria-label="Status for ${esc(r.group||c)}">${Object.entries(WALK_STATUS).map(([k,l])=>`<option value="${k}" ${st.status===k?"selected":""}>${l}</option>`).join("")}</select>
+        ${st.status==="scheduled"?`<div class="grid2 wsched"><label class="f">Day<input type="date" class="walkdate" data-code="${esc(c)}" value="${esc(st.date)}"></label><label class="f">Time<input type="time" class="walktime" data-code="${esc(c)}" value="${esc(st.time)}"></label></div>${st.date?"":`<span class="warnline walkwarn">Add the confirmed day</span>`}`:""}
+        <input type="text" class="walknote" data-code="${esc(c)}" value="${esc(st.note)}" placeholder="Staff note (who's meeting them…)" aria-label="Staff note"></td></tr>`}).join("")}
+    </tbody></table></div>`:`<div class="empty">No walk-through requests yet. Organizers can ask for one in the Conference rooms &amp; A/V section of their form.</div>`}
+  </div></div>`}
+function walkSave(code,patch){
+  const base=kitchenInfo[code]||{code,locations:{}},walk={status:"requested",date:"",time:"",note:"",...(base.walk||{}),...patch};
+  const next={...base,code,walk,updatedAt:new Date().toISOString()};kitchenInfo[code]=next;
+  store.putStaff(code,next).then(()=>toast("Walk-through saved")).catch(e=>toast(e&&e.code==="invalid_argument"?"Only Aspen Grove staff can update walk-throughs":"Not saved. Check your connection."));
+}
+app.addEventListener("change",e=>{if(view!=="staff"||staffTab!=="walks")return;const el=e.target,c=el.dataset.code;if(!c)return;
+  if(el.classList.contains("walkst")){walkSave(c,{status:el.value});renderStaff()}
+  else if(el.classList.contains("walkdate")){walkSave(c,{date:el.value});const w=el.closest("td").querySelector(".walkwarn");if(w)w.hidden=!!el.value}
+  else if(el.classList.contains("walktime"))walkSave(c,{time:el.value});
+  else if(el.classList.contains("walknote"))walkSave(c,{note:el.value})});
 function downloadRooms(){if(!roomWeek)return;saveFile(`Rooms and AV week of ${roomWeek}.html`,printableDoc(`Rooms & A/V · week of ${roomWeek}`,roomsBody(roomWeek)),"Rooms & A/V sheet saved. Open it and press Print.")}
 
 // ---------- backup & system check ----------
@@ -1766,8 +1883,8 @@ function plainMenu(m,st){if(m.snack)return st.on?st.items.join(", "):"";if(!st.c
 async function exportData(kind){
   const rows=(staffRows||[]).map(r=>normalize(structuredClone(r)));const stamp=iso(new Date());
   if(kind==="groups"){
-    const out=[["Code","Group","Status","Organizer","Email","Phone","On-site contact","On-site phone","First day","Last day","Headcount","Setup","A/V","Allergy guests","Severe","Form parts done","Lock-in deadline","Locked in at","Last changed"]];
-    rows.forEach(r=>out.push([r.code,r.group,stateOf(r).label,r.contact,r.email,r.phone,r.onsite.same?r.contact:r.onsite.name,r.onsite.same?r.phone:r.onsite.phone,r.startDate,r.endDate,r.headcount,SETUP_LABEL[r.setup]||"",r.noAV?"None":[...r.av,r.avOther].filter(Boolean).join("; "),r.allergies.length,r.allergies.filter(isSevere).length,`${progressOf(r)}/${SECS_TOTAL}`,deadlineOf(r)?iso(deadlineOf(r)):"",r.lockedAt||"",r.updatedAt||""]));
+    const out=[["Code","Group","Status","Organizer","Email","Phone","On-site contact","On-site phone","First day","Last day","Headcount","Setup","A/V","Breakout rooms","Walk-through","Allergy guests","Severe","Form parts done","Lock-in deadline","Locked in at","Last changed"]];
+    rows.forEach(r=>out.push([r.code,r.group,stateOf(r).label,r.contact,r.email,r.phone,r.onsite.same?r.contact:r.onsite.name,r.onsite.same?r.phone:r.onsite.phone,r.startDate,r.endDate,r.headcount,SETUP_LABEL[r.setup]||"",r.noAV?"None":[...r.av,r.avOther].filter(Boolean).join("; "),hasBreakouts(r)?r.breakouts.map(b=>`${b.name||"Breakout"} (${b.people||"?"}, ${SETUP_LABEL[b.setup]||"setup not given"})`).join("; "):r.breakoutNeed==="no"?"None":"",wantsWalk(r)?walkRequestText(r):r.walk.want==="no"?"No":"",r.allergies.length,r.allergies.filter(isSevere).length,`${progressOf(r)}/${SECS_TOTAL}`,deadlineOf(r)?iso(deadlineOf(r)):"",r.lockedAt||"",r.updatedAt||""]));
     await saveFile(`Aspen Grove groups ${stamp}.csv`,csv(out),"Group list saved");
   }else if(kind==="meals"){
     let info={};try{info=await store.allStaff()}catch(e){}
@@ -1819,7 +1936,7 @@ async function loadStaff(){
   if(store.db){
     if(!staffUnsub)staffUnsub=store.db.collection("reservations").onSnapshot(q=>{staffRows=q.docs.map(d=>d.data());if(view==="staff")renderStaff()},()=>{staffRows=staffRows||[];if(view==="staff")renderStaff()});
   }else{staffRows=await store.all()}
-  if(staffTab==="kitchen"||staffTab==="week"||staffTab==="rooms")loadKitchen();
+  if(needsInfo())loadKitchen();
   renderStaff();
 }
 
@@ -1835,12 +1952,16 @@ function localExample(){
   r.onsite={same:false,name:"Taylor Example",phone:"801-555-0188"};
   r.allergies=[{name:"Sam Example",allergy:"Tree nuts",type:"Allergy",severity:"Severe",mode:"all",meals:[],note:"",from:"",to:"",src:""},
     {name:"Riley Example",allergy:"Gluten",type:"Intolerance",severity:"Mild",mode:"all",meals:[],note:"",from:"",to:"",src:""}];
+  r.breakoutNeed="yes";r.breakouts=[{...blankBreakout(),name:"Grade-level planning",people:20,days:[iso(s)],start:"14:00",end:"16:00",setup:"classroom",av:["Whiteboard"]},
+    {...blankBreakout(),name:"Admin team",people:8,days:[iso(s)],start:"14:00",end:"16:00",setup:"boardroom",av:["Screen"],notes:"HDMI cable for a laptop"}];
+  const w1=new Date(s);w1.setDate(w1.getDate()-12);const w2=new Date(s);w2.setDate(w2.getDate()-11);
+  r.walk={want:"yes",choices:[{date:iso(w1),time:"Afternoon"},{date:iso(w2),time:"Morning"}],people:3,notes:"The main room and both breakout spaces"};
   normalize(r);res=null;return r;
 }
 
 // ---------- boot ----------
-document.getElementById("tab-org").onclick=async()=>{await saving;renderHome()};
-document.getElementById("tab-staff").onclick=async()=>{await saving;setTab("staff");loadStaff()};
+document.getElementById("tab-org").onclick=async()=>{if(view==="edit"||view==="review"){clearTimeout(saveTimer);if(dirty)saveNow()}await saving;renderHome()};
+document.getElementById("tab-staff").onclick=async()=>{if(view==="edit"||view==="review"){clearTimeout(saveTimer);if(dirty)saveNow()}await saving;setTab("staff");loadStaff()};
 function setTab(t){document.getElementById("tab-org").setAttribute("aria-pressed",t==="org");document.getElementById("tab-staff").setAttribute("aria-pressed",t==="staff")}
 const ready=store.init();
 (async()=>{try{const u=window.claude&&claude.use?await claude.use("user"):null;if(!u)return;who.u=u;

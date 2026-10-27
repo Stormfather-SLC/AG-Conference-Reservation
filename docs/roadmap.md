@@ -9,32 +9,28 @@ Replace the PDF clients fill out with a web page that collects the same informat
 - Web form covering everything on the PDF. Pricing is shown only as it appears on the PDF.
 - Reports use only submitted data, as a snapshot. Changes after submission go through Conference Services by phone or email, as they do today.
   - Final sheet (one group)
-  - Weekly itinerary
-  - Production list (kitchen, daily)
+  - Weekly meal schedule (kitchen; called "Weekly itinerary" until Oct 27)
+  - Daily production list (kitchen)
   - Rooms & A/V (setup crew, weekly). Added Oct 23 by Matt's decision; room setup and A/V had been on the parking lot.
+  - Walk-throughs (setup). See below.
+- **Breakout rooms and walk-through requests.** Moved up from Phase 2 on Oct 27 by Matt's decision, at Nate's request (Programs manager, responsible for Setup). These go beyond the paper form.
+  - The organizer says whether they need breakout rooms and, for each: purpose, people, days, times, setup style (theater, round tables, classroom, boardroom, U-shape), A/V and notes. Aspen Grove assigns the rooms; the Rooms & A/V sheet has a blank line to write each one in.
+  - The organizer can request a walk-through with two preferred days and times of day. The form says plainly that these depend on what else is happening at camp and aren't guaranteed. Setup staff mark each request Scheduled (with the confirmed day and time), Done, or Couldn't schedule; the organizer sees the result on their form.
 - Hosting assumed at aspengrove.byu.edu.
+
+### Still to confirm with Nate (breakout rooms and walk-throughs)
+
+Built Oct 27 with these defaults; adjust after Nate reviews it.
+
+1. **Setup styles** for breakout rooms: theater, round tables, classroom, boardroom, U-shape. Right list?
+2. **Fees.** No fee note is shown for breakout rooms or walk-throughs. Should there be one, like mid-event room changes?
+3. **Walk-through timing.** The form suggests before the 14-day lock-in deadline but allows any day before the event.
+4. **Who updates walk-throughs.** Status is saved with the staff notes, which only artifact editors can change. Nate or his team need edit access, or this moves to its own permission.
 
 ## Phase 2
 
 - **Staff edit a submission, with change history.** Partly built already: Conference Services can reopen a locked reservation and every save is logged.
 - **Client edits or resubmits their own form.**
-- **Breakout rooms** (requested Oct 23). In the Conference room & A/V section, let the organizer request breakout rooms and say how each should be set up.
-- **Pre-conference walk-through** (requested Oct 23). Let the organizer request a walk-through of the spaces the group will use.
-
-### Open questions for breakout rooms and the walk-through
-
-Settle these before building:
-
-1. **Breakout room details.** What does the organizer give for each room: purpose or name, headcount, days and times, setup style, A/V? Is per-room A/V needed, or is the main room's A/V list enough?
-2. **Setup styles.** The main room offers theater or round tables. Do breakouts need others, such as classroom, boardroom or U-shape?
-3. **Room assignment.** The form doesn't record which room a group gets. Does Conference Services assign breakout rooms in the page (like meal locations), or write them in on the printed sheet?
-4. **Walk-through: request or schedule.** A request (preferred dates and times, who's coming) that staff confirm by phone or email is a small change. Real scheduling against staff or room availability needs a calendar and is much larger.
-5. **Walk-through timing.** Is there a cutoff, such as before the 14-day lock-in deadline? Is it in person only, or virtual too?
-6. **Fees.** Do breakout rooms or mid-event breakout changes carry a fee to show on the form, like the main room's mid-event changes?
-
-### What it touches
-
-Organizer form section 03, the review page, the Final sheet, the Rooms & A/V sheet, the data model ([data-model.md](data-model.md)), and the group CSV export.
 
 ## Parking lot
 
