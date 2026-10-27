@@ -68,7 +68,7 @@ The staff side lives in `staffnotes/{code}.walk`: `{status, date, time, note}`, 
 |---|---|
 | `gid` | Guest id. A guest with several restrictions has one record per restriction, all sharing the same `gid` and `name`. Older records without one are grouped by name when loaded |
 | `name` | Guest name |
-| `allergy` | One of the 9 major allergens, Vegan, Vegetarian, or free text when `other` is true |
+| `allergy` | One of the 9 major allergens, Celiac disease, Vegan, Vegetarian, or free text when `other` is true |
 | `other` | true when `allergy` is free text |
 | `type` | `Allergy`, `Intolerance`, `Preference` or `Medical` |
 | `severity` | `Mild`, `Severe` or `Airborne` (allergies only) |
@@ -77,7 +77,7 @@ The staff side lives in `staffnotes/{code}.walk`: `{status, date, time, note}`, 
 | `from`, `to` | Slot keys limiting the stay window, or `""` |
 | `src` | `"roster"` when imported from the guest list |
 
-The form sets `type` and `severity` together from one "How serious" choice: Intolerance → `Intolerance`; Allergy, mild / severe / airborne → `Allergy` with `Mild` / `Severe` / `Airborne`; Medically prescribed → `Medical`; Dietary preference (unlisted items only) → `Preference`. Vegan and Vegetarian default to `Preference`.
+The form sets `type` and `severity` together from one "How serious" choice: Intolerance → `Intolerance`; Allergy, mild / severe / airborne → `Allergy` with `Mild` / `Severe` / `Airborne`; Medically prescribed → `Medical`; Dietary preference (unlisted items only) → `Preference`. Vegan and Vegetarian default to `Preference`. Celiac disease is always `Medical` (strict; kitchen plates read "gluten-free (celiac: no cross-contact)"). Seriousness is optional: a restriction left at "Not sure" has no `type`/`severity`, doesn't block lock-in, and still gets a special plate.
 
 Severe means `type` is `Medical`, or the severity is `Severe` or `Airborne`. A guest counts as severe when any of their restrictions is. Kitchen sheets count one special plate per guest, labeled with all of that guest's needs (e.g. "peanut-free + tree-nut-free").
 

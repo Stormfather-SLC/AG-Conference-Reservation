@@ -522,10 +522,12 @@ function setPath(o,p,v){const ks=p.split(".");let a=o;for(let i=0;i<ks.length-1;
 // ---------- allergy list options ----------
 const ALLERGENS=["Milk","Eggs","Fish","Crustacean shellfish","Tree nuts","Peanuts","Wheat/Gluten","Soybeans","Sesame"];
 const DIETS=["Vegan","Vegetarian"];
-const RESTRICT_OPTS=[...ALLERGENS,...DIETS];
+const CONDITIONS=["Celiac disease"]; // always strict: no "how serious" question
+const RESTRICT_OPTS=[...ALLERGENS,...CONDITIONS,...DIETS];
+const isCondition=a=>CONDITIONS.includes(a);
 function matchRestriction(t){const x=String(t||"").toLowerCase().trim();if(!x)return "";
   const tests=[[/^vegan/,"Vegan"],[/^vegetarian/,"Vegetarian"],[/\b(milk|dairy|lactose)\b/,"Milk"],[/\beggs?\b/,"Eggs"],[/\b(crustacean|shellfish|shrimp|crab|lobster|prawn)/,"Crustacean shellfish"],[/\bfish\b/,"Fish"],
-    [/\bpeanuts?\b/,"Peanuts"],[/\b(tree ?nuts?|almond|walnut|cashew|pecan|pistachio|hazelnut|macadamia)/,"Tree nuts"],[/\b(wheat|gluten|celiac|coeliac)/,"Wheat/Gluten"],[/\bsoy(beans?|a)?\b/,"Soybeans"],[/\bsesame\b/,"Sesame"]];
+    [/\bpeanuts?\b/,"Peanuts"],[/\b(tree ?nuts?|almond|walnut|cashew|pecan|pistachio|hazelnut|macadamia)/,"Tree nuts"],[/\b(celiac|coeliac)/,"Celiac disease"],[/\b(wheat|gluten)/,"Wheat/Gluten"],[/\bsoy(beans?|a)?\b/,"Soybeans"],[/\bsesame\b/,"Sesame"]];
   for(const[re,v]of tests)if(re.test(x))return v;return ""}
 const isDietRow=a=>!a.other&&DIETS.includes(a.allergy);
 
@@ -558,7 +560,7 @@ function normalize(r){
   {const w=r.walk||{};r.walk={...blankWalk(),...w,choices:[0,1].map(i=>({date:"",time:"",...((w.choices||[])[i]||{})}))}}r.lastMeal=r.lastMeal||"";r.roster=r.roster||null;
   r.days.forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(st.count===undefined)st.count="";if(!m.snack){if(!st.service)st.service="hall";if(st.location===undefined)st.location=""}}));
   r.allergies=(r.allergies||[]).map(a=>({gid:a.gid||"",name:a.name||"",allergy:a.allergy||"",type:a.type||(a.allergy?"Allergy":""),severity:a.severity||"",mode:a.mode||"all",meals:Array.isArray(a.meals)?a.meals:[],note:typeof a.meals==="string"?a.meals:(a.note||""),from:a.from||"",to:a.to||"",src:a.src||"",other:a.other}));
-  r.allergies.forEach(a=>{if(a.other===undefined){const m=matchRestriction(a.allergy);if(a.allergy&&RESTRICT_OPTS.includes(a.allergy))a.other=false;else if(a.allergy&&m&&a.allergy.trim().toLowerCase()===m.toLowerCase()){a.allergy=m;a.other=false}else a.other=!!a.allergy}if(!a.other&&a.allergy==="Wheat")a.allergy="Wheat/Gluten";if(a.other&&/^\s*(gluten|wheat)\s*$/i.test(a.allergy)){a.allergy="Wheat/Gluten";a.other=false}if(isDietRow(a)){if(a.type!=="Medical")a.type="Preference";a.severity=""}else if(!a.other&&a.allergy&&noSeverity(a))a.type="";});
+  r.allergies.forEach(a=>{if(a.other===undefined){const m=matchRestriction(a.allergy);if(a.allergy&&RESTRICT_OPTS.includes(a.allergy))a.other=false;else if(a.allergy&&m&&a.allergy.trim().toLowerCase()===m.toLowerCase()){a.allergy=m;a.other=false}else a.other=!!a.allergy}if(!a.other&&a.allergy==="Wheat")a.allergy="Wheat/Gluten";if(a.other&&/^\s*(gluten|wheat)\s*$/i.test(a.allergy)){a.allergy="Wheat/Gluten";a.other=false}if(!a.other&&isCondition(a.allergy)){a.type="Medical";a.severity=""}else if(isDietRow(a)){if(a.type!=="Medical")a.type="Preference";a.severity=""}else if(!a.other&&a.allergy&&noSeverity(a))a.type="";});
   // Group restrictions by guest: rows without a guest id join the first row with the same name (older data had one row per restriction).
   {const byName={},used=new Set();r.allergies.forEach(a=>{if(a.gid){used.add(a.gid);const k=a.name.trim().toLowerCase();if(k&&!byName[k])byName[k]=a.gid}});
    r.allergies.forEach((a,i)=>{if(a.gid)return;const k=a.name.trim().toLowerCase();if(k&&byName[k]){a.gid=byName[k];return}
@@ -685,7 +687,7 @@ function allergyIssueItems(r){const m=[];guestsOf(r).forEach((g,gi)=>{const who=
   if(!g.name)m.push({t:`${who}: add the guest's name`,short:"Add the guest's name",id,gid});
   g.rows.forEach(({a,i},j)=>{const nm=a.allergy||"Other",w=`${who}: ${nm}`;
     if(!a.allergy)m.push({t:`${who}: describe the “something not listed” restriction`,short:"Describe the unlisted restriction",id,gid});
-    else if(!levelOf(a))m.push({t:`${w}, choose how serious`,short:`${nm}: choose how serious`,id,gid})})});return m}
+})});return m}
 const allergyIssues=r=>allergyIssueItems(r).map(x=>x.t);
 function extras(r){
   const n=Number(r.headcount)||0, lines=[];let total=0,market=false;
@@ -882,8 +884,8 @@ const LEVEL_SET={intol:{type:"Intolerance",severity:""},mild:{type:"Allergy",sev
 const LEVEL_TEXT={intol:"intolerance",mild:"mild allergy",severe:"severe allergy",air:"airborne allergy",medical:"medically prescribed",pref:"preference"};
 function levelOf(a){if(isDietRow(a))return a.type==="Medical"?"medical":"pref";if(a.type==="Medical")return "medical";if(a.type==="Preference")return "pref";if(a.type==="Intolerance")return "intol";
   if(a.type==="Allergy")return {Mild:"mild",Severe:"severe",Airborne:"air"}[a.severity]||"";return ""}
-function restrText(a){const lv=levelOf(a),nm=esc(a.allergy||"Other (not described)");if(isDietRow(a))return lv==="medical"?`${nm} <span class="sev">(medically prescribed)</span>`:nm;
-  if(!lv)return `${nm} <span class="missingval">(how serious?)</span>`;const hot=lv==="severe"||lv==="air"||lv==="medical";return `${nm} <span class="${hot?"sev":"muted"}">(${LEVEL_TEXT[lv]})</span>`}
+function restrText(a){const lv=levelOf(a),nm=esc(a.allergy||"Other (not described)");if(!a.other&&isCondition(a.allergy))return `<span class="sev">${nm}</span>`;if(isDietRow(a))return lv==="medical"?`${nm} <span class="sev">(medically prescribed)</span>`:nm;
+  if(!lv)return `${nm} <span class="muted">(seriousness not given)</span>`;const hot=lv==="severe"||lv==="air"||lv==="medical";return `${nm} <span class="${hot?"sev":"muted"}">(${LEVEL_TEXT[lv]})</span>`}
 function allergyList(locked){
   const gs=guestsOf(res),iss=allergyIssueItems(res),n=allergyGuests(res).length,ns=allergyGuests(res).filter(guestSevere).length;
   return `<div class="glisthead"><span><b>${n}</b> guest${n===1?"":"s"}${ns?` · <span class="sev">${ns} severe</span>`:""}</span>${gs.length>15?`<input type="search" id="alsearch" placeholder="Find a guest" aria-label="Find a guest">`:""}</div>
@@ -906,7 +908,7 @@ function openGuest(gid){
       if(b.dataset.gaddother!==undefined){gDraft.items.push({allergy:"",other:true,level:""});drawGuest();d.querySelectorAll(".gd-other").forEach((x,k,all)=>{if(k===all.length-1)x.focus()});return}
       if(b.dataset.gdelother!==undefined){gDraft.items.splice(+b.dataset.gdelother,1);drawGuest();return}});
     d.addEventListener("change",e=>{const el=e.target;
-      if(el.dataset.gpick!==undefined){const v=el.value,k=gDraft.items.findIndex(x=>!x.other&&x.allergy===v);if(el.checked&&k<0)gDraft.items.push({allergy:v,other:false,level:DIETS.includes(v)?"pref":""});if(!el.checked&&k>=0)gDraft.items.splice(k,1);drawGuest(true);return}
+      if(el.dataset.gpick!==undefined){const v=el.value,k=gDraft.items.findIndex(x=>!x.other&&x.allergy===v);if(el.checked&&k<0)gDraft.items.push({allergy:v,other:false,level:DIETS.includes(v)?"pref":isCondition(v)?"medical":""});if(!el.checked&&k>=0)gDraft.items.splice(k,1);drawGuest(true);return}
       if(el.dataset.glevel!==undefined){gDraft.items[+el.dataset.glevel].level=el.value;drawGuest();return}
 });
     d.addEventListener("input",e=>{const el=e.target;if(el.id==="gd-name"){gDraft.name=el.value;const w=d.querySelector(".gd-dup");const dup=dupOf(gDraft);if(w)w.innerHTML=dupNote(dup)}
@@ -920,18 +922,19 @@ function drawGuest(keepPicker){
   const d=document.getElementById("gdlg"),dr=gDraft,open=keepPicker&&d.querySelector("details.msel")?.open;
   const picked=dr.items.filter(x=>!x.other).map(x=>x.allergy),others=dr.items.map((x,k)=>({...x,k})).filter(x=>x.other);
   const summary=dr.items.length?dr.items.map(x=>x.other?(x.allergy||"Other"):x.allergy).map(esc).join(", "):"Choose one or more";
-  const levelRows=dr.items.map((x,k)=>({...x,k})).filter(x=>!(!x.other&&DIETS.includes(x.allergy)));
+  const levelRows=dr.items.map((x,k)=>({...x,k})).filter(x=>!(!x.other&&(DIETS.includes(x.allergy)||isCondition(x.allergy))));
   d.innerHTML=`<div class="tdhead"><div><span class="eyebrow">${dr.isNew?"Add a guest":"Edit guest"}</span><h2>${dr.name?esc(dr.name):"Allergies & restrictions"}</h2></div><button class="btn ghost" data-gcancel aria-label="Close">✕</button></div>
     <label class="f" for="gd-name">Guest name<input type="text" id="gd-name" value="${esc(dr.name)}" autocomplete="off"></label>
     <div class="gd-dup">${dupNote(dupOf(dr))}</div>
     <div class="f"><span>Allergies &amp; restrictions</span>
       <details class="msel"${open?" open":""}><summary><span class="msel-sum">${summary}</span><span aria-hidden="true">▾</span></summary><div class="msel-list">
         <div class="msel-h">Allergens</div>${ALLERGENS.map(o=>`<label class="chk"><input type="checkbox" data-gpick value="${esc(o)}" ${picked.includes(o)?"checked":""}>${esc(o)}</label>`).join("")}
+        <div class="msel-h">Medical</div>${CONDITIONS.map(o=>`<label class="chk"><input type="checkbox" data-gpick value="${esc(o)}" ${picked.includes(o)?"checked":""}>${esc(o)}</label>`).join("")}
         <div class="msel-h">Diet</div>${DIETS.map(o=>`<label class="chk"><input type="checkbox" data-gpick value="${esc(o)}" ${picked.includes(o)?"checked":""}>${esc(o)}</label>`).join("")}
       </div></details>
       ${others.map(x=>`<div class="row gd-orow"><input type="text" class="gd-other" data-gother="${x.k}" value="${esc(x.allergy)}" placeholder="Something else, e.g. Kiwi" aria-label="Describe the restriction"><button type="button" class="btn ghost tiny" data-gdelother="${x.k}">Remove</button></div>`).join("")}
       <button type="button" class="btn ghost tiny" style="align-self:flex-start;padding-left:0" data-gaddother>+ Something not listed</button></div>
-    ${levelRows.length?`<div class="f"><span>How serious is each?</span><table class="gd-lv"><tbody>${levelRows.map(x=>`<tr><th scope="row" id="gd-lab-${x.k}">${x.other?(x.allergy?esc(x.allergy):"Other"):esc(x.allergy)}</th><td><select data-glevel="${x.k}" aria-label="How serious: ${esc(x.allergy||"other")}"><option value="">Choose…</option>${(x.other?[...LEVELS,["pref","Dietary preference"]]:LEVELS).map(([v,l])=>`<option value="${v}" ${x.level===v?"selected":""}>${l}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table></div>`:""}
+    ${levelRows.length?`<div class="f"><span>How serious is each? <span class="muted small" style="font-weight:400">Optional. Leave blank if you don't know.</span></span><table class="gd-lv"><tbody>${levelRows.map(x=>`<tr><th scope="row" id="gd-lab-${x.k}">${x.other?(x.allergy?esc(x.allergy):"Other"):esc(x.allergy)}</th><td><select data-glevel="${x.k}" aria-label="How serious: ${esc(x.allergy||"other")}"><option value="">Not sure</option>${(x.other?[...LEVELS,["pref","Dietary preference"]]:LEVELS).map(([v,l])=>`<option value="${v}" ${x.level===v?"selected":""}>${l}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table></div>`:""}
     <div class="row gd-acts"><button class="btn primary" data-gsave>${dr.isNew?"Add guest":"Save"}</button><button class="btn" data-gcancel>Cancel</button>${dr.isNew?"":`<button class="btn ghost danger-text" data-gremove style="margin-left:auto">Remove guest</button>`}</div>`;
 }
 function saveGuest(merge){
@@ -951,7 +954,7 @@ function saveGuest(merge){
 function mealGrid(i,a){
   return `<div class="algrid"><table><thead><tr><th>Day</th>${MEALS.map(m=>`<th>${m.snack?(m.k==="amSnack"?"AM snack":"PM snack"):m.label}</th>`).join("")}</tr></thead><tbody>${res.days.map(d=>`<tr><th scope="row">${fmtDate(d.date)}</th>${MEALS.map(m=>{const key=slotKey(d.date,m.k),served=isServed(m,d.meals[m.k]);return `<td><input type="checkbox" aria-label="${fmtDate(d.date)} ${m.label}" data-almeal="${i}" value="${key}" ${a.meals.includes(key)?"checked":""} ${served?"":"disabled"}></td>`}).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
-const COL_HELP=[["Guest","Guest's full name. Required"],["Allergy or Restriction","One of Milk, Eggs, Fish, Crustacean shellfish, Tree nuts, Peanuts, Wheat/Gluten, Soybeans or Sesame. Anything else, describe it (it's listed as Other). Blank if none"],["Type","Allergy, Intolerance, Preference or Medical (medically prescribed diet)"],["Diet","Vegetarian, Vegan, or blank"],["Severity","Mild, Severe or Airborne (for allergies)"]];
+const COL_HELP=[["Guest","Guest's full name. Required"],["Allergy or Restriction","One of Milk, Eggs, Fish, Crustacean shellfish, Tree nuts, Peanuts, Wheat/Gluten, Soybeans, Sesame or Celiac disease. Anything else, describe it (it's listed as Other). Blank if none"],["Type","Allergy, Intolerance, Preference or Medical (medically prescribed diet)"],["Diet","Vegetarian, Vegan, or blank"],["Severity","Mild, Severe or Airborne (for allergies)"]];
 const dietCounts=list=>({veg:list.filter(x=>x.diet==="Vegetarian").length,vegan:list.filter(x=>x.diet==="Vegan").length});
 function tableDietText(){const seen=new Set();return dietText(res.allergies.filter(isDietRow).filter(a=>{const k=a.name.trim().toLowerCase()+"|"+a.allergy;if(seen.has(k))return false;seen.add(k);return true}).map(a=>({diet:a.allergy})))}
 function dietText(list){const d=dietCounts(list);return [d.veg?`${d.veg} vegetarian`:"",d.vegan?`${d.vegan} vegan`:""].filter(Boolean).join(" · ")}
@@ -1212,7 +1215,7 @@ function mealLine(m,st){
 }
 function sumHead(num,title,sec,locked){return `<div class="sechead"><h2><span class="num">${num}</span>${title}</h2>${locked?"":`<button class="btn ghost" data-editsec="${sec}">Edit</button>`}</div>`}
 
-function sevTag(a){if(a.type==="Medical")return `<span class="sevtag sev">Strict, no substitutions</span>`;if(a.type==="Preference")return `<span class="muted">—</span>`;if(!a.severity)return a.type==="Allergy"?`<span class="missingval">Not set</span>`:`<span class="muted">—</span>`;return `<span class="sevtag ${isSevere(a)?"sev":""}">${SEV_LABEL[a.severity]}</span>`}
+function sevTag(a){if(a.type==="Medical")return `<span class="sevtag sev">Strict, no substitutions</span>`;if(a.type==="Preference")return `<span class="muted">—</span>`;if(!a.severity)return a.type==="Allergy"||!a.type?`<span class="muted">Not given</span>`:`<span class="muted">—</span>`;return `<span class="sevtag ${isSevere(a)?"sev":""}">${SEV_LABEL[a.severity]}</span>`}
 function allergyByMeal(){return res.days.map((d,di)=>{const rows=[];MEALS.forEach(m=>allergiesAt(di,m.k).forEach(a=>rows.push([m,a])));if(!rows.length)return "";
   return `<div class="sumday"><h3>${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</h3><div class="tablewrap"><table class="bymeal"><thead><tr><th>Meal</th><th>Guest</th><th>Allergy or restriction</th><th>Severity</th></tr></thead><tbody>${rows.map(([m,a])=>`<tr class="${isSevere(a)?"sevrow":""}"><td>${m.label}</td><td>${esc(a.name)}</td><td>${esc(a.allergy)}${a.type&&a.type!=="Allergy"?` <span class="muted small">(${a.type.toLowerCase()})</span>`:""}</td><td>${sevTag(a)}</td></tr>`).join("")}</tbody></table></div></div>`}).join("")}
 
@@ -1286,7 +1289,7 @@ function renderReview(){
         ${r.roster?`<p class="prose">Guest list: <b>${r.roster.length}</b> guests${r.rosterFile?` from ${esc(r.rosterFile)}`:""}${tableDietText()?` · ${tableDietText()}`:""}.</p>`:""}
         ${r.allergies.length?(()=>{const gs=allergyGuests(r),ns=gs.filter(guestSevere).length;return `<p class="prose">${gs.length} guest${gs.length===1?"":"s"} with allergies or restrictions${ns?` · <b style="color:var(--bad)">${ns} with something severe, airborne or medically prescribed</b>`:""}.</p>
           <div class="tablewrap"><table class="gtable"><thead><tr><th>Guest</th><th>Allergy or restriction</th><th>Type</th><th>Severity</th></tr></thead><tbody>
-          ${gs.map(g=>g.rows.map(({a},j)=>`<tr${j?' class="cont"':""}>${j?"":`<td rowspan="${g.rows.length}"><b>${val(g.name)}</b></td>`}<td>${val(a.allergy)}</td><td>${a.type?TYPE_LABEL[a.type]||a.type:val("","Not set")}</td><td>${sevTag(a)}</td></tr>`).join("")).join("")}</tbody></table></div>`})()+`
+          ${gs.map(g=>g.rows.map(({a},j)=>`<tr${j?' class="cont"':""}>${j?"":`<td rowspan="${g.rows.length}"><b>${val(g.name)}</b></td>`}<td>${val(a.allergy)}</td><td>${a.type?TYPE_LABEL[a.type]||a.type:`<span class="muted">Not given</span>`}</td><td>${sevTag(a)}</td></tr>`).join("")).join("")}</tbody></table></div>`})()+`
           <p class="prose small muted">Planned for every meal and snack.</p>`
           :`<p class="prose">${r.noAllergies===true?"No guests with allergies or food restrictions.":`<span class="missingval">List allergies, or confirm none.</span>`}</p>`}
       </section>
@@ -1863,7 +1866,7 @@ function sheetBody(r0,info){
       :`<p style="margin:8px 0 0"><b>Breakout rooms:</b> ${r.breakoutNeed==="no"?"None needed":v("","Not answered")}</p>`}
     <p style="margin:8px 0 0"><b>Walk-through:</b> ${wantsWalk(r)?`${esc(walkStatus(r,info.walk))} <span class="muted">· ${esc(walkRequestText(r))}</span>`:r.walk.want==="no"?"Not requested":`<span class="muted">Not requested</span>`}</p>
     <h2>Allergies &amp; restrictions${ag.length?` · ${ag.length} guest${ag.length===1?"":"s"}${sev?`, <span class="sev">${sev} severe</span>`:""}`:""}</h2>
-    ${r.allergies.length?`<table><thead><tr><th>Guest</th><th>Allergy or restriction</th><th>Type</th><th>Severity</th></tr></thead><tbody>${guestsOf(r).map(g=>g.rows.map(({a},j)=>`<tr>${j?"":`<td rowspan="${g.rows.length}"><b>${v(g.name)}</b></td>`}<td>${v(a.allergy)}</td><td>${a.type?esc(TYPE_LABEL[a.type]||a.type):v("","Not set")}</td><td>${sevTag(a)}</td></tr>`).join("")).join("")}</tbody></table>`
+    ${r.allergies.length?`<table><thead><tr><th>Guest</th><th>Allergy or restriction</th><th>Type</th><th>Severity</th></tr></thead><tbody>${guestsOf(r).map(g=>g.rows.map(({a},j)=>`<tr>${j?"":`<td rowspan="${g.rows.length}"><b>${v(g.name)}</b></td>`}<td>${v(a.allergy)}</td><td>${a.type?esc(TYPE_LABEL[a.type]||a.type):`<span class="muted">Not given</span>`}</td><td>${sevTag(a)}</td></tr>`).join("")).join("")}</tbody></table>`
       :`<p style="margin:0">${r.noAllergies===true?"No guests with allergies or food restrictions.":`<span class="miss">Not answered yet.</span>`}</p>`}
     <h2>Meals &amp; snacks</h2>
     ${days||`<p class="miss" style="margin:0">Event dates not set.</p>`}
@@ -1900,7 +1903,7 @@ async function loadKitchen(){kitchenInfo=null;try{kitchenInfo=await store.allSta
 function allDates(){const s=new Set();(staffRows||[]).forEach(r=>(r.days||[]).forEach(d=>s.add(d.date)));return [...s].sort()}
 // ---------- daily production list (Kitchen) ----------
 const STAFF_MEALS=15; // staff plates for the food order guide; the production list shows guest counts only
-const PLATE_LABEL={Milk:"Dairy-free",Eggs:"Egg-free",Fish:"No fish","Crustacean shellfish":"No shellfish","Tree nuts":"Tree-nut-free",Peanuts:"Peanut-free","Wheat/Gluten":"Gluten-free",Soybeans:"Soy-free",Sesame:"Sesame-free",Vegan:"Vegan"};
+const PLATE_LABEL={Milk:"Dairy-free",Eggs:"Egg-free",Fish:"No fish","Crustacean shellfish":"No shellfish","Tree nuts":"Tree-nut-free",Peanuts:"Peanut-free","Wheat/Gluten":"Gluten-free",Soybeans:"Soy-free",Sesame:"Sesame-free","Celiac disease":"Gluten-free (celiac: no cross-contact)",Vegan:"Vegan"};
 const capFirst=t=>t.charAt(0).toUpperCase()+t.slice(1);
 function prodItems(m,es){
   const bag=new Map();
