@@ -95,6 +95,8 @@ Severe means `type` is `Medical`, or the severity is `Severe` or `Airborne`.
 
 **Snacks:** `{on, items (up to 3), count}`
 
+**Time change request (any meal or snack):** `timeReq: {time: "HH:MM", note, at}`. Missing when there's no request. Changing `time` updates `at`, which makes the request pending again.
+
 Standard times: breakfast 8:00, morning snack 10:30, lunch 12:30, afternoon snack 3:00, dinner 6:00.
 
 ### Event (change history)
@@ -125,6 +127,8 @@ The lock-in deadline is 14 days before `startDate`.
 |---|---|
 | `locations` | `{ "YYYY-MM-DD|meal": {place, room, note} }`. `place` is Dining hall, Meeting room (their assigned main room that day), Conference room (a specific `room`), Aspen Lobby, Boxed to go, or Other (`note`) |
 | `times` | `{ "YYYY-MM-DD|meal": "HH:MM" }`, only when changed from the standard time |
+| `timeDec` | `{ "YYYY-MM-DD|meal": {req, at, status} }`. Aspen Grove's decision on the organizer's request (`approved` or `declined`). A request is pending when there's no decision for its current time, or the request is newer than the decision |
+| `timeLog` | Every time change, newest last (up to 200): `{key, from, to, status, req?, note?, at, by}`. `status` is `approved`, `declined`, `changed` (set directly by staff) or `reset` (back to standard) |
 | `rooms` | `{main: {"YYYY-MM-DD": room}, bo: {breakoutId: room}}`. Assigned main room per day and room per breakout. Unassigned rooms print as a blank line |
 | `walk` | Walk-through status; see Walk above |
 

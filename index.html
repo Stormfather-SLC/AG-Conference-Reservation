@@ -299,6 +299,10 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .sheetwrap{overflow-x:auto}
 .kitchenpick{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
 .kitchenpick select{min-width:240px}
+.reqbtn{align-self:flex-start;padding-left:0}
+.treqbox{display:flex;flex-direction:column;gap:8px;border-left:3px solid var(--line);padding-left:12px}
+.treq{margin-top:6px;display:flex;flex-direction:column;gap:6px;background:var(--warn-soft);border-left:3px solid var(--warn);padding:6px 8px;border-radius:3px;font-size:.85rem}
+.tlog summary{cursor:pointer;color:var(--spruce);font-weight:600;font-size:.9rem}
 .plansec{display:flex;flex-direction:column;gap:14px;border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
 .plansec .sechead h3{font-size:1.15rem}
 .roomtbl{table-layout:auto;min-width:0;max-width:640px}.roomtbl th[scope=row]{width:140px}.roomtbl select,.bortbl select{min-width:200px}
@@ -675,7 +679,7 @@ async function openCode(raw){
 function openEditor(r){view="edit";showNeeds=false;res=normalize(r);lastSig=sectionSig(res);dirty=false;clearTimeout(retryT);retryN=0;restoreOffer=null;
   {const b=store.mode==="db"?bakGet(res.code):null;if(b&&b.updatedAt>(res.updatedAt||"")&&res.status!=="locked")restoreOffer=b;else if(b)bakDel(res.code)}
   setSaveState(store.mode==="db"?(res.updatedAt?"Saved to Aspen Grove · "+fmtDate(new Date(res.updatedAt),{month:"short",day:"numeric"})+", "+clock(res.updatedAt):"Saved to Aspen Grove"):"Saved on this device only","ok");
-  staffInfo=null;{const code=res.code;store.getStaff(code).then(x=>{if(res&&res.code===code){staffInfo=x;if(x&&(view==="review"||(view==="edit"&&((x.times&&Object.keys(x.times).length)||x.walk))))rerender()}}).catch(()=>{})}pendingImport=null;rosterError="";showTpl=false;activeDay=Math.min(activeDay,Math.max(0,res.days.length-1));confirmingLock=false;view="edit";isLocked()?renderReview():renderEditor();window.scrollTo(0,0)}
+  staffInfo=null;{const code=res.code;store.getStaff(code).then(x=>{if(res&&res.code===code){staffInfo=x;if(x&&(view==="review"||(view==="edit"&&((x.times&&Object.keys(x.times).length)||x.walk||x.timeDec))))rerender()}}).catch(()=>{})}pendingImport=null;rosterError="";showTpl=false;activeDay=Math.min(activeDay,Math.max(0,res.days.length-1));confirmingLock=false;view="edit";isLocked()?renderReview():renderEditor();window.scrollTo(0,0)}
 
 function syncDays(){
   const s=parseDate(res.startDate),e=parseDate(res.endDate);
@@ -701,6 +705,26 @@ function allergyBadge(di,m){const l=allergiesAt(di,m.k);if(!l.length)return "";c
   const names=l.slice(0,4).map(a=>esc(a.name||"Guest")+(a.allergy?` (${esc(a.allergy)}${isSevere(a)?", "+SEV_LABEL[a.severity].toLowerCase():""})`:"")).join(", ")+(l.length>4?` and ${l.length-4} more`:"");
   return `<div class="albadge ${sev?"sev":""}"><b>${l.length} guest${l.length>1?"s":""} with allergies or restrictions${sev?` · ${sev} severe`:""}</b><span>${names}</span></div>`}
 function rosterHint(di,m){return ""}
+// ---------- meal time changes ----------
+// Organizer asks: days[i].meals[k].timeReq = {time, note, at}. Aspen Grove decides in staff notes:
+// times[key] = the time actually served, timeDec[key] = {req, at, status}, timeLog = every change, newest last.
+function reqState(st,n,key){const q=st&&st.timeReq;if(!q||!q.time)return null;const d=n&&n.timeDec&&n.timeDec[key];
+  if(d&&d.req===q.time&&d.at>=(q.at||""))return d.status;return "pending"}
+function pendingReqs(r,n){const out=[];(r.days||[]).forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k],key=slotKey(d.date,m.k);if(st&&isServed(m,st)&&reqState(st,n,key)==="pending")out.push({d,m,st,key})}));return out}
+function logTime(n,e){n.timeLog=n.timeLog||[];n.timeLog.push({...e,at:new Date().toISOString(),by:who.id||""});if(n.timeLog.length>200)n.timeLog=n.timeLog.slice(-200)}
+const TIME_VERB={approved:"Request approved",declined:"Request declined",changed:"Changed by Aspen Grove",reset:"Back to standard time"};
+function timeReqBlock(d,di,m){
+  const st=d.meals[m.k];if(!isServed(m,st))return "";
+  const p=`days.${di}.meals.${m.k}`,key=slotKey(d.date,m.k),q=st.timeReq,locked=isLocked(),cur=timeOf(d.date,m);
+  const state=reqState(st,staffInfo,key);
+  if(!q){return locked?"":`<button type="button" class="btn ghost tiny reqbtn" data-reqtime="${p}">Request a different time</button>`}
+  const msg=!q.time?"":state==="pending"?`<div class="notice warn small"><b>Requested ${fmtTime(q.time)}, waiting for Aspen Grove to approve.</b> Until then it’s served at ${fmtTime(cur)}, and a fee may apply.</div>`
+    :state==="approved"?`<div class="notice ok small"><b>Approved:</b> now served at ${fmtTime(cur)}</div>`
+    :`<div class="notice bad small"><b>We couldn't move this ${m.snack?"snack":"meal"}.</b> It stays at ${fmtTime(cur)}; contact Conference Services with questions.</div>`;
+  if(locked)return q.time?msg:"";
+  return `<div class="treqbox"><div class="grid2"><label class="f" for="${p}.timeReq.time">Requested time<input type="time" id="${p}.timeReq.time" data-path="${p}.timeReq.time" value="${esc(q.time)}"><span class="hint">Standard: ${fmtTime(m.time)}</span></label>
+    <label class="f" for="${p}.timeReq.note">Reason (optional)<input type="text" id="${p}.timeReq.note" data-path="${p}.timeReq.note" value="${esc(q.note)}" placeholder="For example: session runs late"></label></div>
+    ${msg}<button type="button" class="btn ghost tiny danger-text" data-cancelreq="${p}">Cancel request</button></div>`}
 const rosterVeg=()=>new Set(res.allergies.filter(isDietRow).map(a=>a.name.trim().toLowerCase()).filter(Boolean)).size;
 function guestsField(p){const st=getPath(res,p),v=st.count===""||st.count==null?(headN()||""):st.count;return `<label class="f" for="f-${p}.count">Guests<input id="f-${p}.count" type="number" min="0" data-path="${p}.count" value="${esc(v)}"></label>`}
 
@@ -713,7 +737,7 @@ function renderMeal(d,di,m){
       ${st.on?`<div class="row" style="justify-content:space-between"><span class="small muted">Choose up to 3 items across any category.</span><span class="count">${n} / 3 chosen</span></div>
       <div class="snackcats" id="snk-${p}">${Object.entries(SNACKS).map(([cat,items])=>`<div><h4>${cat}</h4><div class="checks">${items.map(it=>{const on=st.items.includes(it);const full=!on&&n>=3;return `<label class="chk${full?" full":""}"><input type="checkbox" data-snack="${p}" value="${esc(it)}" ${on?"checked":""} ${full?"disabled":""}>${esc(it)}</label>`}).join("")}</div></div>`).join("")}</div>
       <div class="grid2">${guestsField(p)}</div>`:""}
-      ${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
+      ${timeReqBlock(d,di,m)}${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
     </div>`;
   }
   const sel=m.list.find(x=>x.id===st.choice);
@@ -731,7 +755,7 @@ function renderMeal(d,di,m){
     ${vegOK&&st.choice&&st.choice!=="none"?`<div class="grid2">
       <label class="f" for="${p}.vegChoice">Vegetarian option<select id="${p}.vegChoice" data-path="${p}.vegChoice"><option value="">None</option>${VEG.map(v=>`<option value="${v.id}" ${st.vegChoice===v.id?"selected":""}>${v.name}</option>`).join("")}</select><span class="hint">Can also be prepared vegan</span></label>
       ${st.vegChoice?field("Vegetarian plates",p+".vegCount","number",rosterVeg()?`${rosterVeg()} vegetarian or vegan guest${rosterVeg()===1?"":"s"} listed in section 04`:"How many guests",'min="0"'):""}</div>`:""}
-    ${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
+    ${timeReqBlock(d,di,m)}${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
   </div>`;
 }
 
@@ -936,7 +960,7 @@ function renderEditor(){
         <div class="row" style="justify-content:space-between"><h3>${fmtDate(r.days[activeDay].date,{weekday:"long",month:"long",day:"numeric"})}</h3>${activeDay&&!locked?`<button class="btn" data-copyday="${activeDay}">Copy ${fmtDate(r.days[activeDay-1].date,{weekday:"long"})}'s meals</button>`:""}</div>
         ${MEALS.map(m=>renderMeal(r.days[activeDay],activeDay,m)).join("")}
         <div class="daynav">${activeDay?`<button class="btn" data-day="${activeDay-1}" data-top>← ${fmtDate(r.days[activeDay-1].date)}</button>`:"<span></span>"}${activeDay<r.days.length-1?`<button class="btn primary" data-day="${activeDay+1}" data-top>Next: ${fmtDate(r.days[activeDay+1].date)} →</button>`:`<span class="small muted">Last day of your event</span>`}</div>
-        <p class="small muted" style="margin:0">Meals and snacks are served at the times shown. Need a different time, or a meal boxed or served somewhere else? Mention it in Additional comments and our staff will follow up. Changes may carry a fee. When several groups are on site, Aspen Grove may pre-select meals.</p>`
+        <p class="small muted" style="margin:0">Meals and snacks are served at the times shown. Need a different time? Use “Request a different time” on that meal or snack; Aspen Grove approves it and the time updates here. Need a meal boxed or served somewhere else? Mention it in Additional comments. Changes may carry a fee. When several groups are on site, Aspen Grove may pre-select meals.</p>`
         :`<div class="empty">Enter your first and last day above and a menu for each day appears here.</div>`}
       </section>
 
@@ -1242,7 +1266,12 @@ app.addEventListener("change",e=>{
   if(view==="staffplan"){
     if(el.classList.contains("locsel")){const key=el.dataset.key,prev=plan.locations[key];plan.locations[key]={place:el.value,note:el.value==="Other"?(prev&&prev.note)||"":"",room:el.value==="Conference room"?(prev&&prev.room)||"":""};planSave();
       rerender();if(el.value==="Other")document.getElementById("locnote-"+key)?.focus();if(el.value==="Conference room")document.getElementById("room-"+key)?.focus()}
-    else if(el.classList.contains("timein")){const key=el.dataset.key;if(!el.value||el.value===el.dataset.def)delete plan.times[key];else plan.times[key]=el.value;planSave();rerender()}
+    else if(el.classList.contains("timein")){const key=el.dataset.key,from=plan.times[key]||el.dataset.def,to=el.value||el.dataset.def;if(from===to)return;
+      if(to===el.dataset.def)delete plan.times[key];else plan.times[key]=to;
+      const[dd,mk]=key.split("|"),st=(res.days.find(x=>x.date===dd)||{meals:{}}).meals[mk],q=st&&st.timeReq;
+      if(q&&q.time===to&&reqState(st,plan,key)==="pending"){plan.timeDec[key]={req:q.time,at:new Date().toISOString(),status:"approved"};logTime(plan,{key,from,to,status:"approved",req:q.time,note:q.note||""})}
+      else logTime(plan,{key,from,to,status:to===el.dataset.def?"reset":"changed"});
+      planSave();rerender()}
     else if(el.classList.contains("roomsel")){const key=el.dataset.key;const L=plan.locations[key]||{place:"Conference room",note:""};L.place="Conference room";L.room=el.value;plan.locations[key]=L;planSave();rerender()}
     if(el.classList.contains("mainroom")){if(el.value)plan.rooms.main[el.dataset.date]=el.value;else delete plan.rooms.main[el.dataset.date];planSave();rerender();return}
     if(el.id==="main-all"&&el.value){res.days.forEach(d=>plan.rooms.main[d.date]=el.value);planSave();rerender();toast(`${el.value} set for every day`);return}
@@ -1264,6 +1293,7 @@ app.addEventListener("change",e=>{
   if(!el.dataset.path)return;
   let v=el.type==="checkbox"?el.checked:el.type==="number"?(el.value===""||(/\.count$/.test(el.dataset.path)&&Number(el.value)===headN())?"":Number(el.value)):el.value;
   setPath(res,el.dataset.path,v);
+  if(el.dataset.path.endsWith(".timeReq.time")){setPath(res,el.dataset.path.replace(/\.time$/,".at"),new Date().toISOString());scheduleSave();rerender();return}
   if(el.dataset.path==="breakoutNeed"&&v==="yes"&&!res.breakouts.length)res.breakouts.push(blankBreakout());
   if(el.dataset.path==="startDate"||el.dataset.path==="endDate"){
     if(el.dataset.path==="startDate"&&(!res.endDate||res.endDate<res.startDate))res.endDate=res.startDate;
@@ -1314,6 +1344,8 @@ app.addEventListener("click",async e=>{
   if(b.dataset.rosterremove!==undefined){res.roster=null;res.rosterFile="";res.rosterAt=null;rerender();scheduleSave();toast("Guest list removed. Allergies from it stay in the table.");return}
   if(b.dataset.usecount){const[di,k,c]=b.dataset.usecount.split("|");res.days[+di].meals[k].count=+c;rerender();scheduleSave();return}
   if(b.id==="addallergy"){res.allergies.push({name:"",allergy:"",type:"",severity:"",mode:"all",meals:[],note:"",from:"",to:"",src:"",other:false});res.noAllergies=false;rerender();document.getElementById("al-n-"+(res.allergies.length-1))?.focus();scheduleSave();return}
+  if(b.dataset.reqtime){const st=getPath(res,b.dataset.reqtime);st.timeReq={time:"",note:"",at:new Date().toISOString()};rerender();document.getElementById(b.dataset.reqtime+".timeReq.time")?.focus();return}
+  if(b.dataset.cancelreq){const st=getPath(res,b.dataset.cancelreq);delete st.timeReq;rerender();scheduleSave();return}
   if(b.id==="addbo"){res.breakouts.push(blankBreakout());rerender();scheduleSave();document.getElementById(`f-breakouts.${res.breakouts.length-1}.name`)?.focus();return}
   if(b.dataset.delbo){res.breakouts.splice(Number(b.dataset.delbo),1);rerender();scheduleSave();return}
   if(b.dataset.delallergy){res.allergies.splice(Number(b.dataset.delallergy),1);rerender();scheduleSave();return}
@@ -1328,6 +1360,10 @@ app.addEventListener("click",async e=>{
   if(b.dataset.open){actingAs="staff";openCode(b.dataset.open);return}
   if(b.dataset.plan){openPlan(b.dataset.plan);return}
   if(b.dataset.backstaff!==undefined){clearTimeout(planSaveT);if(planState==="Saving…"){try{await store.putStaff(res.code,{...plan,code:res.code,updatedAt:new Date().toISOString()})}catch(err){}}loadStaff();return}
+  if(b.dataset.tapprove||b.dataset.tdecline){const key=b.dataset.tapprove||b.dataset.tdecline,[dd,mk]=key.split("|"),st=res.days.find(x=>x.date===dd).meals[mk],q=st.timeReq,from=plan.times[key]||MEAL[mk].time;
+    if(b.dataset.tapprove){if(q.time===MEAL[mk].time)delete plan.times[key];else plan.times[key]=q.time;plan.timeDec[key]={req:q.time,at:new Date().toISOString(),status:"approved"};logTime(plan,{key,from,to:q.time,status:"approved",req:q.time,note:q.note||""});toast(`${MEAL[mk].label} moved to ${fmtTime(q.time)}`)}
+    else{plan.timeDec[key]={req:q.time,at:new Date().toISOString(),status:"declined"};logTime(plan,{key,from,to:from,status:"declined",req:q.time,note:q.note||""});toast("Request declined")}
+    planSave();rerender();return}
   if(b.dataset.bulkapply!==undefined){const bm=document.getElementById("bulk-meal").value,bs=document.getElementById("bulk-snack").value,br=document.getElementById("bulk-room").value;if(!bm&&!bs){toast("Choose a location to apply");return}
     if((bm==="Conference room"||bs==="Conference room")&&!br){const sel=document.getElementById("bulk-room");sel.classList.add("need");sel.setAttribute("aria-invalid","true");const nt=document.getElementById("bulk-roomnote");if(nt)nt.hidden=false;sel.focus();return}
     let n=0;res.days.forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(!isPlanned(m,st))return;const v=m.snack?bs:bm;if(v){plan.locations[slotKey(d.date,m.k)]={place:v,note:"",room:v==="Conference room"?br:""};n++}}));
@@ -1374,7 +1410,7 @@ async function openPlan(code){
   let r=null;try{r=await store.get(code)}catch(e){}
   if(!r){toast("Couldn't open "+code);return}
   res=normalize(r);plan=null;try{plan=await store.getStaff(code)}catch(e){}
-  plan=plan||{code,locations:{}};plan.locations=plan.locations||{};plan.times=plan.times||{};plan.rooms={main:{},bo:{},...(plan.rooms||{})};plan.rooms.main=plan.rooms.main||{};plan.rooms.bo=plan.rooms.bo||{};planState="";
+  plan=plan||{code,locations:{}};plan.locations=plan.locations||{};plan.times=plan.times||{};plan.timeDec=plan.timeDec||{};plan.timeLog=plan.timeLog||[];plan.rooms={main:{},bo:{},...(plan.rooms||{})};plan.rooms.main=plan.rooms.main||{};plan.rooms.bo=plan.rooms.bo||{};planState="";
   planAll=null;planRows=null;try{planAll=await store.allStaff();planRows=staffRows||await store.all()}catch(e){planAll=planAll||{};planRows=planRows||[]}
   renderPlan();window.scrollTo(0,0);
 }
@@ -1403,10 +1439,13 @@ function renderPlan(){
     ${r.days.map((d,di)=>`<div class="sumday"><h3>${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</h3>
       <div class="tablewrap"><table class="plantable"><thead><tr><th>Meal</th><th>Time</th><th>Guests</th><th>Menu</th><th>Location</th></tr></thead><tbody>
       ${MEALS.map(m=>{const st=d.meals[m.k],key=slotKey(d.date,m.k),sv=isPlanned(m,st),L=locOf(key,m);
-        return `<tr class="${sv?"":"off"}"><th scope="row">${m.label}</th><td>${sv?(()=>{const t=plan.times[key]||m.time,ch=t!==m.time;return `<input type="time" class="timein" id="time-${key}" data-key="${key}" data-def="${m.time}" value="${t}" aria-label="Time for ${fmtDate(d.date)} ${m.label}">${ch?`<span class="warnline">Fee may apply (standard: ${fmtTime(m.time)})</span>`:""}`})():""}</td><td class="mono">${sv?mealCount(st):""}</td><td>${sv?menuShort(m,st):`<span class="muted">Not served</span>`}</td>
+        return `<tr class="${sv?"":"off"}"><th scope="row">${m.label}</th><td>${sv?(()=>{const t=plan.times[key]||m.time,ch=t!==m.time;return `<input type="time" class="timein" id="time-${key}" data-key="${key}" data-def="${m.time}" value="${t}" aria-label="Time for ${fmtDate(d.date)} ${m.label}">${ch?`<span class="warnline">Fee may apply (standard: ${fmtTime(m.time)})</span>`:""}${(()=>{const q=st.timeReq,rs=reqState(st,plan,key);if(!q||!q.time)return "";
+          if(rs==="pending")return `<div class="treq"><b>Requested ${fmtTime(q.time)}</b>${q.note?`<span class="small"> · ${esc(q.note)}</span>`:""}<div class="row"><button class="btn tiny primary" data-tapprove="${key}">Approve</button><button class="btn tiny" data-tdecline="${key}">Decline</button></div></div>`;
+          return `<span class="small muted">Request for ${fmtTime(q.time)} ${rs}</span>`})()}`})():""}</td><td class="mono">${sv?mealCount(st):""}</td><td>${sv?menuShort(m,st):`<span class="muted">Not served</span>`}</td>
         <td>${sv?`<select class="locsel" id="loc-${key}" data-key="${key}" aria-label="Location for ${fmtDate(d.date)} ${m.label}">${LOCS.map(o=>`<option value="${o}" ${L.place===o?"selected":""}>${o==="Meeting room"?`Their meeting room${mainRoomOn(plan,d.date)?" ("+mainRoomOn(plan,d.date)+")":""}`:o}</option>`).join("")}</select>${L.place==="Conference room"?roomSelect("roomsel","room-"+key,key,L.room||"","Conference room for "+fmtDate(d.date)+" "+m.label)+(L.room?"":`<span class="warnline">Choose a room</span>`):""}${L.place==="Other"?`<input type="text" class="locnote" id="locnote-${key}" data-key="${key}" value="${esc(L.note)}" placeholder="Where?" aria-label="Other location">`:""}`:""}</td></tr>`}).join("")}
       </tbody></table></div></div>`).join("")}`:`<div class="empty">This group hasn't set its event dates yet.</div>`}
-    <p class="small muted" style="margin:0">Meals default to the Dining hall and snacks to the Aspen Lobby until you change them. Times start at the standard schedule; a changed time is flagged because a fee may apply. Organizers see the locations on their review page but can't change them. “Their meeting room” follows the main room assigned above for that day.</p></section>
+    <p class="small muted" style="margin:0">Meals default to the Dining hall and snacks to the Aspen Lobby until you change them. Times start at the standard schedule; a changed time is flagged because a fee may apply. Organizers see the locations on their review page but can't change them. “Their meeting room” follows the main room assigned above for that day.</p>
+    ${plan.timeLog.length?`<details class="tlog"><summary>Time change history (${plan.timeLog.length})</summary><ul class="history">${[...plan.timeLog].reverse().map(e=>`<li><time>${fmtDate(new Date(e.at),{month:"short",day:"numeric"})}, ${clock(e.at)}</time><span>${esc(slotLabel(e.key))}: <b>${TIME_VERB[e.status]||e.status}</b>${e.status==="declined"?` (asked for ${fmtTime(e.req)}, stays ${fmtTime(e.from)})`:` · ${fmtTime(e.from)} → ${fmtTime(e.to)}`}${e.note?` <span class="who">· “${esc(e.note)}”</span>`:""}</span></li>`).join("")}</ul></details>`:""}</section>
   </div>`;
 }
 function roomBookings(){
@@ -1449,7 +1488,7 @@ const DEPTS=[{k:"groups",label:"Groups",tabs:[["groups","Groups"]]},
  {k:"kitchen",label:"Kitchen",tabs:[["kitchen","Daily production list"],["week","Weekly meal schedule"]]},
  {k:"setup",label:"Setup",tabs:[["rooms","Rooms & A/V"],["walks","Walk-throughs"]]}];
 const STAFF_TABS=["groups","kitchen","week","rooms","walks","backup"];
-const needsInfo=()=>["kitchen","week","rooms","walks"].includes(staffTab);
+const needsInfo=()=>["groups","kitchen","week","rooms","walks"].includes(staffTab);
 const deptOf=t=>(DEPTS.find(d=>d.tabs.some(([k])=>k===t))||{k:t}).k;
 function prefGet(k){try{return localStorage.getItem(k)||""}catch(e){return ""}}
 function prefSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
@@ -1573,7 +1612,7 @@ function groupsView(){
       ${shown.map(r=>{const dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null,s=stateOf(r),locked=r.status==="locked",p=progressOf(r);
         const dlTxt=!dl?"—":locked?fmtDate(dl):left<0?`<span style="color:var(--bad);font-weight:600">${fmtDate(dl)} · overdue</span>`:left<=7?`<span style="color:var(--warn);font-weight:600">${fmtDate(dl)} · ${left}d</span>`:`${fmtDate(dl)} · ${left}d`;
         const sev=(r.allergies||[]).filter(isSevere).length;
-        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b> <span class="mono small muted">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span>${sev?`<br><span class="small" style="color:var(--bad);font-weight:600">${sev} critical allerg${sev===1?"y":"ies"}</span>`:""}${wantsWalk(r)?`<br><span class="small muted">Walk-through requested</span>`:""}${r.breakoutNeed==="yes"&&r.breakouts&&r.breakouts.length?`<br><span class="small muted">${r.breakouts.length} breakout room${r.breakouts.length===1?"":"s"}</span>`:""}</td>
+        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b> <span class="mono small muted">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span>${sev?`<br><span class="small" style="color:var(--bad);font-weight:600">${sev} critical allerg${sev===1?"y":"ies"}</span>`:""}${(()=>{const n=pendingReqs(r,(kitchenInfo||{})[r.code]).length;return n?`<br><span class="small" style="color:var(--warn);font-weight:600">${n} time change request${n===1?"":"s"} to review</span>`:""})()}${wantsWalk(r)?`<br><span class="small muted">Walk-through requested</span>`:""}${r.breakoutNeed==="yes"&&r.breakouts&&r.breakouts.length?`<br><span class="small muted">${r.breakouts.length} breakout room${r.breakouts.length===1?"":"s"}</span>`:""}</td>
         <td>${r.startDate?fmtDate(r.startDate)+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate):""):"—"}</td><td class="mono">${esc(r.headcount||"—")}</td>
         <td><div class="prog"><span class="bar"><i style="width:${p/SECS_TOTAL*100}%"></i></span>${p}/${SECS_TOTAL}</div></td>
         <td>${dlTxt}</td><td><span class="pill ${s.k==="locked"?"locked":s.k}">${s.label}</span></td>
@@ -1711,6 +1750,8 @@ function prodItems(m,es){
   }
   return {items:[...bag.values()],rows,special:[...special.values()].sort((a,b)=>b.n-a.n),entrees};
 }
+// Service heading time: the actual time when every group eats together, otherwise "several times".
+function svcTime(m,times){const u=[...new Set(times)];return u.length===1?(u[0]===m.time?fmtTime(m.time):`<span class="miss">${fmtTime(u[0])}</span> <span class="small">(standard ${fmtTime(m.time)})</span>`):`several times`}
 function prodService(date,m){
   const es=weekEntries(date,m);if(!es.length)return null;
   const by=new Map();
@@ -1736,7 +1777,7 @@ function kitchenBody(date){
       const spn=g.special.reduce((a,x)=>a+x.n,0);
       const sp=spn?`<tr class="k-spec"><td class="cb">${box}</td><td><b>Special plates</b> <span class="small">${g.special.map(x=>`${x.n} ${esc(x.label.toLowerCase())}`).join(" · ")}</span></td><td class="pc">${par}</td></tr>`:"";
       return `<div class="srvblock">${head}<table class="ptab"><thead><tr><th></th><th>Item</th><th class="pc">PAR</th></tr></thead><tbody>${rows}${sp}</tbody></table></div>`}).join("");
-    return `<section class="dsvc"><h2><span>${m.label} · ${fmtTime(m.time)}</span><span class="dtot">${sv.guests} guest${sv.guests===1?"":"s"}</span></h2>${parts}</section>`}).join("");
+    return `<section class="dsvc"><h2><span>${m.label} · ${svcTime(m,sv.servings.map(g=>g.time))}</span><span class="dtot">${sv.guests} guest${sv.guests===1?"":"s"}</span></h2>${parts}</section>`}).join("");
   const sp=new Map();svc.forEach(sv=>sv.es.forEach(x=>x.al.forEach(a=>{if(a.allergy==="Vegetarian")return;const k=x.r.code+"|"+a.name.trim().toLowerCase();
     const g=sp.get(k)||{r:x.r,name:a.name,reqs:[],svc:[]};if(!g.reqs.some(q=>q.allergy===a.allergy))g.reqs.push(a);if(!g.svc.includes(sv.m.label))g.svc.push(sv.m.label);sp.set(k,g)})));
   const gsv=code=>svc.filter(sv=>sv.es.some(x=>x.r.code===code)).length;
@@ -1748,6 +1789,13 @@ function kitchenBody(date){
     <div>${gl.map(r=>`${esc(r.group)} (${headN(r)})`).join(" · ")}</div></div>
     <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
     <div class="small muted" style="margin-top:6px">Groups served at the same time and place are combined under one count. Chefs fill in PAR. Amber marks a non-standard time, place, or draft.</div>
+    ${(()=>{const info=kitchenInfo||{},ch=[],pend=[];(staffRows||[]).forEach(r0=>{const r=normalize(structuredClone(r0)),n=info[r.code]||{};
+      (n.timeLog||[]).filter(e=>e.key.startsWith(date+"|")&&(e.status==="approved"||e.status==="changed"||e.status==="reset")).forEach(e=>ch.push({r,e}));
+      pendingReqs(r,n).filter(x=>x.d.date===date).forEach(x=>pend.push({r,x}))});
+      if(!ch.length&&!pend.length)return "";
+      const last=new Map();ch.forEach(o=>last.set(o.r.code+o.e.key,o));
+      return `<h2>Time changes</h2><table class="ptab"><tbody>${[...last.values()].map(({r,e})=>`<tr><td><b>${MEAL[e.key.split("|")[1]].label}</b> · ${esc(r.group||r.code)}</td><td class="miss">${fmtTime(e.from)} → ${fmtTime(e.to)}</td><td class="small muted">${e.status==="reset"?"back to standard":e.status==="changed"?"changed by Aspen Grove":"request approved"} ${fmtDate(new Date(e.at),{month:"short",day:"numeric"})}</td></tr>`).join("")}
+        ${pend.map(({r,x})=>`<tr><td><b>${x.m.label}</b> · ${esc(r.group||r.code)}</td><td>Requested ${fmtTime(x.st.timeReq.time)}</td><td class="small miss">Not approved yet: still ${fmtTime((info[r.code]?.times||{})[x.key]||x.m.time)}</td></tr>`).join("")}</tbody></table>`})()}
     ${blocks}${dayspec}
     <h2>Tomorrow · ${fmtDate(nd,{weekday:"long",month:"short",day:"numeric"})}</h2>${prev}
     <div class="pnotes"><span>Notes</span></div></div>`}
@@ -1844,7 +1892,7 @@ function dayPageBody(date,partial){
           <td class="miss">${x.time?fmtTime(x.time):""}</td><td class="${x.where?"miss":"muted"}">${esc(x.where||defLoc(m))}</td>
           <td class="${nd?"":"muted"}">${nd?`${nd} dietary${ns?` · <span class="sev">${ns} severe</span>`:""}`:"—"}</td></tr>`}).join("")}</tbody></table>
         <div class="dmenu">${shared?`<span class="shared">Shared · ${sub}</span> `:""}${menuFull(m,xs[0].st)}${veg.length?`<div class="small">Vegetarian: ${veg.join("; ")}</div>`:""}</div></div>`}).join("");
-    return `<section class="dsvc"><h2><span>${m.label} · ${fmtTime(m.time)}</span><span class="dtot">${tot} guest${tot===1?"":"s"}</span></h2>${menus}</section>`}).join("");
+    return `<section class="dsvc"><h2><span>${m.label} · ${svcTime(m,es.map(x=>x.time||m.time))}</span><span class="dtot">${tot} guest${tot===1?"":"s"}</span></h2>${menus}</section>`}).join("");
   const dl=[...diet.values()].filter(d=>!partial||partial.has(d.r.code+"|"+d.name.trim().toLowerCase())).sort((a,b)=>(a.r.group||"").localeCompare(b.r.group||"")||a.name.localeCompare(b.name));
   const gsvc=code=>svc.filter(({es})=>es.some(x=>x.r.code===code)).length;
   let lastG="";const req=a=>`<span class="${isSevere(a)?"sev":""}">${esc(a.allergy)}${a.type==="Medical"?" (medical)":isSevere(a)?" (severe)":a.type==="Preference"?` <span class="muted">(preference)</span>`:a.type==="Intolerance"?` <span class="muted">(intolerance)</span>`:""}</span>`;
