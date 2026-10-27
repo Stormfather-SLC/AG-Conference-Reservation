@@ -317,6 +317,23 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .sheetwrap{overflow-x:auto}
 .kitchenpick{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
 .kitchenpick select{min-width:240px}
+.glisthead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.glisthead input{max-width:260px}
+.glist{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--r)}
+.glist li{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.glist li:last-child{border-bottom:0}
+.gl-main{display:flex;flex-direction:column;gap:2px;min-width:0}
+.gl-r{font-size:.9rem}.gl-r .sev,.glisthead .sev{color:var(--bad);font-weight:600}
+.gdlg{width:min(520px,calc(100vw - 32px))}.gdlg .f{margin-bottom:12px}
+.msel{position:relative}
+.msel summary{list-style:none;display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);cursor:pointer;font-weight:400}
+.msel summary::-webkit-details-marker{display:none}
+.msel-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px;border:1px solid var(--line);border-top:0;border-radius:0 0 6px 6px;padding:8px 10px;background:var(--surface)}
+.msel-h{grid-column:1/-1;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:4px}
+.msel-list .chk{border:0;padding:3px 0;font-weight:400}
+.gd-orow{margin-top:6px;flex-wrap:nowrap}.gd-orow input{flex:1}
+.gd-lv{width:100%}.gd-lv th{text-transform:none;letter-spacing:0;font-size:.9rem;color:var(--fg);width:40%}.gd-lv td,.gd-lv th{padding:4px 8px 4px 0;border:0}
+.gd-acts{margin-top:4px}
 .gcards{display:flex;flex-direction:column;gap:12px}
 .gcard{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
 .gcard-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
@@ -664,12 +681,11 @@ function missingItems(r){
   return m;
 }
 const missingList=r=>missingItems(r).map(x=>x.t);
-function allergyIssueItems(r){const m=[];guestsOf(r).forEach((g,gi)=>{const who=g.name||`Guest ${gi+1}`;
-  if(!g.name)m.push({t:`${who}: add the guest's name`,id:`al-n-${g.rows[0].i}`});
-  g.rows.forEach(({a,i},j)=>{const w=g.rows.length>1?`${who}, restriction ${j+1}`:who;
-  if(!a.allergy)m.push({t:a.other?`${w}: describe the allergy or restriction`:`${w}: choose an allergy or restriction`,id:a.other?`al-a-${i}`:`al-pick-${i}`});
-  if(!a.type)m.push({t:`${w}: choose a type`,id:`al-type-${i}`});
-  if(a.type==="Allergy"&&!a.severity)m.push({t:`${w}: choose a severity`,id:`al-severity-${i}`})})});return m}
+function allergyIssueItems(r){const m=[];guestsOf(r).forEach((g,gi)=>{const who=g.name||`Guest ${gi+1}`,id=`gedit-${g.gid}`,gid=g.gid;
+  if(!g.name)m.push({t:`${who}: add the guest's name`,short:"Add the guest's name",id,gid});
+  g.rows.forEach(({a,i},j)=>{const nm=a.allergy||"Other",w=`${who}: ${nm}`;
+    if(!a.allergy)m.push({t:`${who}: describe the “something not listed” restriction`,short:"Describe the unlisted restriction",id,gid});
+    else if(!levelOf(a))m.push({t:`${w}, choose how serious`,short:`${nm}: choose how serious`,id,gid})})});return m}
 const allergyIssues=r=>allergyIssueItems(r).map(x=>x.t);
 function extras(r){
   const n=Number(r.headcount)||0, lines=[];let total=0,market=false;
@@ -859,23 +875,78 @@ function peek(d,i){
 
 function mealPicker(path,cur){const o=[];res.days.forEach(d=>MAINS.forEach(k=>o.push([slotKey(d.date,k),`${fmtDate(d.date)} · ${MEAL[k].label}`])));
   return `<select id="f-${path}" data-path="${path}">${o.map(([v,l])=>`<option value="${v}" ${cur===v?"selected":""}>${l}</option>`).join("")}</select>`}
-function allergyCards(locked){
-  const gs=guestsOf(res);
-  return gs.map((g,gi)=>{const first=g.rows[0].i,k=g.name.trim().toLowerCase(),dup=k?gs.find(o=>o.gid!==g.gid&&o.name.trim().toLowerCase()===k&&gs.indexOf(o)<gi):null;
-    return `<div class="gcard" id="gc-${esc(g.gid)}">
-      <div class="gcard-head"><label class="f" for="al-n-${first}">Guest name<input type="text" id="al-n-${first}" data-path="allergies.${first}.name" data-gid="${esc(g.gid)}" value="${esc(g.name)}">${g.rows.some(x=>x.a.src==="roster")?`<span class="hint">From guest list</span>`:""}</label>
-        ${locked?"":`<button type="button" class="btn ghost danger-text tiny" data-delguest="${esc(g.gid)}">Remove guest</button>`}</div>
-      ${dup&&!locked?`<div class="notice warn small">${esc(dup.name)} is already listed. <button type="button" class="linkbtn" style="color:inherit;font-weight:600" data-mergeguest="${esc(g.gid)}|${esc(dup.gid)}">Add ${g.rows.length===1?"this restriction":"these restrictions"} to ${esc(dup.name)} instead</button></div>`:""}
-      <div class="tablewrap"><table class="altable"><thead><tr><th>Allergy or restriction</th><th>Type</th><th>Severity</th><th></th></tr></thead><tbody>${g.rows.map(({a,i})=>restrictionRow(a,i,locked,g.rows.length>1)).join("")}</tbody></table></div>
-      ${locked?"":`<button type="button" class="btn ghost tiny addrestr" data-addrestr="${esc(g.gid)}">+ Add another restriction</button>`}
-    </div>`}).join("")}
-function restrictionRow(a,i,locked,canRemove){{
-    const sel=(f,opts,cur,label)=>`<select aria-label="${label}" id="al-${f}-${i}" data-path="allergies.${i}.${f}">${opts.map(([v,l])=>`<option value="${v}" ${cur===v?"selected":""}>${l}</option>`).join("")}</select>`;
-    return `<tr><td><select class="alpick" id="al-pick-${i}" data-i="${i}" aria-label="Allergy or restriction"><option value="">Choose…</option><optgroup label="Allergens">${ALLERGENS.map(o=>`<option ${!a.other&&a.allergy===o?"selected":""}>${o}</option>`).join("")}</optgroup><optgroup label="Diet">${DIETS.map(o=>`<option ${!a.other&&a.allergy===o?"selected":""}>${o}</option>`).join("")}</optgroup><option value="Other" ${a.other?"selected":""}>Other</option></select>${a.other?`<input type="text" class="alother" aria-label="Describe the allergy or restriction" id="al-a-${i}" data-path="allergies.${i}.allergy" value="${esc(a.allergy)}" placeholder="Describe it, e.g. Kiwi">`:""}${a.note?`<span class="hint">${esc(a.note)}</span>`:""}</td>
-      <td>${sel("type",isDietRow(a)?[["Preference","Dietary preference"],["Medical","Medically prescribed"]]:a.other?[["","Choose…"],["Allergy","Allergy"],["Intolerance","Intolerance"],["Preference","Dietary preference"],["Medical","Medically prescribed"]]:[["","Choose…"],["Allergy","Allergy"],["Intolerance","Intolerance"]],a.type,"Type")}</td>
-      <td>${noSeverity(a)?`<span class="muted small">Not needed</span>`:sel("severity",[["","Choose…"],["Mild","Mild"],["Severe","Severe"],["Airborne","Airborne / anaphylactic"]],a.severity,"Severity")}</td>
-      <td>${locked||!canRemove?"":`<button class="btn ghost tiny" data-delallergy="${i}" aria-label="Remove this restriction">Remove</button>`}</td></tr>`;
-  }
+// ---------- allergy list (one line per guest) + Add/Edit dialog ----------
+// "How serious" replaces separate Type and Severity: one choice per restriction.
+const LEVELS=[["intol","Intolerance"],["mild","Allergy, mild"],["severe","Allergy, severe"],["air","Allergy, airborne / anaphylactic"],["medical","Medically prescribed"]];
+const LEVEL_SET={intol:{type:"Intolerance",severity:""},mild:{type:"Allergy",severity:"Mild"},severe:{type:"Allergy",severity:"Severe"},air:{type:"Allergy",severity:"Airborne"},medical:{type:"Medical",severity:""},pref:{type:"Preference",severity:""}};
+const LEVEL_TEXT={intol:"intolerance",mild:"mild allergy",severe:"severe allergy",air:"airborne allergy",medical:"medically prescribed",pref:"preference"};
+function levelOf(a){if(isDietRow(a))return a.type==="Medical"?"medical":"pref";if(a.type==="Medical")return "medical";if(a.type==="Preference")return "pref";if(a.type==="Intolerance")return "intol";
+  if(a.type==="Allergy")return {Mild:"mild",Severe:"severe",Airborne:"air"}[a.severity]||"";return ""}
+function restrText(a){const lv=levelOf(a),nm=esc(a.allergy||"Other (not described)");if(isDietRow(a))return lv==="medical"?`${nm} <span class="sev">(medically prescribed)</span>`:nm;
+  if(!lv)return `${nm} <span class="missingval">(how serious?)</span>`;const hot=lv==="severe"||lv==="air"||lv==="medical";return `${nm} <span class="${hot?"sev":"muted"}">(${LEVEL_TEXT[lv]})</span>`}
+function allergyList(locked){
+  const gs=guestsOf(res),iss=allergyIssueItems(res),n=allergyGuests(res).length,ns=allergyGuests(res).filter(guestSevere).length;
+  return `<div class="glisthead"><span><b>${n}</b> guest${n===1?"":"s"}${ns?` · <span class="sev">${ns} severe</span>`:""}</span>${gs.length>15?`<input type="search" id="alsearch" placeholder="Find a guest" aria-label="Find a guest">`:""}</div>
+  <ul class="glist">${gs.map((g,gi)=>{const mine=iss.filter(x=>x.gid===g.gid);
+    return `<li id="gl-${esc(g.gid)}" data-name="${esc(g.name.toLowerCase())}"><div class="gl-main"><b>${g.name?esc(g.name):`<span class="missingval">Guest ${gi+1} (name needed)</span>`}</b>${g.rows.some(x=>x.a.src==="roster")?` <span class="hint">from guest list</span>`:""}
+      <span class="gl-r">${g.rows.map(({a})=>restrText(a)).join(" · ")}</span>${mine.length?`<span class="warnline">${mine.map(x=>esc(x.short)).join("; ")}</span>`:""}</div>
+      ${locked?"":`<button type="button" class="btn tiny" id="gedit-${esc(g.gid)}" data-editguest="${esc(g.gid)}">Edit</button>`}</li>`}).join("")}</ul>`}
+let gDraft=null;
+function openGuest(gid){
+  const g=gid&&guestsOf(res).find(x=>x.gid===gid);
+  gDraft=g?{gid,isNew:false,name:g.name,items:g.rows.map(({a})=>({allergy:a.allergy,other:!!a.other||(!RESTRICT_OPTS.includes(a.allergy)&&!!a.allergy),level:levelOf(a)}))}
+          :{gid:newGid(),isNew:true,name:"",items:[]};
+  let d=document.getElementById("gdlg");
+  if(!d){d=document.createElement("dialog");d.id="gdlg";d.className="tdlg gdlg";document.body.appendChild(d);
+    d.addEventListener("click",e=>{if(e.target===d){d.close();return}const b=e.target.closest("button");if(!b)return;
+      if(b.dataset.gcancel!==undefined){d.close();return}
+      if(b.dataset.gsave!==undefined){saveGuest(false);return}
+      if(b.dataset.gmerge!==undefined){saveGuest(true);return}
+      if(b.dataset.gremove!==undefined){res.allergies=res.allergies.filter(a=>a.gid!==gDraft.gid);d.close();rerender();scheduleSave();toast("Guest removed");return}
+      if(b.dataset.gaddother!==undefined){gDraft.items.push({allergy:"",other:true,level:""});drawGuest();d.querySelectorAll(".gd-other").forEach((x,k,all)=>{if(k===all.length-1)x.focus()});return}
+      if(b.dataset.gdelother!==undefined){gDraft.items.splice(+b.dataset.gdelother,1);drawGuest();return}});
+    d.addEventListener("change",e=>{const el=e.target;
+      if(el.dataset.gpick!==undefined){const v=el.value,k=gDraft.items.findIndex(x=>!x.other&&x.allergy===v);if(el.checked&&k<0)gDraft.items.push({allergy:v,other:false,level:DIETS.includes(v)?"pref":""});if(!el.checked&&k>=0)gDraft.items.splice(k,1);drawGuest(true);return}
+      if(el.dataset.glevel!==undefined){gDraft.items[+el.dataset.glevel].level=el.value;drawGuest();return}
+});
+    d.addEventListener("input",e=>{const el=e.target;if(el.id==="gd-name"){gDraft.name=el.value;const w=d.querySelector(".gd-dup");const dup=dupOf(gDraft);if(w)w.innerHTML=dupNote(dup)}
+      if(el.dataset.gother!==undefined){const k=+el.dataset.gother;gDraft.items[k].allergy=el.value;const th=d.querySelector(`#gd-lab-${k}`);if(th)th.textContent=el.value||"Other";
+        const sm=d.querySelector("details.msel summary .msel-sum");if(sm)sm.textContent=gDraft.items.map(x=>x.other?(x.allergy||"Other"):x.allergy).join(", ")||"Choose one or more"}});}
+  drawGuest();d.showModal();(gDraft.isNew?d.querySelector("#gd-name"):d.querySelector("[data-gsave]"))?.focus();
+}
+const dupOf=dr=>{const k=dr.name.trim().toLowerCase();return k?guestsOf(res).find(o=>o.gid!==dr.gid&&o.name.trim().toLowerCase()===k):null};
+const dupNote=dup=>dup?`<div class="notice warn small">${esc(dup.name)} is already listed. <button type="button" class="linkbtn" style="color:inherit;font-weight:600" data-gmerge>Add these to ${esc(dup.name)} instead</button></div>`:"";
+function drawGuest(keepPicker){
+  const d=document.getElementById("gdlg"),dr=gDraft,open=keepPicker&&d.querySelector("details.msel")?.open;
+  const picked=dr.items.filter(x=>!x.other).map(x=>x.allergy),others=dr.items.map((x,k)=>({...x,k})).filter(x=>x.other);
+  const summary=dr.items.length?dr.items.map(x=>x.other?(x.allergy||"Other"):x.allergy).map(esc).join(", "):"Choose one or more";
+  const levelRows=dr.items.map((x,k)=>({...x,k})).filter(x=>!(!x.other&&DIETS.includes(x.allergy)));
+  d.innerHTML=`<div class="tdhead"><div><span class="eyebrow">${dr.isNew?"Add a guest":"Edit guest"}</span><h2>${dr.name?esc(dr.name):"Allergies & restrictions"}</h2></div><button class="btn ghost" data-gcancel aria-label="Close">✕</button></div>
+    <label class="f" for="gd-name">Guest name<input type="text" id="gd-name" value="${esc(dr.name)}" autocomplete="off"></label>
+    <div class="gd-dup">${dupNote(dupOf(dr))}</div>
+    <div class="f"><span>Allergies &amp; restrictions</span>
+      <details class="msel"${open?" open":""}><summary><span class="msel-sum">${summary}</span><span aria-hidden="true">▾</span></summary><div class="msel-list">
+        <div class="msel-h">Allergens</div>${ALLERGENS.map(o=>`<label class="chk"><input type="checkbox" data-gpick value="${esc(o)}" ${picked.includes(o)?"checked":""}>${esc(o)}</label>`).join("")}
+        <div class="msel-h">Diet</div>${DIETS.map(o=>`<label class="chk"><input type="checkbox" data-gpick value="${esc(o)}" ${picked.includes(o)?"checked":""}>${esc(o)}</label>`).join("")}
+      </div></details>
+      ${others.map(x=>`<div class="row gd-orow"><input type="text" class="gd-other" data-gother="${x.k}" value="${esc(x.allergy)}" placeholder="Something else, e.g. Kiwi" aria-label="Describe the restriction"><button type="button" class="btn ghost tiny" data-gdelother="${x.k}">Remove</button></div>`).join("")}
+      <button type="button" class="btn ghost tiny" style="align-self:flex-start;padding-left:0" data-gaddother>+ Something not listed</button></div>
+    ${levelRows.length?`<div class="f"><span>How serious is each?</span><table class="gd-lv"><tbody>${levelRows.map(x=>`<tr><th scope="row" id="gd-lab-${x.k}">${x.other?(x.allergy?esc(x.allergy):"Other"):esc(x.allergy)}</th><td><select data-glevel="${x.k}" aria-label="How serious: ${esc(x.allergy||"other")}"><option value="">Choose…</option>${(x.other?[...LEVELS,["pref","Dietary preference"]]:LEVELS).map(([v,l])=>`<option value="${v}" ${x.level===v?"selected":""}>${l}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table></div>`:""}
+    <div class="row gd-acts"><button class="btn primary" data-gsave>${dr.isNew?"Add guest":"Save"}</button><button class="btn" data-gcancel>Cancel</button>${dr.isNew?"":`<button class="btn ghost danger-text" data-gremove style="margin-left:auto">Remove guest</button>`}</div>`;
+}
+function saveGuest(merge){
+  const d=document.getElementById("gdlg"),dr=gDraft;let gid=dr.gid,name=dr.name.trim();
+  const dup=dupOf(dr);if(merge&&dup){gid=dup.gid;name=dup.name}
+  const old=res.allergies.filter(a=>a.gid===gid),base=old[0]||{mode:"all",meals:[],from:"",to:"",src:""};
+  const keep=merge?old:[];  // merging keeps the existing guest's restrictions and adds the new ones
+  const rows=[...keep,...dr.items.filter(x=>!(merge&&keep.some(a=>!a.other&&!x.other&&a.allergy===x.allergy))).map(x=>({gid,name,allergy:x.allergy.trim(),other:x.other,...(LEVEL_SET[x.level]||{type:"",severity:""}),mode:base.mode,meals:[...base.meals],note:"",from:base.from,to:base.to,src:base.src||""}))];
+  if(!rows.length){if(!dr.isNew)res.allergies=res.allergies.filter(a=>a.gid!==dr.gid);d.close();rerender();scheduleSave();return}
+  const at=res.allergies.findIndex(a=>a.gid===gid||a.gid===dr.gid);
+  res.allergies=res.allergies.filter(a=>a.gid!==gid&&a.gid!==dr.gid);
+  res.allergies.splice(at<0?res.allergies.length:Math.min(at,res.allergies.length),0,...rows);
+  if(rows.length)res.noAllergies=false;normalize(res);
+  d.close();rerender();scheduleSave();toast(merge?`Added to ${name}`:dr.isNew?"Guest added":"Saved");
+  document.getElementById("gl-"+gid)?.classList.add("flash");
 }
 function mealGrid(i,a){
   return `<div class="algrid"><table><thead><tr><th>Day</th>${MEALS.map(m=>`<th>${m.snack?(m.k==="amSnack"?"AM snack":"PM snack"):m.label}</th>`).join("")}</tr></thead><tbody>${res.days.map(d=>`<tr><th scope="row">${fmtDate(d.date)}</th>${MEALS.map(m=>{const key=slotKey(d.date,m.k),served=isServed(m,d.meals[m.k]);return `<td><input type="checkbox" aria-label="${fmtDate(d.date)} ${m.label}" data-almeal="${i}" value="${key}" ${a.meals.includes(key)?"checked":""} ${served?"":"disabled"}></td>`}).join("")}</tr>`).join("")}</tbody></table></div>`;
@@ -1039,7 +1110,7 @@ function renderEditor(){
       <section class="card" id="sec-allergies"><div class="sechead"><h2><span class="num">04</span>Attendees &amp; allergies</h2><span class="small muted">Must be received ${DEADLINE_DAYS} days before your event</span></div>
         ${rosterBox(locked)}
         <h3>Allergies and food restrictions</h3>
-        ${r.allergies.length?`<div class="gcards">${allergyCards(locked)}</div>`
+        ${r.allergies.length?allergyList(locked)
           :`<label class="chk" style="width:fit-content"><input type="checkbox" id="f-noAllergies" data-path="noAllergies" ${r.noAllergies===true?"checked":""}> No guests with allergies or food restrictions</label>`}
         ${locked?"":`<div class="row"><button class="btn" id="addallergy">+ Add a guest</button></div>`}
         <p class="small muted" style="margin:0">We accommodate many, but not all, food restrictions. We plan for each guest's allergies at every meal and snack.</p>
@@ -1280,6 +1351,7 @@ function goNeed(i){
   el.scrollIntoView({block:"center",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
   const f=el.matches("input,select,textarea")?el:el.querySelector("input:not([disabled]),select,textarea");if(f)f.focus({preventScroll:true});
   el.classList.add("flash");setTimeout(()=>el.classList.remove("flash"),1600);
+  if(t.gid&&!isLocked())openGuest(t.gid);
 }
 function refreshLive(){
   // update parts that depend on values without re-rendering inputs
@@ -1346,6 +1418,7 @@ async function fillNames(){if(!who.u||!who.u.profiles)return;const els=[...docum
 // ---------- events ----------
 app.addEventListener("input",e=>{
   const el=e.target;
+  if(el.id==="alsearch"){const q=el.value.trim().toLowerCase();document.querySelectorAll(".glist li").forEach(li=>li.hidden=!!q&&!li.dataset.name.includes(q));return}
   if(view==="staffplan"){if(el.classList.contains("locnote")){const L=plan.locations[el.dataset.key];if(L){L.note=el.value;planSave()}}return}if((view!=="edit"&&view!=="review")||!el.dataset.path||el.type==="checkbox"||el.type==="radio"||el.tagName==="SELECT"||el.type==="date")return;
   setPath(res,el.dataset.path,el.type==="number"?(el.value===""||(/\.count$/.test(el.dataset.path)&&Number(el.value)===headN())?"":Number(el.value)):el.value);
   if(el.dataset.gid)res.allergies.forEach(a=>{if(a.gid===el.dataset.gid)a.name=el.value});
@@ -1439,11 +1512,12 @@ app.addEventListener("click",async e=>{
   if(b.dataset.cancelimport!==undefined){pendingImport=null;rerender();return}
   if(b.dataset.rosterremove!==undefined){res.roster=null;res.rosterFile="";res.rosterAt=null;rerender();scheduleSave();toast("Guest list removed. Allergies from it stay in the table.");return}
   if(b.dataset.usecount){const[di,k,c]=b.dataset.usecount.split("|");res.days[+di].meals[k].count=+c;rerender();scheduleSave();return}
-  if(b.id==="addallergy"){res.allergies.push({gid:newGid(),name:"",allergy:"",type:"",severity:"",mode:"all",meals:[],note:"",from:"",to:"",src:"",other:false});res.noAllergies=false;rerender();document.getElementById("al-n-"+(res.allergies.length-1))?.focus();scheduleSave();return}
+  if(b.id==="addallergy"){openGuest(null);return}
   if(b.dataset.reqtime){const st=getPath(res,b.dataset.reqtime);st.timeReq={time:"",note:"",at:new Date().toISOString()};rerender();document.getElementById(b.dataset.reqtime+".timeReq.time")?.focus();return}
   if(b.dataset.cancelreq){const st=getPath(res,b.dataset.cancelreq);delete st.timeReq;rerender();scheduleSave();return}
   if(b.id==="addbo"){res.breakouts.push(blankBreakout());rerender();scheduleSave();document.getElementById(`f-breakouts.${res.breakouts.length-1}.name`)?.focus();return}
   if(b.dataset.delbo){res.breakouts.splice(Number(b.dataset.delbo),1);rerender();scheduleSave();return}
+  if(b.dataset.editguest){openGuest(b.dataset.editguest);return}
   if(b.dataset.addrestr){const g=guestsOf(res).find(x=>x.gid===b.dataset.addrestr),last=g.rows[g.rows.length-1],base=last.a;
     res.allergies.splice(last.i+1,0,{gid:g.gid,name:g.name,allergy:"",type:"",severity:"",mode:base.mode,meals:[...base.meals],note:"",from:base.from,to:base.to,src:"",other:false});
     rerender();scheduleSave();document.getElementById("al-pick-"+(last.i+1))?.focus();return}
@@ -1847,7 +1921,7 @@ function prodItems(m,es){
     (m.incl||"").split(/,\s*/).filter(Boolean).forEach(sd=>es.forEach(x=>add(capFirst(sd),x.r.group,"incl")));
   }
   const special=new Map();
-  es.forEach(x=>{const per=new Map();x.al.forEach(a=>{if(a.allergy==="Vegetarian")return;const who=x.r.code+"|"+a.name.trim().toLowerCase(),lab=PLATE_LABEL[a.allergy]||a.allergy;
+  es.forEach(x=>{const per=new Map();x.al.forEach(a=>{if(a.allergy==="Vegetarian")return;const who=x.r.code+"|"+a.name.trim().toLowerCase(),lab=PLATE_LABEL[a.allergy]||("no "+a.allergy.toLowerCase());
       const p=per.get(who)||new Set();p.add(lab);per.set(who,p)});
     per.forEach(labs=>{const lab=[...labs].sort().join(" + "),k=lab.toLowerCase();const sp=special.get(k)||{label:lab,n:0};sp.n++;special.set(k,sp)})});
   const rows=[];

@@ -77,6 +77,8 @@ The staff side lives in `staffnotes/{code}.walk`: `{status, date, time, note}`, 
 | `from`, `to` | Slot keys limiting the stay window, or `""` |
 | `src` | `"roster"` when imported from the guest list |
 
+The form sets `type` and `severity` together from one "How serious" choice: Intolerance → `Intolerance`; Allergy, mild / severe / airborne → `Allergy` with `Mild` / `Severe` / `Airborne`; Medically prescribed → `Medical`; Dietary preference (unlisted items only) → `Preference`. Vegan and Vegetarian default to `Preference`.
+
 Severe means `type` is `Medical`, or the severity is `Severe` or `Airborne`. A guest counts as severe when any of their restrictions is. Kitchen sheets count one special plate per guest, labeled with all of that guest's needs (e.g. "peanut-free + tree-nut-free").
 
 ### Day
