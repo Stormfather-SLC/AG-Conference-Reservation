@@ -1439,10 +1439,10 @@ app.addEventListener("click",async e=>{
 // ---------- STAFF: meal locations ----------
 const LOCS=["Dining hall","Meeting room","Conference room","Aspen Lobby","Boxed to go","Other"];
 const LOC_TEXT={"Meeting room":"Their meeting room"};
-const ROOMS=["Timp Room A","Timp Room B","Timp Room C","Fir","Spruce","Pine"];
+const ROOMS=["Timp Room A","Timp Room B","Timp Room C","Fir","Pine","Spruce"];
 // Connected rooms, in their physical order. Neighbors can be booked together; rooms that aren't side by side can't.
 const ROOM_SETS=[{label:"Timp rooms",short:x=>x.replace("Timp Room ",""),parts:["Timp Room A","Timp Room B","Timp Room C"]},
- {label:"Tree rooms",short:x=>x,parts:["Fir","Spruce","Pine"]}];
+ {label:"Tree rooms",short:x=>x,parts:["Fir","Pine","Spruce"]}];
 // Every bookable option: each single room, then each run of neighbors. Value = label, e.g. "Timp A & B", "Fir, Spruce & Pine (all)".
 const ROOM_OPTS=ROOM_SETS.map(set=>{const p=set.parts,o=[];
   for(let n=1;n<=p.length;n++)for(let i=0;i+n<=p.length;i++){const run=p.slice(i,i+n);

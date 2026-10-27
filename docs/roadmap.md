@@ -27,8 +27,7 @@ Built Oct 27 with these defaults; adjust after Nate reviews it.
 2. **Fees.** No fee note is shown for breakout rooms or walk-throughs. Should there be one, like mid-event room changes?
 3. **Walk-through timing.** The form suggests before the 14-day lock-in deadline but allows any day before the event.
 4. **Who updates rooms and walk-throughs.** Both save with the staff notes, which only artifact editors can change. Nate or his team need edit access, or these move to their own permission.
-5. **Tree room order.** Combinations assume Spruce is between Fir and Pine. Confirm the middle room.
-6. **When rooms get decided.** Room assignment on the page assumes Setup decides rooms ahead of the event week. If it's usually decided day-of, the printed write-in line remains the fallback.
+5. **When rooms get decided.** Room assignment on the page assumes Setup decides rooms ahead of the event week. If it's usually decided day-of, the printed write-in line remains the fallback.
 
 ## Phase 2
 
