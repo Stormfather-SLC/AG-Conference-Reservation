@@ -1238,7 +1238,8 @@ app.addEventListener("change",e=>{
     if(el.classList.contains("locsel")){const key=el.dataset.key,prev=plan.locations[key];plan.locations[key]={place:el.value,note:el.value==="Other"?(prev&&prev.note)||"":"",room:el.value==="Conference room"?(prev&&prev.room)||"":""};planSave();
       rerender();if(el.value==="Other")document.getElementById("locnote-"+key)?.focus();if(el.value==="Conference room")document.getElementById("room-"+key)?.focus()}
     else if(el.classList.contains("timein")){const key=el.dataset.key;if(!el.value||el.value===el.dataset.def)delete plan.times[key];else plan.times[key]=el.value;planSave();rerender()}
-    else if(el.classList.contains("roomsel")){const key=el.dataset.key;const L=plan.locations[key]||{place:"Conference room",note:""};L.place="Conference room";L.room=el.value;plan.locations[key]=L;planSave()}
+    else if(el.classList.contains("roomsel")){const key=el.dataset.key;const L=plan.locations[key]||{place:"Conference room",note:""};L.place="Conference room";L.room=el.value;plan.locations[key]=L;planSave();rerender()}
+    if(el.id==="bulk-room"&&el.value){el.classList.remove("need");el.removeAttribute("aria-invalid");const nt=document.getElementById("bulk-roomnote");if(nt)nt.hidden=true}
     return}if((view!=="edit"&&view!=="review")||isLocked())return;
   if(el.id==="rosterfile"){const f=el.files&&el.files[0];el.value="";handleRosterFile(f);return}
   if(el.classList.contains("alpick")){const a=res.allergies[+el.dataset.i],v=el.value;
@@ -1320,6 +1321,7 @@ app.addEventListener("click",async e=>{
   if(b.dataset.plan){openPlan(b.dataset.plan);return}
   if(b.dataset.backstaff!==undefined){clearTimeout(planSaveT);if(planState==="Saving…"){try{await store.putStaff(res.code,{...plan,code:res.code,updatedAt:new Date().toISOString()})}catch(err){}}loadStaff();return}
   if(b.dataset.bulkapply!==undefined){const bm=document.getElementById("bulk-meal").value,bs=document.getElementById("bulk-snack").value,br=document.getElementById("bulk-room").value;if(!bm&&!bs){toast("Choose a location to apply");return}
+    if((bm==="Conference room"||bs==="Conference room")&&!br){const sel=document.getElementById("bulk-room");sel.classList.add("need");sel.setAttribute("aria-invalid","true");const nt=document.getElementById("bulk-roomnote");if(nt)nt.hidden=false;sel.focus();return}
     let n=0;res.days.forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(!isPlanned(m,st))return;const v=m.snack?bs:bm;if(v){plan.locations[slotKey(d.date,m.k)]={place:v,note:"",room:v==="Conference room"?br:""};n++}}));
     rerender();planSave();toast(`Updated ${n} location${n===1?"":"s"}`);return}
   if(b.dataset.askdelete){pendingDelete=b.dataset.askdelete;renderStaff();return}
@@ -1369,13 +1371,13 @@ function renderPlan(){
     ${r.days.length?`<div class="bulk">
       <label class="f" for="bulk-meal">Set every meal to<select id="bulk-meal">${opt(LOCS.filter(o=>o!=="Other"),true)}</select></label>
       <label class="f" for="bulk-snack">Set every snack to<select id="bulk-snack">${opt(LOCS.filter(o=>o!=="Other"),true)}</select></label>
-      <label class="f" for="bulk-room">Which conference room<select id="bulk-room"><option value="">Choose a room</option>${ROOMS.map(o=>`<option>${o}</option>`).join("")}</select></label>
+      <label class="f" for="bulk-room">Which conference room<select id="bulk-room"><option value="">Choose a room</option>${ROOMS.map(o=>`<option>${o}</option>`).join("")}</select><span class="warnline" id="bulk-roomnote" hidden>Required when setting a conference room</span></label>
       <button class="btn" data-bulkapply>Apply</button></div>
     ${r.days.map((d,di)=>`<div class="sumday"><h3>${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</h3>
       <div class="tablewrap"><table class="plantable"><thead><tr><th>Meal</th><th>Time</th><th>Guests</th><th>Menu</th><th>Location</th></tr></thead><tbody>
       ${MEALS.map(m=>{const st=d.meals[m.k],key=slotKey(d.date,m.k),sv=isPlanned(m,st),L=locOf(key,m);
         return `<tr class="${sv?"":"off"}"><th scope="row">${m.label}</th><td>${sv?(()=>{const t=plan.times[key]||m.time,ch=t!==m.time;return `<input type="time" class="timein" id="time-${key}" data-key="${key}" data-def="${m.time}" value="${t}" aria-label="Time for ${fmtDate(d.date)} ${m.label}">${ch?`<span class="warnline">Fee may apply (standard: ${fmtTime(m.time)})</span>`:""}`})():""}</td><td class="mono">${sv?mealCount(st):""}</td><td>${sv?menuShort(m,st):`<span class="muted">Not served</span>`}</td>
-        <td>${sv?`<select class="locsel" id="loc-${key}" data-key="${key}" aria-label="Location for ${fmtDate(d.date)} ${m.label}">${LOCS.map(o=>`<option ${L.place===o?"selected":""}>${o}</option>`).join("")}</select>${L.place==="Conference room"?roomSelect("roomsel","room-"+key,key,L.room||"","Conference room for "+fmtDate(d.date)+" "+m.label):""}${L.place==="Other"?`<input type="text" class="locnote" id="locnote-${key}" data-key="${key}" value="${esc(L.note)}" placeholder="Where?" aria-label="Other location">`:""}`:""}</td></tr>`}).join("")}
+        <td>${sv?`<select class="locsel" id="loc-${key}" data-key="${key}" aria-label="Location for ${fmtDate(d.date)} ${m.label}">${LOCS.map(o=>`<option ${L.place===o?"selected":""}>${o}</option>`).join("")}</select>${L.place==="Conference room"?roomSelect("roomsel","room-"+key,key,L.room||"","Conference room for "+fmtDate(d.date)+" "+m.label)+(L.room?"":`<span class="warnline">Choose a room</span>`):""}${L.place==="Other"?`<input type="text" class="locnote" id="locnote-${key}" data-key="${key}" value="${esc(L.note)}" placeholder="Where?" aria-label="Other location">`:""}`:""}</td></tr>`}).join("")}
       </tbody></table></div></div>`).join("")}`:`<div class="empty">This group hasn't set its event dates yet.</div>`}
     <p class="small muted" style="margin:0">Meals default to the Dining hall and snacks to the Aspen Lobby until you change them. Times start at the standard schedule; a changed time is flagged because a fee may apply. Organizers see the locations on their review page but can't change them.</p>
   </div>`;
