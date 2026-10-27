@@ -17,6 +17,7 @@ Replace the PDF clients fill out with a web page that collects the same informat
 - **Breakout rooms and walk-through requests.** Moved up from Phase 2 on Oct 27 by Matt's decision, at Nate's request (Programs manager, responsible for Setup). These go beyond the paper form.
   - The organizer says whether they need breakout rooms and, for each: purpose, people, days, times, setup style (theater, round tables, classroom, boardroom, U-shape), A/V and notes. Aspen Grove assigns the rooms, on the page or by writing them on the Rooms & A/V sheet.
   - The organizer can request a walk-through with two preferred days and times of day. The form says plainly that these depend on what else is happening at camp and aren't guaranteed. Setup staff mark each request Scheduled (with the confirmed day and time), Done, or Couldn't schedule; the organizer sees the result on their form.
+- **Meal and snack time changes** (built Oct 27 by Matt's decision). Organizers request a different time; Conference Services approves or declines from the Groups list (Review button opens a dialog) or changes a time directly on Rooms & locations. Every change is logged, and the production list opens with the day's time changes and any requests not yet approved.
 - Hosting assumed at aspengrove.byu.edu.
 
 ### Still to confirm with Nate (breakout rooms and walk-throughs)
@@ -33,6 +34,7 @@ Built Oct 27 with these defaults; adjust after Nate reviews it.
 
 - **Staff edit a submission, with change history.** Partly built already: Conference Services can reopen a locked reservation and every save is logged.
 - **Client edits or resubmits their own form.**
+- **"Needs attention" report and daily digest for Lisa** (discussed Oct 27). One view of what the office has to act on: groups near or past the lock-in deadline, not started, changed since last viewed (especially headcount, allergies, and anything changed after lock-in), newly locked in, and upcharges by group. A once-a-day email digest, sent only when something is on that list, links to the report and carries no guest names or allergy details. For the pilot it could run as a scheduled task sending from Matt's Gmail; production would use BYU mail. Open question: what Lisa's team spends the most time chasing, so that goes at the top.
 
 ## Parking lot
 
