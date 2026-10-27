@@ -299,6 +299,14 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .sheetwrap{overflow-x:auto}
 .kitchenpick{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
 .kitchenpick select{min-width:240px}
+.linkbtn{border:0;background:none;padding:0;font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-align:left}
+.warnlink{color:var(--warn);font-weight:600;font-size:.875rem}.warnlink:hover{color:var(--fg)}
+.tdlg{border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--fg);box-shadow:0 18px 48px rgba(0,0,0,.25)}
+.tdlg::backdrop{background:rgba(0,24,50,.45)}
+.tdhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.tdhead .eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--aspen);font-weight:700}
+.tditem{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding:14px 0}
+.tdwhen{display:flex;flex-direction:column;gap:2px}.tdchange{font-size:1.15rem}
 .reqbtn{align-self:flex-start;padding-left:0}
 .treqbox{display:flex;flex-direction:column;gap:8px;border-left:3px solid var(--line);padding-left:12px}
 .treq{margin-top:6px;display:flex;flex-direction:column;gap:6px;background:var(--warn-soft);border-left:3px solid var(--warn);padding:6px 8px;border-radius:3px;font-size:.85rem}
@@ -711,6 +719,39 @@ function rosterHint(di,m){return ""}
 function reqState(st,n,key){const q=st&&st.timeReq;if(!q||!q.time)return null;const d=n&&n.timeDec&&n.timeDec[key];
   if(d&&d.req===q.time&&d.at>=(q.at||""))return d.status;return "pending"}
 function pendingReqs(r,n){const out=[];(r.days||[]).forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k],key=slotKey(d.date,m.k);if(st&&isServed(m,st)&&reqState(st,n,key)==="pending")out.push({d,m,st,key})}));return out}
+// ---------- time change review dialog (from Groups) ----------
+let trCode=null;
+function decideTime(n,r,key,approve){
+  const[dd,mk]=key.split("|"),st=r.days.find(x=>x.date===dd).meals[mk],q=st.timeReq,from=(n.times||{})[key]||MEAL[mk].time,at=new Date().toISOString();
+  n.times=n.times||{};n.timeDec=n.timeDec||{};
+  if(approve){if(q.time===MEAL[mk].time)delete n.times[key];else n.times[key]=q.time}
+  n.timeDec[key]={req:q.time,at,status:approve?"approved":"declined"};
+  logTime(n,{key,from,to:approve?q.time:from,status:approve?"approved":"declined",req:q.time,note:q.note||""});
+}
+function timeReviewHTML(){
+  const r0=(staffRows||[]).find(x=>x.code===trCode);if(!r0)return "";
+  const r=normalize(structuredClone(r0)),n=(kitchenInfo||{})[trCode]||{},pend=pendingReqs(r,n);
+  return `<div class="tdhead"><div><span class="eyebrow">Time change requests</span><h2>${esc(r.group||r.code)}</h2><span class="small muted mono">${esc(r.code)}</span></div><button class="btn ghost" data-trclose aria-label="Close">✕</button></div>
+  ${pend.length?pend.map(x=>{const cur=(n.times||{})[x.key]||x.m.time;return `<div class="tditem"><div class="tdwhen"><b>${fmtDate(x.d.date,{weekday:"long",month:"short",day:"numeric"})} · ${x.m.label}</b>
+      <span class="small muted">${mealCount(x.st,r)} guests · ${x.m.snack?esc(x.st.items.join(", ")):menuShort(x.m,x.st)}</span></div>
+      <div class="tdchange"><span>${fmtTime(cur)}</span> → <b>${fmtTime(x.st.timeReq.time)}</b>${x.st.timeReq.time===x.m.time?` <span class="small muted">(back to standard)</span>`:cur!==x.m.time?` <span class="small muted">(standard ${fmtTime(x.m.time)})</span>`:""}</div>
+      ${x.st.timeReq.note?`<p class="small" style="margin:0">Reason: “${esc(x.st.timeReq.note)}”</p>`:""}
+      <p class="small muted" style="margin:0">Approving tells the kitchen right away: the new time shows on the production list and meal schedule. A fee may apply.</p>
+      <div class="row"><button class="btn primary" data-trapprove="${x.key}">Approve ${fmtTime(x.st.timeReq.time)}</button><button class="btn" data-trdecline="${x.key}">Decline, keep ${fmtTime(cur)}</button></div></div>`}).join("")
+    :`<div class="notice ok">All requests for this group have been reviewed.</div><div class="row"><button class="btn primary" data-trclose>Done</button></div>`}`}
+function openTimeReview(code){trCode=code;let d=document.getElementById("tdlg");
+  if(!d){d=document.createElement("dialog");d.id="tdlg";d.className="tdlg";document.body.appendChild(d);
+    d.addEventListener("close",()=>{trCode=null;if(view==="staff")renderStaff()});
+    d.addEventListener("click",async e=>{const b=e.target.closest("button");if(e.target===d){d.close();return}if(!b)return;
+      if(b.dataset.trclose!==undefined){d.close();return}
+      const key=b.dataset.trapprove||b.dataset.trdecline;if(!key)return;
+      const r0=staffRows.find(x=>x.code===trCode),r=normalize(structuredClone(r0)),base=structuredClone((kitchenInfo||{})[trCode]||{code:trCode,locations:{}});
+      decideTime(base,r,key,!!b.dataset.trapprove);base.code=trCode;base.updatedAt=new Date().toISOString();
+      d.querySelectorAll("button").forEach(x=>x.disabled=true);
+      try{await store.putStaff(trCode,base);kitchenInfo=kitchenInfo||{};kitchenInfo[trCode]=base;toast(b.dataset.trapprove?`Approved: ${slotLabel(key)} at ${fmtTime(base.times[key]||MEAL[key.split("|")[1]].time)}`:"Request declined")}
+      catch(err){toast(err&&err.code==="invalid_argument"?"Only Aspen Grove staff can approve time changes":"Not saved. Check your connection.")}
+      d.innerHTML=timeReviewHTML()})}
+  d.innerHTML=timeReviewHTML();if(!d.open)d.showModal();d.querySelector("[data-trapprove],[data-trclose]")?.focus()}
 function logTime(n,e){n.timeLog=n.timeLog||[];n.timeLog.push({...e,at:new Date().toISOString(),by:who.id||""});if(n.timeLog.length>200)n.timeLog=n.timeLog.slice(-200)}
 const TIME_VERB={approved:"Request approved",declined:"Request declined",changed:"Changed by Aspen Grove",reset:"Back to standard time"};
 function timeReqBlock(d,di,m){
@@ -1315,6 +1356,7 @@ app.addEventListener("click",async e=>{
   if(b.dataset.sheetback!==undefined){sheetBack();return}
   if(b.dataset.sheetdl!==undefined){downloadSheet();return}
   if(b.dataset.dept){const d=DEPTS.find(x=>x.k===b.dataset.dept),last=prefGet("ag:lastTab:"+d.k);b.dataset.stab=d.tabs.some(([k])=>k===last)?last:d.tabs[0][0]}
+  if(b.dataset.treview){openTimeReview(b.dataset.treview);return}
   if(b.dataset.gfilter){const k=b.dataset.gfilter;groupFilter=groupFilter===k?"all":k;renderStaff();return}
   if(b.dataset.stab){pickStaffTab(b.dataset.stab);staffMsg=null;startOpen=false;if(needsInfo())loadKitchen();renderStaff();return}
   if(b.dataset.startgroup!==undefined){startOpen=!startOpen;staffMsg=null;renderStaff();if(startOpen)document.getElementById("sg-group")?.focus();return}
@@ -1360,10 +1402,6 @@ app.addEventListener("click",async e=>{
   if(b.dataset.open){actingAs="staff";openCode(b.dataset.open);return}
   if(b.dataset.plan){openPlan(b.dataset.plan);return}
   if(b.dataset.backstaff!==undefined){clearTimeout(planSaveT);if(planState==="Saving…"){try{await store.putStaff(res.code,{...plan,code:res.code,updatedAt:new Date().toISOString()})}catch(err){}}loadStaff();return}
-  if(b.dataset.tapprove||b.dataset.tdecline){const key=b.dataset.tapprove||b.dataset.tdecline,[dd,mk]=key.split("|"),st=res.days.find(x=>x.date===dd).meals[mk],q=st.timeReq,from=plan.times[key]||MEAL[mk].time;
-    if(b.dataset.tapprove){if(q.time===MEAL[mk].time)delete plan.times[key];else plan.times[key]=q.time;plan.timeDec[key]={req:q.time,at:new Date().toISOString(),status:"approved"};logTime(plan,{key,from,to:q.time,status:"approved",req:q.time,note:q.note||""});toast(`${MEAL[mk].label} moved to ${fmtTime(q.time)}`)}
-    else{plan.timeDec[key]={req:q.time,at:new Date().toISOString(),status:"declined"};logTime(plan,{key,from,to:from,status:"declined",req:q.time,note:q.note||""});toast("Request declined")}
-    planSave();rerender();return}
   if(b.dataset.bulkapply!==undefined){const bm=document.getElementById("bulk-meal").value,bs=document.getElementById("bulk-snack").value,br=document.getElementById("bulk-room").value;if(!bm&&!bs){toast("Choose a location to apply");return}
     if((bm==="Conference room"||bs==="Conference room")&&!br){const sel=document.getElementById("bulk-room");sel.classList.add("need");sel.setAttribute("aria-invalid","true");const nt=document.getElementById("bulk-roomnote");if(nt)nt.hidden=false;sel.focus();return}
     let n=0;res.days.forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(!isPlanned(m,st))return;const v=m.snack?bs:bm;if(v){plan.locations[slotKey(d.date,m.k)]={place:v,note:"",room:v==="Conference room"?br:""};n++}}));
@@ -1440,7 +1478,7 @@ function renderPlan(){
       <div class="tablewrap"><table class="plantable"><thead><tr><th>Meal</th><th>Time</th><th>Guests</th><th>Menu</th><th>Location</th></tr></thead><tbody>
       ${MEALS.map(m=>{const st=d.meals[m.k],key=slotKey(d.date,m.k),sv=isPlanned(m,st),L=locOf(key,m);
         return `<tr class="${sv?"":"off"}"><th scope="row">${m.label}</th><td>${sv?(()=>{const t=plan.times[key]||m.time,ch=t!==m.time;return `<input type="time" class="timein" id="time-${key}" data-key="${key}" data-def="${m.time}" value="${t}" aria-label="Time for ${fmtDate(d.date)} ${m.label}">${ch?`<span class="warnline">Fee may apply (standard: ${fmtTime(m.time)})</span>`:""}${(()=>{const q=st.timeReq,rs=reqState(st,plan,key);if(!q||!q.time)return "";
-          if(rs==="pending")return `<div class="treq"><b>Requested ${fmtTime(q.time)}</b>${q.note?`<span class="small"> · ${esc(q.note)}</span>`:""}<div class="row"><button class="btn tiny primary" data-tapprove="${key}">Approve</button><button class="btn tiny" data-tdecline="${key}">Decline</button></div></div>`;
+          if(rs==="pending")return `<div class="treq"><b>Requested ${fmtTime(q.time)}</b>${q.note?`<span class="small"> · ${esc(q.note)}</span>`:""}<span class="small">Review it from the Groups list.</span></div>`;
           return `<span class="small muted">Request for ${fmtTime(q.time)} ${rs}</span>`})()}`})():""}</td><td class="mono">${sv?mealCount(st):""}</td><td>${sv?menuShort(m,st):`<span class="muted">Not served</span>`}</td>
         <td>${sv?`<select class="locsel" id="loc-${key}" data-key="${key}" aria-label="Location for ${fmtDate(d.date)} ${m.label}">${LOCS.map(o=>`<option value="${o}" ${L.place===o?"selected":""}>${o==="Meeting room"?`Their meeting room${mainRoomOn(plan,d.date)?" ("+mainRoomOn(plan,d.date)+")":""}`:o}</option>`).join("")}</select>${L.place==="Conference room"?roomSelect("roomsel","room-"+key,key,L.room||"","Conference room for "+fmtDate(d.date)+" "+m.label)+(L.room?"":`<span class="warnline">Choose a room</span>`):""}${L.place==="Other"?`<input type="text" class="locnote" id="locnote-${key}" data-key="${key}" value="${esc(L.note)}" placeholder="Where?" aria-label="Other location">`:""}`:""}</td></tr>`}).join("")}
       </tbody></table></div></div>`).join("")}`:`<div class="empty">This group hasn't set its event dates yet.</div>`}
@@ -1612,7 +1650,7 @@ function groupsView(){
       ${shown.map(r=>{const dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null,s=stateOf(r),locked=r.status==="locked",p=progressOf(r);
         const dlTxt=!dl?"—":locked?fmtDate(dl):left<0?`<span style="color:var(--bad);font-weight:600">${fmtDate(dl)} · overdue</span>`:left<=7?`<span style="color:var(--warn);font-weight:600">${fmtDate(dl)} · ${left}d</span>`:`${fmtDate(dl)} · ${left}d`;
         const sev=(r.allergies||[]).filter(isSevere).length;
-        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b> <span class="mono small muted">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span>${sev?`<br><span class="small" style="color:var(--bad);font-weight:600">${sev} critical allerg${sev===1?"y":"ies"}</span>`:""}${(()=>{const n=pendingReqs(r,(kitchenInfo||{})[r.code]).length;return n?`<br><span class="small" style="color:var(--warn);font-weight:600">${n} time change request${n===1?"":"s"} to review</span>`:""})()}${wantsWalk(r)?`<br><span class="small muted">Walk-through requested</span>`:""}${r.breakoutNeed==="yes"&&r.breakouts&&r.breakouts.length?`<br><span class="small muted">${r.breakouts.length} breakout room${r.breakouts.length===1?"":"s"}</span>`:""}</td>
+        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b> <span class="mono small muted">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span>${sev?`<br><span class="small" style="color:var(--bad);font-weight:600">${sev} critical allerg${sev===1?"y":"ies"}</span>`:""}${(()=>{const n=pendingReqs(r,(kitchenInfo||{})[r.code]).length;return n?`<br><button type="button" class="linkbtn warnlink" data-treview="${esc(r.code)}">${n} time change request${n===1?"":"s"} to review</button>`:""})()}${wantsWalk(r)?`<br><span class="small muted">Walk-through requested</span>`:""}${r.breakoutNeed==="yes"&&r.breakouts&&r.breakouts.length?`<br><span class="small muted">${r.breakouts.length} breakout room${r.breakouts.length===1?"":"s"}</span>`:""}</td>
         <td>${r.startDate?fmtDate(r.startDate)+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate):""):"—"}</td><td class="mono">${esc(r.headcount||"—")}</td>
         <td><div class="prog"><span class="bar"><i style="width:${p/SECS_TOTAL*100}%"></i></span>${p}/${SECS_TOTAL}</div></td>
         <td>${dlTxt}</td><td><span class="pill ${s.k==="locked"?"locked":s.k}">${s.label}</span></td>
