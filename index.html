@@ -255,6 +255,11 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .subnav{display:flex;gap:2px;flex-wrap:wrap;border-bottom:2px solid var(--rule);margin-bottom:18px}
 .subnav button{border:0;background:none;padding:9px 14px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;font-size:.95rem}
 .subnav button[aria-pressed="true"]{color:var(--title);border-bottom-color:var(--spruce)}
+.subnav .admin{margin-left:auto;font-weight:500;font-size:.85rem}
+.reportnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-4px 0 16px}
+.reportnav .lbl{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-right:4px}
+.reportnav button{border:1px solid var(--line);background:var(--surface);padding:6px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.88rem;color:var(--fg)}
+.reportnav button[aria-pressed="true"]{background:var(--spruce);color:var(--spruce-ink);border-color:var(--spruce)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;display:flex;flex-direction:column;gap:2px}
 .stat .n{font-family:var(--mono);font-size:1.6rem;font-weight:500;line-height:1.1}
@@ -1188,7 +1193,8 @@ app.addEventListener("click",async e=>{
   if(b.dataset.sheet){await saving;openSheet(b.dataset.sheet);return}
   if(b.dataset.sheetback!==undefined){sheetBack();return}
   if(b.dataset.sheetdl!==undefined){downloadSheet();return}
-  if(b.dataset.stab){staffTab=b.dataset.stab;staffMsg=null;startOpen=false;if(staffTab==="kitchen"||staffTab==="week"||staffTab==="rooms")loadKitchen();renderStaff();return}
+  if(b.dataset.dept){const d=DEPTS.find(x=>x.k===b.dataset.dept),last=prefGet("ag:lastTab:"+d.k);b.dataset.stab=d.tabs.some(([k])=>k===last)?last:d.tabs[0][0]}
+  if(b.dataset.stab){pickStaffTab(b.dataset.stab);staffMsg=null;startOpen=false;if(staffTab==="kitchen"||staffTab==="week"||staffTab==="rooms")loadKitchen();renderStaff();return}
   if(b.dataset.startgroup!==undefined){startOpen=!startOpen;staffMsg=null;renderStaff();if(startOpen)document.getElementById("sg-group")?.focus();return}
   if(b.dataset.invite){inviteFor(b.dataset.invite);return}
   if(b.dataset.remind){remindFor(b.dataset.remind);return}
@@ -1299,7 +1305,16 @@ function planSave(){
 
 // ---------- CONFERENCE SERVICES ----------
 const PAGE_URL="https://claude.ai/artifact/9kSo7EiZ3AAYSrh96k4yud";
-let staffTab="groups", staffMsg=null, startOpen=false, kitchenInfo=null, kitchenDate="", checkResult=null, sheetCtx=null;
+// Sections are grouped by who uses them. Each browser remembers its last section, so the kitchen, setup crew and office each land on their own view.
+const DEPTS=[{k:"groups",label:"Groups",tabs:[["groups","Groups"]]},
+ {k:"kitchen",label:"Kitchen",tabs:[["kitchen","Daily production list"],["week","Weekly meal schedule"]]},
+ {k:"setup",label:"Setup",tabs:[["rooms","Rooms & A/V"]]}];
+const STAFF_TABS=["groups","kitchen","week","rooms","backup"];
+const deptOf=t=>(DEPTS.find(d=>d.tabs.some(([k])=>k===t))||{k:t}).k;
+function prefGet(k){try{return localStorage.getItem(k)||""}catch(e){return ""}}
+function prefSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function pickStaffTab(t){staffTab=t;prefSet("ag:lastTab",t);const d=DEPTS.find(x=>x.tabs.some(([k])=>k===t));if(d&&d.tabs.length>1)prefSet("ag:lastTab:"+d.k,t)}
+let staffTab=STAFF_TABS.includes(prefGet("ag:lastTab"))?prefGet("ag:lastTab"):"groups", staffMsg=null, startOpen=false, kitchenInfo=null, kitchenDate="", checkResult=null, sheetCtx=null;
 const SECS_TOTAL=5;
 function progressOf(r){const s=sectionStatus(normalize(structuredClone(r)));return ["contact","room","meals","allergies","checklist"].filter(k=>s[k]).length}
 function organizerStarted(r){if(r.createdBy!=="staff")return true;return (r.history||[]).some(h=>h.role==="organizer")}
@@ -1387,7 +1402,9 @@ function startForm(){if(!startOpen)return "";
 
 function renderStaff(){
   view="staff";setTab("staff");
-  const nav=`<nav class="subnav" aria-label="Conference Services">${[["groups","Groups"],["kitchen","Production list"],["week","Weekly itinerary"],["rooms","Rooms & A/V"],["backup","Backup & system check"]].map(([k,l])=>`<button data-stab="${k}" aria-pressed="${staffTab===k}">${l}</button>`).join("")}</nav>`;
+  const cur=deptOf(staffTab),dept=DEPTS.find(d=>d.k===cur);
+  const nav=`<nav class="subnav" aria-label="Conference Services">${DEPTS.map(d=>`<button data-dept="${d.k}" aria-pressed="${cur===d.k}">${d.label}</button>`).join("")}<button class="admin" data-stab="backup" aria-pressed="${staffTab==="backup"}">Backup &amp; system check</button></nav>`
+    +(dept&&dept.tabs.length>1?`<div class="reportnav" role="group" aria-label="${dept.label} reports">${dept.tabs.map(([k,l])=>`<button data-stab="${k}" aria-pressed="${staffTab===k}">${l}</button>`).join("")}</div>`:"");
   if(staffRows===null){app.innerHTML=nav+`<div class="empty">Loading reservations…</div>`;return}
   const body=staffTab==="kitchen"?kitchenView():staffTab==="week"?weekView():staffTab==="rooms"?roomsView():staffTab==="backup"?backupView():groupsView();
   const keep={};document.querySelectorAll("#startform input,#msgtext").forEach(el=>keep[el.id]=el.value);const foc=document.activeElement&&document.activeElement.id;
@@ -1509,7 +1526,7 @@ function downloadSheet(){const {r,info}=sheetCtx;saveFile(`${r.code} ${(r.group|
 // ---------- kitchen by day ----------
 async function loadKitchen(){kitchenInfo=null;try{kitchenInfo=await store.allStaff()}catch(e){kitchenInfo={}}if(view==="staff"&&(staffTab==="kitchen"||staffTab==="week"||staffTab==="rooms"))renderStaff()}
 function allDates(){const s=new Set();(staffRows||[]).forEach(r=>(r.days||[]).forEach(d=>s.add(d.date)));return [...s].sort()}
-// ---------- production list (Kitchen tab) ----------
+// ---------- daily production list (Kitchen) ----------
 const STAFF_MEALS=15; // staff plates for the food order guide; the production list shows guest counts only
 const PLATE_LABEL={Milk:"Dairy-free",Eggs:"Egg-free",Fish:"No fish","Crustacean shellfish":"No shellfish","Tree nuts":"Tree-nut-free",Peanuts:"Peanut-free","Wheat/Gluten":"Gluten-free",Soybeans:"Soy-free",Sesame:"Sesame-free",Vegan:"Vegan"};
 const capFirst=t=>t.charAt(0).toUpperCase()+t.slice(1);
@@ -1602,7 +1619,7 @@ function kitchenView(){
 function downloadKitchen(){if(!kitchenDate)return;saveFile(`Production list ${kitchenDate}.html`,printableDoc(`Production list · ${kitchenDate}`,kitchenBody(kitchenDate)),"Production list saved. Open it and press Print.")}
 app.addEventListener("change",e=>{if(e.target.id==="kdate"){kitchenDate=e.target.value;renderStaff()}if(e.target.id==="wstart"){weekStart=e.target.value;renderStaff()}if(e.target.id==="rstart"){roomWeek=e.target.value;renderStaff()}});
 
-// ---------- weekly itinerary ----------
+// ---------- weekly meal schedule (Kitchen) ----------
 let weekStart="";
 function mondayOf(s){const d=parseDate(s);const x=new Date(d);x.setDate(d.getDate()-((d.getDay()+6)%7));return iso(x)}
 function addDays(s,n){const d=parseDate(s);d.setDate(d.getDate()+n);return iso(d)}
@@ -1629,7 +1646,7 @@ function glanceBody(start,dates,diet){
     const gl=[...gs.values()].sort((a,b)=>(a.group||"").localeCompare(b.group||""));const head=gl.reduce((a,r)=>a+headN(r),0);
     return `<tr><th scope="row">${fmtDate(d,{weekday:"short",month:"short",day:"numeric"})}</th><td>${gl.map(r=>`${esc(r.group||r.code)} (${headN(r)})${r.status!=="locked"?` <span class="miss">(draft)</span>`:""}`).join("<br>")}</td><td class="n">${gl.length>1?head:""}</td><td>${sv.length?esc(sv.join(", ").replace(/^./,c=>c.toUpperCase())):`<span class="muted">No food service</span>`}</td></tr>`}).join("");
   const all=new Set(),drafts=new Set();dates.forEach(d=>MEALS.forEach(m=>weekEntries(d,m).forEach(x=>{all.add(x.r.code);if(x.r.status!=="locked")drafts.add(x.r.code)})));
-  return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Weekly meal &amp; snack itinerary</div><h1>${fmtDate(dates[0],{weekday:"long",month:"long",day:"numeric"})} – ${fmtDate(dates[dates.length-1],{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1><div>${all.size} group${all.size===1?"":"s"} on site</div></div>
+  return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Weekly meal schedule</div><h1>${fmtDate(dates[0],{weekday:"long",month:"long",day:"numeric"})} – ${fmtDate(dates[dates.length-1],{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1><div>${all.size} group${all.size===1?"":"s"} on site</div></div>
     <div class="stamp ${drafts.size?"draft":""}">${drafts.size?`${drafts.size} draft${drafts.size===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
     <h2>At a glance</h2><table><thead><tr><th style="width:96px">Day</th><th>Groups on site</th><th style="width:72px">Combined</th><th>Food service</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="small muted">Each day follows on its own page.</p>
@@ -1654,9 +1671,9 @@ function weekView(){
     <button class="btn primary" data-wdl>Download to print</button></div>
     <p class="small muted" style="margin:0">A one-page summary of the week, then one page per day with every meal and snack in time order, for every group on site. Only weeks with groups are listed.</p></div>
     ${kitchenInfo===null?`<div class="empty">Loading meal locations…</div>`:`<div class="sheetwrap"><article class="sheet">${weekBody(weekStart)}</article></div>`}</div>`}
-function downloadWeek(){if(!weekStart)return;saveFile(`Itinerary week of ${weekStart}.html`,printableDoc(`Itinerary · week of ${weekStart}`,weekBody(weekStart)),"Itinerary saved. Open it and press Print.")}
+function downloadWeek(){if(!weekStart)return;saveFile(`Meal schedule week of ${weekStart}.html`,printableDoc(`Meal schedule · week of ${weekStart}`,weekBody(weekStart)),"Meal schedule saved. Open it and press Print.")}
 
-// ---------- itinerary: one page per day ----------
+// ---------- meal schedule: one page per day ----------
 function menuKey(m,st){return m.snack?st.items.join("|"):[st.choice,st.meat||"",st.addon?1:0,st.second?1:0].join("|")}
 function menuFull(m,st){
   if(m.snack)return `<b>${esc(st.items.join(", ")||"Items not picked")}</b>`;
@@ -1690,11 +1707,11 @@ function dayPageBody(date,partial){
   const dietTbl=dl.length?`<table class="ddiet"><thead><tr><th>Guest</th><th>Requirement</th><th>Today</th></tr></thead><tbody>${dl.map(d=>{const g=d.r.code!==lastG?`<tr class="dg"><th colspan="3">${esc(d.r.group)}</th></tr>`:"";lastG=d.r.code;
     return g+`<tr><td>${esc(d.name)}</td><td>${d.reqs.map(req).join("; ")}</td><td class="${d.svc.length===gsvc(d.r.code)?"muted":"miss"}">${d.svc.length===gsvc(d.r.code)?"All":esc(d.svc.join(", "))}</td></tr>`}).join("")}</tbody></table>`:`<p class="muted">None.</p>`;
   const head=gl.reduce((a,r)=>a+headN(r),0),drafts=gl.filter(r=>r.status!=="locked").length;
-  return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Meal &amp; snack itinerary</div><h1>${fmtDate(date,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1>
+  return `<div class="dpage"><div class="top"><div><div class="org">Aspen Grove · Meal schedule</div><h1>${fmtDate(date,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</h1>
     <div>${gl.map(r=>`${esc(r.group)} (${headN(r)})`).join(" · ")}${gl.length>1?` · <b>Combined ${head}</b>`:""}</div></div>
     <div class="stamp ${drafts?"draft":""}">${drafts?`${drafts} draft${drafts===1?"":"s"} included`:"All locked in"}<span>Printed ${fmtDate(new Date(),{month:"short",day:"numeric"})}, ${clock()}</span></div></div>
     <div class="small muted" style="margin-top:6px">Times are standard unless shown in amber. Amber also marks a non-standard place, charge, or partial attendance.</div>
-    ${blocks}${partial?(dl.length?`<h2>Dietary accommodations · attending certain meals</h2>${dietTbl}`:"")+`<p class="small muted">Dietary needs for the whole stay are listed once at the start of this itinerary.</p>`:`<h2>Dietary accommodations</h2>${dietTbl}`}</div>`}
+    ${blocks}${partial?(dl.length?`<h2>Dietary accommodations · attending certain meals</h2>${dietTbl}`:"")+`<p class="small muted">Dietary needs for the whole stay are listed once at the start of this meal schedule.</p>`:`<h2>Dietary accommodations</h2>${dietTbl}`}</div>`}
 
 // ---------- rooms & A/V (weekly) ----------
 let roomWeek="";
