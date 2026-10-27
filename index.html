@@ -280,6 +280,8 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .acts .btn{padding:5px 10px;font-size:.85rem}
 .stafftable td.a{white-space:normal;min-width:190px}
 .nowrap{white-space:nowrap}
+.newdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--spruce);margin-right:7px;vertical-align:1px}
+.stafftable td.upd{color:var(--spruce);font-weight:600}
 .acts .reviewbtn{flex-basis:100%;justify-content:center;background:var(--warn-soft);border-color:var(--warn);color:var(--fg)}
 .acts .reviewbtn:hover{border-color:var(--fg)}
 .amenu{position:relative}
@@ -1365,6 +1367,8 @@ app.addEventListener("change",e=>{
 function rerender(){const y=window.scrollY;view==="staffplan"?renderPlan():view==="review"?renderReview():view==="sheet"?renderSheet():view==="staff"?renderStaff():renderEditor();window.scrollTo(0,y)}
 app.addEventListener("click",async e=>{
   const b=e.target.closest("button,a");if(!b)return;
+  {const c=b.dataset.sheet||b.dataset.open||b.dataset.plan||b.dataset.treview||b.dataset.remind||b.dataset.invite||b.dataset.unlock;if(c&&view==="staff")markSeen([c])}
+  if(b.dataset.seenall!==undefined){markSeen((staffRows||[]).map(r=>r.code));renderStaff();return}
   if(b.matches(".rail a")){e.preventDefault();document.querySelector(b.getAttribute("href"))?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});return}
   if(b.id==="back"){await saving;if(actingAs==="staff"){setTab("staff");loadStaff()}else renderHome();return}
   if(b.dataset.restore!==undefined){const x=restoreOffer;restoreOffer=null;delete x._unsaved;res=normalize(x);lastSig=null;logEvent(res,"Restored unsaved changes from this device");lastSig=sectionSig(res);rerender();saveNow();toast("Changes restored");return}
@@ -1649,11 +1653,20 @@ function renderStaff(){
 
 const GROUP_FILTERS={all:"Upcoming groups",locked:"Locked in",progress:"Organizer working on it",waiting:"Invited, not started",overdue:"Past the 14-day deadline"};
 let groupFilter="all", planAll=null, planRows=null;
+// "Updated" dots: each browser remembers when it last opened each group, so every staff member sees what's new to them.
+// Only organizer changes count; staff edits don't light the dot.
+function seenMap(){try{const m=JSON.parse(localStorage.getItem("ag:seen")||"null");if(m&&m._since)return m}catch(e){}const m={_since:new Date().toISOString()};try{localStorage.setItem("ag:seen",JSON.stringify(m))}catch(e){}return m}
+function markSeen(codes){const m=seenMap(),now=new Date().toISOString();codes.forEach(c=>m[c]=now);try{localStorage.setItem("ag:seen",JSON.stringify(m))}catch(e){}}
+const orgChangedAt=r=>((r.history||[]).filter(h=>h.role!=="staff").map(h=>h.at).sort().pop())||(r.createdBy!=="staff"?r.createdAt:"")||"";
+const isNewToMe=(r,m)=>{const t=orgChangedAt(r);return !!t&&t>(m[r.code]||m._since)};
+function whenText(iso){if(!iso)return "—";const d=new Date(iso),days=daysBetween(d,TODAY);
+  return days===0?`Today<br><span class="small">${clock(iso)}</span>`:days===1?`Yesterday<br><span class="small">${clock(iso)}</span>`:fmtDate(d,{month:"short",day:"numeric"})}
 function groupsView(){
   const rows=staffRows;
   const sorted=[...rows].sort((a,b)=>(a.startDate||"9999").localeCompare(b.startDate||"9999"));
   const st=rows.map(stateOf), cnt=k=>k==="all"?rows.length:st.filter(x=>x.k===k).length;
   const shown=groupFilter==="all"?sorted:sorted.filter(r=>stateOf(r).k===groupFilter);
+  const seen=seenMap(),freshN=rows.filter(r=>isNewToMe(r,seen)).length;
   const card=(k,l)=>`<button type="button" class="stat stat-btn${k==="overdue"&&cnt(k)?" alert":""}" data-gfilter="${k}" aria-pressed="${groupFilter===k}"><span class="n">${cnt(k)}</span><span class="l">${l}</span></button>`;
   return `<div class="stack">
     <div class="stats" role="group" aria-label="Filter groups by status">
@@ -1661,15 +1674,16 @@ function groupsView(){
     </div>
     ${msgCard()}${startForm()}
     <div class="panel" style="gap:14px">
-      <div class="row" style="justify-content:space-between"><div class="row"><h2>${groupFilter==="all"?"Upcoming groups":esc(GROUP_FILTERS[groupFilter])}</h2>${groupFilter==="all"?"":`<span class="muted small">${shown.length} of ${rows.length}</span><button class="btn ghost" type="button" data-gfilter="all">Show all groups</button>`}</div>${startOpen?"":`<button class="btn primary" data-startgroup>+ Start a group</button>`}</div>
-      ${rows.length?`<div class="tablewrap"><table class="stafftable"><thead><tr><th>Group</th><th>Event</th><th>Guests</th><th>Form</th><th>Lock-in deadline</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-      ${shown.length?"":`<tr><td colspan="7"><div class="empty">No groups ${esc(GROUP_FILTERS[groupFilter].toLowerCase())} right now.</div></td></tr>`}
+      <div class="row" style="justify-content:space-between"><div class="row"><h2>${groupFilter==="all"?"Upcoming groups":esc(GROUP_FILTERS[groupFilter])}</h2>${freshN?`<span class="small"><span class="newdot" aria-hidden="true"></span>${freshN} updated since you last looked</span><button class="btn ghost tiny" type="button" data-seenall>Mark all as seen</button>`:""}${groupFilter==="all"?"":`<span class="muted small">${shown.length} of ${rows.length}</span><button class="btn ghost" type="button" data-gfilter="all">Show all groups</button>`}</div>${startOpen?"":`<button class="btn primary" data-startgroup>+ Start a group</button>`}</div>
+      ${rows.length?`<div class="tablewrap"><table class="stafftable"><thead><tr><th>Group</th><th>Event</th><th>Guests</th><th>Form</th><th>Lock-in deadline</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead><tbody>
+      ${shown.length?"":`<tr><td colspan="8"><div class="empty">No groups ${esc(GROUP_FILTERS[groupFilter].toLowerCase())} right now.</div></td></tr>`}
       ${shown.map(r=>{const dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null,s=stateOf(r),locked=r.status==="locked",p=progressOf(r);
         const dlTxt=!dl?"—":locked?fmtDate(dl):left<0?`<span style="color:var(--bad);font-weight:600">${fmtDate(dl)} · overdue</span>`:left<=7?`<span style="color:var(--warn);font-weight:600">${fmtDate(dl)} · ${left}d</span>`:`${fmtDate(dl)} · ${left}d`;
-        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b><br><span class="mono small muted nowrap">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span></td>
+        const fresh=isNewToMe(r,seen);
+        return `<tr${fresh?' class="fresh"':""}><td class="g">${fresh?`<span class="newdot" title="Updated by the organizer since you last opened this group" aria-label="Updated"></span>`:""}<b>${esc(r.group||"Untitled group")}</b><br><span class="mono small muted nowrap">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span></td>
         <td>${r.startDate?fmtDate(r.startDate)+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate):""):"—"}</td><td class="mono">${esc(r.headcount||"—")}</td>
         <td><div class="prog"><span class="bar"><i style="width:${p/SECS_TOTAL*100}%"></i></span>${p}/${SECS_TOTAL}</div></td>
-        <td>${dlTxt}</td><td><span class="pill ${s.k==="locked"?"locked":s.k}">${s.label}</span></td>
+        <td>${dlTxt}</td><td><span class="pill ${s.k==="locked"?"locked":s.k}">${s.label}</span></td><td class="nowrap${fresh?" upd":""}">${whenText(r.updatedAt)}</td>
         <td class="a">${pendingDelete===r.code
           ?`<div class="acts"><span class="small" style="font-weight:600;color:var(--bad)">Delete permanently?</span><button class="btn danger" data-dodelete="${esc(r.code)}">Delete</button><button class="btn" data-canceldelete>Cancel</button></div>`
           :`<div class="acts"><details class="amenu"><summary class="btn" aria-label="Actions for ${esc(r.group||r.code)}">Actions <span aria-hidden="true">▾</span></summary><div class="amenu-list" role="menu">
