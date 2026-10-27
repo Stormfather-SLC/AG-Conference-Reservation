@@ -278,7 +278,14 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .pill.progress{background:var(--aspen-soft);color:var(--spruce)}
 .acts{display:flex;flex-wrap:wrap;gap:6px;white-space:normal}
 .acts .btn{padding:5px 10px;font-size:.85rem}
-.stafftable td.a{white-space:normal;min-width:250px}
+.stafftable td.a{white-space:normal;min-width:190px}
+.nowrap{white-space:nowrap}
+.amenu{position:relative}
+.amenu summary{list-style:none;padding:5px 12px;font-size:.85rem}.amenu summary::-webkit-details-marker{display:none}
+.amenu[open] summary{border-color:var(--spruce);background:var(--sunk)}
+.amenu-list{position:fixed;z-index:30;min-width:200px;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 10px 28px rgba(0,0,0,.18);padding:4px}
+.amenu-list button{border:0;background:none;text-align:left;padding:8px 12px;border-radius:3px;font:inherit;font-size:.9rem;color:var(--fg);cursor:pointer}
+.amenu-list button:hover,.amenu-list button:focus-visible{background:var(--sunk);color:var(--spruce)}
 .msgcard{border:2px solid var(--spruce);background:var(--aspen-soft)}
 .msgcard textarea{min-height:230px;font-size:.9rem;line-height:1.5;background:var(--surface)}
 .copyline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.9rem}
@@ -581,6 +588,14 @@ const store={db:null,mode:"pending",
 let view="home", res=null, activeDay=0, confirmingLock=false, saveState="", saving=Promise.resolve(), saveTimer=null, staffRows=null, staffUnsub=null, homeMsg="", pendingDelete=null, pendingImport=null, rosterError="", showTpl=false, plan=null, planSaveT=null, planState="", staffInfo=null;
 const app=document.getElementById("app");
 
+document.addEventListener("toggle",e=>{const d=e.target;if(!d.classList||!d.classList.contains("amenu")||!d.open)return;
+  document.querySelectorAll("details.amenu[open]").forEach(x=>{if(x!==d)x.open=false});
+  const r=d.querySelector("summary").getBoundingClientRect(),l=d.querySelector(".amenu-list"),h=l.offsetHeight||180;
+  l.style.top=(r.bottom+h+8>innerHeight?r.top-h-4:r.bottom+4)+"px";l.style.left=Math.max(8,Math.min(r.left,innerWidth-l.offsetWidth-8))+"px";
+  l.querySelector("button")?.focus()},true);
+document.addEventListener("click",e=>{if(!e.target.closest("details.amenu"))document.querySelectorAll("details.amenu[open]").forEach(x=>x.open=false)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll("details.amenu[open]").forEach(x=>{x.open=false;x.querySelector("summary").focus()})});
+addEventListener("scroll",()=>document.querySelectorAll("details.amenu[open]").forEach(x=>x.open=false),true);
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2600)}
 function renderBanner(){
   const b=document.getElementById("banner");
@@ -1649,14 +1664,19 @@ function groupsView(){
       ${shown.length?"":`<tr><td colspan="7"><div class="empty">No groups ${esc(GROUP_FILTERS[groupFilter].toLowerCase())} right now.</div></td></tr>`}
       ${shown.map(r=>{const dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null,s=stateOf(r),locked=r.status==="locked",p=progressOf(r);
         const dlTxt=!dl?"—":locked?fmtDate(dl):left<0?`<span style="color:var(--bad);font-weight:600">${fmtDate(dl)} · overdue</span>`:left<=7?`<span style="color:var(--warn);font-weight:600">${fmtDate(dl)} · ${left}d</span>`:`${fmtDate(dl)} · ${left}d`;
-        const sev=(r.allergies||[]).filter(isSevere).length;
-        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b> <span class="mono small muted">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span>${sev?`<br><span class="small" style="color:var(--bad);font-weight:600">${sev} critical allerg${sev===1?"y":"ies"}</span>`:""}${(()=>{const n=pendingReqs(r,(kitchenInfo||{})[r.code]).length;return n?`<br><button type="button" class="linkbtn warnlink" data-treview="${esc(r.code)}">${n} time change request${n===1?"":"s"} to review</button>`:""})()}${wantsWalk(r)?`<br><span class="small muted">Walk-through requested</span>`:""}${r.breakoutNeed==="yes"&&r.breakouts&&r.breakouts.length?`<br><span class="small muted">${r.breakouts.length} breakout room${r.breakouts.length===1?"":"s"}</span>`:""}</td>
+        return `<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b><br><span class="mono small muted nowrap">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span>${(()=>{const n=pendingReqs(r,(kitchenInfo||{})[r.code]).length;return n?`<br><button type="button" class="linkbtn warnlink" data-treview="${esc(r.code)}">${n} time change request${n===1?"":"s"} to review</button>`:""})()}${wantsWalk(r)?`<br><span class="small muted">Walk-through requested</span>`:""}${r.breakoutNeed==="yes"&&r.breakouts&&r.breakouts.length?`<br><span class="small muted">${r.breakouts.length} breakout room${r.breakouts.length===1?"":"s"}</span>`:""}</td>
         <td>${r.startDate?fmtDate(r.startDate)+(r.endDate&&r.endDate!==r.startDate?" – "+fmtDate(r.endDate):""):"—"}</td><td class="mono">${esc(r.headcount||"—")}</td>
         <td><div class="prog"><span class="bar"><i style="width:${p/SECS_TOTAL*100}%"></i></span>${p}/${SECS_TOTAL}</div></td>
         <td>${dlTxt}</td><td><span class="pill ${s.k==="locked"?"locked":s.k}">${s.label}</span></td>
         <td class="a">${pendingDelete===r.code
           ?`<div class="acts"><span class="small" style="font-weight:600;color:var(--bad)">Delete permanently?</span><button class="btn danger" data-dodelete="${esc(r.code)}">Delete</button><button class="btn" data-canceldelete>Cancel</button></div>`
-          :`<div class="acts"><button class="btn" data-sheet="${esc(r.code)}">Final sheet</button>${locked?"":s.k==="waiting"?`<button class="btn" data-invite="${esc(r.code)}">Invitation</button>`:`<button class="btn" data-remind="${esc(r.code)}">Reminder</button>`}<button class="btn" data-open="${esc(r.code)}">Open form</button><button class="btn" data-plan="${esc(r.code)}">Rooms &amp; locations</button>${locked?`<button class="btn ghost" data-unlock="${esc(r.code)}">Reopen</button>`:""}<button class="btn ghost danger-text" data-askdelete="${esc(r.code)}" aria-label="Delete ${esc(r.code)}">Delete</button></div>`}</td></tr>`}).join("")}
+          :`<div class="acts"><details class="amenu"><summary class="btn" aria-label="Actions for ${esc(r.group||r.code)}">Actions <span aria-hidden="true">▾</span></summary><div class="amenu-list" role="menu">
+            <button role="menuitem" data-sheet="${esc(r.code)}">Final sheet</button>
+            <button role="menuitem" data-open="${esc(r.code)}">Open form</button>
+            <button role="menuitem" data-plan="${esc(r.code)}">Rooms &amp; locations</button>
+            ${locked?"":s.k==="waiting"?`<button role="menuitem" data-invite="${esc(r.code)}">Invitation email</button>`:`<button role="menuitem" data-remind="${esc(r.code)}">Reminder email</button>`}
+            ${locked?`<button role="menuitem" data-unlock="${esc(r.code)}">Reopen for changes</button>`:""}
+          </div></details><button class="btn ghost danger-text" data-askdelete="${esc(r.code)}" aria-label="Delete ${esc(r.code)}">Delete</button></div>`}</td></tr>`}).join("")}
       </tbody></table></div>`:`<div class="empty">No groups yet. Start one with the button above, or an organizer can create one from the Organizer tab.</div>`}
       <p class="small muted" style="margin:0">The list updates live as organizers type. "Form" counts the five required parts: contact, room, meals, allergies, checklist. In a production version this view would sit behind BYU sign-in.</p>
     </div>
