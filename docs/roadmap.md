@@ -12,7 +12,6 @@ Replace the PDF clients fill out with a web page that collects the same informat
   - Weekly itinerary
   - Production list (kitchen, daily)
   - Rooms & A/V (setup crew, weekly). Added Oct 23 by Matt's decision; room setup and A/V had been on the parking lot.
-  - Food order guide: plate counts across the week, with 15 staff meals added. **Not built yet.**
 - Hosting assumed at aspengrove.byu.edu.
 
 ## Phase 2
@@ -42,4 +41,5 @@ Organizer form section 03, the review page, the Final sheet, the Rooms & A/V she
 - Monday.com (forms and boards). Not part of the design.
 - Pricing beyond what's on the PDF.
 - Billing integration. At most a selections report to billing.
+- Food order guide: plate counts across the week, with 15 staff meals added to the largest entrée at breakfast, lunch and dinner (not snacks). Moved out of Phase 1 on Oct 27 by Matt's decision. The staff meal count is already set in the app (`STAFF_MEALS`).
 - Units or yields (pans, trays) on the production list and order guide.
