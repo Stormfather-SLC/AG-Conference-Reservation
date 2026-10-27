@@ -1349,11 +1349,24 @@ app.addEventListener("click",async e=>{
 const LOCS=["Dining hall","Meeting room","Conference room","Aspen Lobby","Boxed to go","Other"];
 const LOC_TEXT={"Meeting room":"Their meeting room"};
 const ROOMS=["Timp Room A","Timp Room B","Timp Room C","Fir","Spruce","Pine"];
+// Connected rooms, in their physical order. Neighbors can be booked together; rooms that aren't side by side can't.
+const ROOM_SETS=[{label:"Timp rooms",short:x=>x.replace("Timp Room ",""),parts:["Timp Room A","Timp Room B","Timp Room C"]},
+ {label:"Tree rooms",short:x=>x,parts:["Fir","Spruce","Pine"]}];
+// Every bookable option: each single room, then each run of neighbors. Value = label, e.g. "Timp A & B", "Fir, Spruce & Pine (all)".
+const ROOM_OPTS=ROOM_SETS.map(set=>{const p=set.parts,o=[];
+  for(let n=1;n<=p.length;n++)for(let i=0;i+n<=p.length;i++){const run=p.slice(i,i+n);
+    const lab=n===1?run[0]:(set.label==="Timp rooms"?"Timp ":"")+(n===2?run.map(set.short).join(" & "):run.slice(0,-1).map(set.short).join(", ")+" & "+set.short(run[n-1]))+(n===p.length?" (all)":"");
+    o.push({label:lab,parts:run})}
+  return {label:set.label,opts:o}});
+const ROOM_PARTS=Object.fromEntries(ROOM_OPTS.flatMap(g=>g.opts.map(o=>[o.label,o.parts])));
+const roomParts=x=>x?ROOM_PARTS[x]||[x]:[];
+const roomsOverlap=(a,b)=>roomParts(a).some(p=>roomParts(b).includes(p));
+const roomOptions=cur=>ROOM_OPTS.map(g=>`<optgroup label="${g.label}">${g.opts.map(o=>`<option value="${esc(o.label)}" ${cur===o.label?"selected":""}>${esc(o.label)}</option>`).join("")}</optgroup>`).join("")+(cur&&!ROOM_PARTS[cur]?`<option selected>${esc(cur)}</option>`:"");
 // n = the group's staff notes; "Meeting room" resolves to the main room assigned for that day.
 const mainRoomOn=(n,date)=>(n&&n.rooms&&n.rooms.main&&n.rooms.main[date])||"";
 const locLabel=(L,date,n)=>L.place==="Other"?(L.note||"Other"):L.place==="Meeting room"?(mainRoomOn(n,date)?`Meeting room · ${mainRoomOn(n,date)}`:"Their meeting room (not assigned yet)"):L.place==="Conference room"?(L.room?`Conference room · ${L.room}`:"Conference room (room not set)"):L.place;
 const inRoom=L=>!!L&&(L.place==="Conference room"||L.place==="Meeting room");
-const roomSelect=(cls,id,key,cur,label)=>`<select class="${cls}" id="${id}"${key?` data-key="${key}"`:""} aria-label="${label}"><option value="">Choose a room</option>${ROOMS.map(o=>`<option ${cur===o?"selected":""}>${o}</option>`).join("")}</select>`;
+const roomSelect=(cls,id,key,cur,label)=>`<select class="${cls}" id="${id}"${key?` data-key="${key}"`:""} aria-label="${label}"><option value="">Choose a room</option>${roomOptions(cur)}</select>`;
 const defLoc=m=>m.snack?"Aspen Lobby":"Dining hall";
 const timeOf=(date,m)=>(staffInfo&&staffInfo.times&&staffInfo.times[slotKey(date,m.k)])||m.time;
 const isPlanned=(m,st)=>m.snack?!!st.on:st.choice!=="none";
@@ -1385,7 +1398,7 @@ function renderPlan(){
     ${r.days.length?`<div class="bulk">
       <label class="f" for="bulk-meal">Set every meal to<select id="bulk-meal">${opt(LOCS.filter(o=>o!=="Other"),true)}</select></label>
       <label class="f" for="bulk-snack">Set every snack to<select id="bulk-snack">${opt(LOCS.filter(o=>o!=="Other"),true)}</select></label>
-      <label class="f" for="bulk-room">Which conference room<select id="bulk-room"><option value="">Choose a room</option>${ROOMS.map(o=>`<option>${o}</option>`).join("")}</select><span class="warnline" id="bulk-roomnote" hidden>Required when setting a conference room</span></label>
+      <label class="f" for="bulk-room">Which conference room<select id="bulk-room"><option value="">Choose a room</option>${roomOptions("")}</select><span class="warnline" id="bulk-roomnote" hidden>Required when setting a conference room</span></label>
       <button class="btn" data-bulkapply>Apply</button></div>
     ${r.days.map((d,di)=>`<div class="sumday"><h3>${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</h3>
       <div class="tablewrap"><table class="plantable"><thead><tr><th>Meal</th><th>Time</th><th>Guests</th><th>Menu</th><th>Location</th></tr></thead><tbody>
@@ -1404,10 +1417,10 @@ function roomBookings(){
     if(hasBreakouts(r))r.breakouts.forEach((b,i)=>{const rm=(R.bo||{})[b.id];if(rm)b.days.forEach(date=>out.push({date,room:rm,code:r.code,group:r.group||r.code,what:`breakout: ${b.name||"room "+(i+1)}${b.start?" "+fmtTime(b.start)+(b.end?"–"+fmtTime(b.end):""):""}`,tag:b.id}))})});
   return out}
 // Other bookings of the same room on the same day (another group, or another use by this group).
-function clashes(all,date,room,code,tag){return room?all.filter(x=>x.date===date&&x.room===room&&!(x.code===code&&x.tag===tag)):[]}
+function clashes(all,date,room,code,tag){return room?all.filter(x=>x.date===date&&roomsOverlap(x.room,room)&&!(x.code===code&&x.tag===tag)):[]}
 const clashText=c=>c.map(x=>`${x.code===res.code?"this group":esc(x.group)} (${esc(x.what)})`).join("; ");
 function roomsSection(r){
-  const all=roomBookings(),R=plan.rooms,opts=cur=>`<option value="">Not assigned yet</option>${ROOMS.map(o=>`<option ${cur===o?"selected":""}>${o}</option>`).join("")}`;
+  const all=roomBookings(),R=plan.rooms,opts=cur=>`<option value="">Not assigned yet</option>${roomOptions(cur)}`;
   const mainRows=r.days.map(d=>{const cur=R.main[d.date]||"",c=clashes(all,d.date,cur,r.code,"main");
     return `<tr><th scope="row">${fmtDate(d.date,{weekday:"short",month:"short",day:"numeric"})}</th><td><select class="mainroom" id="main-${d.date}" data-date="${d.date}" aria-label="Main room ${fmtDate(d.date)}">${opts(cur)}</select>${c.length?`<span class="warnline">Also booked: ${clashText(c)}</span>`:""}</td></tr>`}).join("");
   const bo=hasBreakouts(r)?r.breakouts.map((b,i)=>{const cur=R.bo[b.id]||"",c=b.days.flatMap(date=>clashes(all,date,cur,r.code,b.id).map(x=>({...x,on:date})));
@@ -1416,7 +1429,7 @@ function roomsSection(r){
   return `<section class="plansec"><div class="sechead"><h3>Meeting rooms</h3><span class="small muted">Set by Setup</span></div>
     <p class="small muted" style="margin:0">Main room setup: <b>${r.setup?SETUP_LABEL[r.setup]:"not given"}</b>${r.headcount?` for ${esc(r.headcount)} guests`:""}. A room booked more than once on the same day is flagged; times aren't compared, so check whether they overlap. Rooms left unassigned print as a blank line to write in.</p>
     ${r.days.length?`<div class="tablewrap"><table class="plantable roomtbl"><thead><tr><th>Day</th><th>Main room</th></tr></thead><tbody>${mainRows}</tbody></table></div>
-    ${r.days.length>1?`<div class="row"><label class="f" for="main-all" style="flex-direction:row;align-items:center;gap:10px;white-space:nowrap">Same room every day<select id="main-all"><option value="">Choose a room</option>${ROOMS.map(o=>`<option>${o}</option>`).join("")}</select></label></div>`:""}`:`<div class="empty">This group hasn't set its event dates yet.</div>`}
+    ${r.days.length>1?`<div class="row"><label class="f" for="main-all" style="flex-direction:row;align-items:center;gap:10px;white-space:nowrap">Same room every day<select id="main-all"><option value="">Choose a room</option>${roomOptions("")}</select></label></div>`:""}`:`<div class="empty">This group hasn't set its event dates yet.</div>`}
     <h3 style="margin-top:6px">Breakout rooms</h3>
     ${bo?`<div class="tablewrap"><table class="plantable bortbl"><thead><tr><th>Breakout</th><th>When</th><th>Room</th></tr></thead><tbody>${bo}</tbody></table></div>`:`<p class="small muted" style="margin:0">${r.breakoutNeed==="no"?"No breakout rooms requested.":r.breakoutNeed==="yes"?"Breakout rooms requested, but none described yet.":"The organizer hasn't answered the breakout room question yet."}</p>`}
   </section>
@@ -1855,8 +1868,10 @@ function roomsBody(start){
   const days=dates.filter(d=>groups.some(r=>r.days.some(x=>x.date===d)));
   const bosOn=(r,d)=>hasBreakouts(r)?r.breakouts.filter(b=>b.days.includes(d)):[];
   const RM=r=>(info[r.code]||{}).rooms||{},mainOn=(r,d)=>(RM(r).main||{})[d]||"",boRoom=(r,b)=>(RM(r).bo||{})[b.id]||"";
-  const booked=new Map();groups.forEach(r=>{r.days.forEach(d=>{const x=mainOn(r,d.date);if(x)booked.set(d.date+"|"+x,(booked.get(d.date+"|"+x)||0)+1)});if(hasBreakouts(r))r.breakouts.forEach(b=>{const x=boRoom(r,b);if(x)b.days.forEach(d=>booked.set(d+"|"+x,(booked.get(d+"|"+x)||0)+1))})});
-  const dbl=(d,x)=>x&&(booked.get(d+"|"+x)||0)>1?` <span class="miss">(double-booked)</span>`:"";
+  // Count bookings per physical room per day, so "Timp A & B" and "Timp Room B" on the same day are caught.
+  const booked=new Map(),bump=(d,x)=>roomParts(x).forEach(p=>booked.set(d+"|"+p,(booked.get(d+"|"+p)||0)+1));
+  groups.forEach(r=>{r.days.forEach(d=>{const x=mainOn(r,d.date);if(x)bump(d.date,x)});if(hasBreakouts(r))r.breakouts.forEach(b=>{const x=boRoom(r,b);if(x)b.days.forEach(d=>bump(d,x))})});
+  const dbl=(d,x)=>x&&roomParts(x).some(p=>(booked.get(d+"|"+p)||0)>1)?` <span class="miss">(double-booked)</span>`:"";
   const glance=days.map(d=>{const on=groups.filter(r=>r.days.some(x=>x.date===d));const eq=new Map();on.forEach(r=>[...(r.noAV?[]:r.av),...bosOn(r,d).flatMap(b=>b.av)].forEach(a=>eq.set(a,(eq.get(a)||0)+1)));
     return `<tr><th scope="row">${fmtDate(d,{weekday:"short",month:"short",day:"numeric"})}</th><td>${on.map(r=>{const bo=bosOn(r,d);return `${esc(r.group||r.code)}${mainOn(r,d)?` · <b>${esc(mainOn(r,d))}</b>${dbl(d,mainOn(r,d))}`:""} <span class="muted">· ${r.setup?SETUP_LABEL[r.setup].toLowerCase():"setup not given"}</span>${bo.length?`<br><span class="small">+ ${bo.length} breakout${bo.length===1?"":"s"}: ${bo.map(b=>`${boRoom(r,b)?`<b>${esc(boRoom(r,b))}</b>${dbl(d,boRoom(r,b))} `:""}${esc(b.setup?SETUP_LABEL[b.setup].toLowerCase():"setup not given")}${b.people?" for "+esc(b.people):""}`).join(", ")}</span>`:""}`}).join("<br>")}</td><td>${eq.size?[...eq].map(([a,n])=>`${esc(a)}${n>1?` ×${n}`:""}`).join(", "):`<span class="muted">None</span>`}</td></tr>`}).join("");
   const drafts=groups.filter(r=>r.status!=="locked").length;

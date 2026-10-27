@@ -128,4 +128,9 @@ The lock-in deadline is 14 days before `startDate`.
 | `rooms` | `{main: {"YYYY-MM-DD": room}, bo: {breakoutId: room}}`. Assigned main room per day and room per breakout. Unassigned rooms print as a blank line |
 | `walk` | Walk-through status; see Walk above |
 
-Rooms come from the list Timp Room A, B and C, Fir, Spruce and Pine. A room used twice on the same day (by any group, or twice by one group) is flagged as double-booked; times are not compared.
+Rooms are single rooms or neighbors booked together:
+
+- Timp: Timp Room A, Timp Room B, Timp Room C, Timp A & B, Timp B & C, Timp A, B & C (all). A and C can't be booked together without B.
+- Tree rooms: Fir, Spruce, Pine, Fir & Spruce, Spruce & Pine, Fir, Spruce & Pine (all). Spruce is assumed to be the middle room (to confirm).
+
+A booking is flagged as double-booked when any physical room in it is used more than once on the same day, by any group or twice by one group, so "Timp A & B" clashes with "Timp Room B". Times are not compared.
