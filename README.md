@@ -17,7 +17,7 @@ A prototype web form that replaces the paper **Conference Final Details** form a
 - Menu rules are built in: 3-item snack limit, vegetarian plates, fajita meat, add-ons, and an upgrade-cost estimate.
 - Review everything on one page, then lock in. The form becomes read-only.
 - Anything still missing is listed above the Lock in button. Each item links straight to the field that needs it, missing fields are outlined in red, and a "Go to next" button in the side rail steps through what's left.
-- Request a different time for any meal or snack. The request shows as pending until Aspen Grove approves or declines it, and the form then shows the outcome.
+- Request a different time for any meal or snack with **Change time** in its header; the request covers the whole meal for every guest. The header and a notice under it show the request as pending until Aspen Grove approves or declines it, and the form then shows the outcome.
 - Download a printable copy.
 
 ### Conference Services

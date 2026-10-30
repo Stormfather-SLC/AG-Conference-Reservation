@@ -354,8 +354,15 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .tdhead .eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--aspen);font-weight:700}
 .tditem{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding:14px 0}
 .tdwhen{display:flex;flex-direction:column;gap:2px}.tdchange{font-size:1.15rem}
-.reqbtn{align-self:flex-start;padding-left:0}
-.treqbox{display:flex;flex-direction:column;gap:8px;border-left:3px solid var(--line);padding-left:12px}
+.mtime{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mtime s{color:var(--muted)}.mtime b{color:var(--fg)}
+.mchg{font-family:var(--body);font-size:.85rem;font-weight:600;color:var(--spruce)}
+.treqbox{display:flex;flex-direction:column;gap:10px;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.treqgrid{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:12px}
+@media (max-width:560px){.treqgrid{grid-template-columns:1fr}}
+.treqnote{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap}
+.treqnote>span{flex:1 1 360px}
+.treqacts{gap:16px;font-size:.9rem;font-weight:600}.treqacts .linkbtn{color:var(--spruce)}.treqacts .danger-text{color:var(--bad)}
 .treq{margin-top:6px;display:flex;flex-direction:column;gap:6px;background:var(--warn-soft);border-left:3px solid var(--warn);padding:6px 8px;border-radius:3px;font-size:.85rem}
 .tlog summary{cursor:pointer;color:var(--spruce);font-weight:600;font-size:.9rem}
 .plansec{display:flex;flex-direction:column;gap:14px;border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
@@ -827,18 +834,31 @@ function openTimeReview(code){trCode=code;let d=document.getElementById("tdlg");
   d.innerHTML=timeReviewHTML();if(!d.open)d.showModal();d.querySelector("[data-trapprove],[data-trclose]")?.focus()}
 function logTime(n,e){n.timeLog=n.timeLog||[];n.timeLog.push({...e,at:new Date().toISOString(),by:who.id||""});if(n.timeLog.length>200)n.timeLog=n.timeLog.slice(-200)}
 const TIME_VERB={approved:"Request approved",declined:"Request declined",changed:"Changed by Aspen Grove",reset:"Back to standard time"};
+// Time is a meal-level setting: it lives in the meal header ("Change time"), and the editor opens just under it.
+// treqOpen: paths whose time editor is open → snapshot of timeReq when opened (null = new request), for Cancel.
+const treqOpen=new Map();
+function mealName(m){return m.label.toLowerCase()}
+function mealHeadTime(d,di,m,showCount){
+  const st=d.meals[m.k],p=`days.${di}.meals.${m.k}`,cur=timeOf(d.date,m),cnt=showCount?`<span>· ${mealCount(st)} guests</span>`:"";
+  if(!isServed(m,st))return `<span class="t">${fmtTime(cur)}</span>`;
+  const q=st.timeReq,state=reqState(st,staffInfo,slotKey(d.date,m.k)),open=treqOpen.has(p);
+  if(state==="pending"&&!open)return `<span class="t mtime"><s>${fmtTime(cur)}</s> <b>${fmtTime(q.time)}</b> <span class="pill draft">Pending approval</span>${cnt}</span>`;
+  const chg=!isLocked()&&!open?`<button type="button" class="linkbtn mchg" data-reqtime="${p}" aria-label="Change ${mealName(m)} time">Change time</button>`:"";
+  return `<span class="t mtime"><span class="mcur">${fmtTime(cur)}</span>${chg}${cnt}</span>`}
 function timeReqBlock(d,di,m){
   const st=d.meals[m.k];if(!isServed(m,st))return "";
   const p=`days.${di}.meals.${m.k}`,key=slotKey(d.date,m.k),q=st.timeReq,locked=isLocked(),cur=timeOf(d.date,m);
-  const state=reqState(st,staffInfo,key);
-  if(!q){return locked?"":`<button type="button" class="btn ghost tiny reqbtn" data-reqtime="${p}">Request a different time</button>`}
-  const msg=!q.time?"":state==="pending"?`<div class="notice warn small"><b>Requested ${fmtTime(q.time)}, waiting for Aspen Grove to approve.</b> Until then it’s served at ${fmtTime(cur)}, and a fee may apply.</div>`
-    :state==="approved"?`<div class="notice ok small"><b>Approved:</b> now served at ${fmtTime(cur)}</div>`
-    :`<div class="notice bad small"><b>We couldn't move this ${m.snack?"snack":"meal"}.</b> It stays at ${fmtTime(cur)}; contact Conference Services with questions.</div>`;
-  if(locked)return q.time?msg:"";
-  return `<div class="treqbox"><div class="grid2"><label class="f" for="${p}.timeReq.time">Requested time<input type="time" id="${p}.timeReq.time" data-path="${p}.timeReq.time" value="${esc(q.time)}"><span class="hint">Standard: ${fmtTime(m.time)}</span></label>
-    <label class="f" for="${p}.timeReq.note">Reason (optional)<input type="text" id="${p}.timeReq.note" data-path="${p}.timeReq.note" value="${esc(q.note)}" placeholder="For example: session runs late"></label></div>
-    ${msg}<button type="button" class="btn ghost tiny danger-text" data-cancelreq="${p}">Cancel request</button></div>`}
+  const state=reqState(st,staffInfo,key),n=mealCount(st),Name=m.label,who=n>0?`all ${n} guests`:"all guests",the=m.snack?"the ":"";
+  if(!locked&&q&&treqOpen.has(p)){
+    return `<div class="treqbox"><div class="treqgrid"><label class="f" for="${p}.timeReq.time">Serve ${mealName(m)} at<input type="time" id="${p}.timeReq.time" data-path="${p}.timeReq.time" value="${esc(q.time)}"></label>
+      <label class="f" for="${p}.timeReq.note">Reason (optional)<input type="text" id="${p}.timeReq.note" data-path="${p}.timeReq.note" value="${esc(q.note)}" placeholder="For example: session runs late"></label></div>
+      <p class="small" style="margin:0">Moves ${the}${mealName(m)} for ${who} (standard time ${fmtTime(m.time)}). Aspen Grove approves time changes, and a fee may apply.</p>
+      <div class="row"><button type="button" class="btn primary" data-reqdone="${p}">${state==="pending"&&treqOpen.get(p)?"Update request":"Request time change"}</button><button type="button" class="btn" data-reqcancel="${p}">Cancel</button></div></div>`}
+  if(!q||!q.time)return "";
+  const acts=locked?"":`<div class="row treqacts"><button type="button" class="linkbtn" data-reqtime="${p}">Edit request</button><button type="button" class="linkbtn danger-text" data-cancelreq="${p}">Cancel request</button></div>`;
+  if(state==="pending")return `<div class="notice warn treqnote"><span><b>${Name} requested at ${fmtTime(q.time)} for ${who}.</b> Waiting for Aspen Grove to approve. Until then it’s served at ${fmtTime(cur)}, and a fee may apply.</span>${acts}</div>`;
+  if(state==="approved")return `<div class="notice ok small"><b>Approved:</b> ${the}${mealName(m)} is now served at ${fmtTime(cur)}</div>`;
+  return `<div class="notice bad small"><b>We couldn't move this ${m.snack?"snack":"meal"}.</b> It stays at ${fmtTime(cur)}; contact Conference Services with questions.</div>`}
 const rosterVeg=()=>new Set(res.allergies.filter(isDietRow).map(a=>a.name.trim().toLowerCase()).filter(Boolean)).size;
 function guestsField(p){const st=getPath(res,p),v=st.count===""||st.count==null?(headN()||""):st.count;return `<label class="f" for="f-${p}.count">Guests<input id="f-${p}.count" type="number" min="0" data-path="${p}.count" value="${esc(v)}"></label>`}
 
@@ -846,17 +866,19 @@ function renderMeal(d,di,m){
   const st=d.meals[m.k];const p=`days.${di}.meals.${m.k}`;
   if(m.snack){
     const n=st.items.length;
-    return `<div class="meal"><div class="mealhead"><h3>${m.label}</h3><span class="t">${fmtTime(timeOf(d.date,m))}${st.on?` · ${mealCount(st)} guests`:""}</span></div>
+    return `<div class="meal"><div class="mealhead"><h3>${m.label}</h3>${mealHeadTime(d,di,m,st.on)}</div>
+      ${timeReqBlock(d,di,m)}
       <label class="chk" style="width:fit-content"><input type="checkbox" id="${p}.on" data-path="${p}.on" ${st.on?"checked":""}> Include ${m.k==="amSnack"?"a":"an"} ${m.label.toLowerCase()} break</label>
       ${st.on?`<div class="row" style="justify-content:space-between"><span class="small muted">Choose up to 3 items across any category.</span><span class="count">${n} / 3 chosen</span></div>
       <div class="snackcats" id="snk-${p}">${Object.entries(SNACKS).map(([cat,items])=>`<div><h4>${cat}</h4><div class="checks">${items.map(it=>{const on=st.items.includes(it);const full=!on&&n>=3;return `<label class="chk${full?" full":""}"><input type="checkbox" data-snack="${p}" value="${esc(it)}" ${on?"checked":""} ${full?"disabled":""}>${esc(it)}</label>`}).join("")}</div></div>`).join("")}</div>
       <div class="grid2">${guestsField(p)}</div>`:""}
-      ${timeReqBlock(d,di,m)}${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
+      ${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
     </div>`;
   }
   const sel=m.list.find(x=>x.id===st.choice);
   const vegOK=m.k!=="breakfast";
-  return `<div class="meal"><div class="mealhead"><h3>${m.label}</h3><span class="t">${fmtTime(timeOf(d.date,m))}${sel?` · ${mealCount(st)} guests`:""}</span></div>
+  return `<div class="meal"><div class="mealhead"><h3>${m.label}</h3>${mealHeadTime(d,di,m,!!sel)}</div>
+    ${timeReqBlock(d,di,m)}
     <div class="mealgrid3">
       <label class="f" for="${p}.choice">Entrée
         <select id="${p}.choice" data-path="${p}.choice"><option value="">Choose a ${m.label.toLowerCase()} entrée</option>${m.list.map(x=>`<option value="${x.id}" ${st.choice===x.id?"selected":""}>${esc(x.name)} - Includes ${esc(x.sides.toLowerCase())}, ${m.incl}${x.pp?` (+$${x.pp} pp)`:""}${x.note?` (${x.note})`:""}</option>`).join("")}<option value="none" ${st.choice==="none"?"selected":""}>Not needed this day</option></select></label>
@@ -869,7 +891,7 @@ function renderMeal(d,di,m){
     ${vegOK&&st.choice&&st.choice!=="none"?`<div class="grid2">
       <label class="f" for="${p}.vegChoice">Vegetarian option<select id="${p}.vegChoice" data-path="${p}.vegChoice"><option value="">None</option>${VEG.map(v=>`<option value="${v.id}" ${st.vegChoice===v.id?"selected":""}>${v.name}</option>`).join("")}</select><span class="hint">Can also be prepared vegan</span></label>
       ${st.vegChoice?field("Vegetarian plates",p+".vegCount","number",rosterVeg()?`${rosterVeg()} vegetarian or vegan guest${rosterVeg()===1?"":"s"} listed in section 04`:"How many guests",'min="0"'):""}</div>`:""}
-    ${timeReqBlock(d,di,m)}${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
+    ${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
   </div>`;
 }
 
@@ -1530,8 +1552,13 @@ app.addEventListener("click",async e=>{
   if(b.dataset.rosterremove!==undefined){res.roster=null;res.rosterFile="";res.rosterAt=null;rerender();scheduleSave();toast("Guest list removed. Allergies from it stay in the table.");return}
   if(b.dataset.usecount){const[di,k,c]=b.dataset.usecount.split("|");res.days[+di].meals[k].count=+c;rerender();scheduleSave();return}
   if(b.id==="addallergy"){openGuest(null);return}
-  if(b.dataset.reqtime){const st=getPath(res,b.dataset.reqtime);st.timeReq={time:"",note:"",at:new Date().toISOString()};rerender();document.getElementById(b.dataset.reqtime+".timeReq.time")?.focus();return}
-  if(b.dataset.cancelreq){const st=getPath(res,b.dataset.cancelreq);delete st.timeReq;rerender();scheduleSave();return}
+  if(b.dataset.reqtime){const p=b.dataset.reqtime,st=getPath(res,p);treqOpen.set(p,st.timeReq?structuredClone(st.timeReq):null);
+    if(!st.timeReq)st.timeReq={time:"",note:"",at:new Date().toISOString()};rerender();document.getElementById(p+".timeReq.time")?.focus();return}
+  if(b.dataset.reqdone){const p=b.dataset.reqdone,st=getPath(res,p);if(!st.timeReq||!st.timeReq.time){document.getElementById(p+".timeReq.time")?.focus();toast("Choose a time first");return}
+    treqOpen.delete(p);rerender();scheduleSave();return}
+  if(b.dataset.reqcancel){const p=b.dataset.reqcancel,st=getPath(res,p),snap=treqOpen.get(p);treqOpen.delete(p);
+    if(snap)st.timeReq=snap;else delete st.timeReq;rerender();scheduleSave();return}
+  if(b.dataset.cancelreq){const p=b.dataset.cancelreq,st=getPath(res,p);treqOpen.delete(p);delete st.timeReq;rerender();scheduleSave();return}
   if(b.id==="addbo"){res.breakouts.push(blankBreakout());rerender();scheduleSave();document.getElementById(`f-breakouts.${res.breakouts.length-1}.name`)?.focus();return}
   if(b.dataset.delbo){res.breakouts.splice(Number(b.dataset.delbo),1);rerender();scheduleSave();return}
   if(b.dataset.editguest){openGuest(b.dataset.editguest);return}
