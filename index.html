@@ -1433,6 +1433,7 @@ async function fillNames(){if(!who.u||!who.u.profiles)return;const els=[...docum
 // ---------- events ----------
 app.addEventListener("input",e=>{
   const el=e.target;
+  if(el.id==="pastsearch"){pastQuery=el.value;const pos=el.selectionStart;renderStaff();const n=document.getElementById("pastsearch");if(n){n.focus();n.setSelectionRange(pos,pos)}return}
   if(el.id==="alsearch"){const q=el.value.trim().toLowerCase();document.querySelectorAll(".glist li").forEach(li=>li.hidden=!!q&&!li.dataset.name.includes(q));return}
   if(view==="staffplan"){if(el.classList.contains("locnote")){const L=plan.locations[el.dataset.key];if(L){L.note=el.value;planSave()}}return}if((view!=="edit"&&view!=="review")||!el.dataset.path||el.type==="checkbox"||el.type==="radio"||el.tagName==="SELECT"||el.type==="date")return;
   setPath(res,el.dataset.path,el.type==="number"?(el.value===""||(/\.count$/.test(el.dataset.path)&&Number(el.value)===headN())?"":Number(el.value)):el.value);
@@ -1499,8 +1500,9 @@ app.addEventListener("click",async e=>{
   if(b.dataset.sheetdl!==undefined){downloadSheet();return}
   if(b.dataset.dept){const d=DEPTS.find(x=>x.k===b.dataset.dept),last=prefGet("ag:lastTab:"+d.k);b.dataset.stab=d.tabs.some(([k])=>k===last)?last:d.tabs[0][0]}
   if(b.dataset.treview){openTimeReview(b.dataset.treview);return}
+  if(b.dataset.pastview){pastView=b.dataset.pastview==="1";pastQuery="";renderStaff();window.scrollTo(0,0);return}
   if(b.dataset.gfilter){const k=b.dataset.gfilter;groupFilter=groupFilter===k?"all":k;renderStaff();return}
-  if(b.dataset.stab){pickStaffTab(b.dataset.stab);staffMsg=null;startOpen=false;if(needsInfo())loadKitchen();renderStaff();return}
+  if(b.dataset.stab){pastView=false;pickStaffTab(b.dataset.stab);staffMsg=null;startOpen=false;if(needsInfo())loadKitchen();renderStaff();return}
   if(b.dataset.startgroup!==undefined){startOpen=!startOpen;staffMsg=null;renderStaff();if(startOpen)document.getElementById("sg-group")?.focus();return}
   if(b.dataset.invite){inviteFor(b.dataset.invite);return}
   if(b.dataset.remind){remindFor(b.dataset.remind);return}
@@ -1780,7 +1782,7 @@ function renderStaff(){
   if(staffTab==="backup")fillNames();
 }
 
-const GROUP_FILTERS={all:"Upcoming groups",locked:"Locked in",progress:"Organizer working on it",waiting:"Invited, not started",overdue:"Past the 14-day deadline"};
+const GROUP_FILTERS={all:"Current & upcoming",locked:"Locked in",progress:"Organizer working on it",waiting:"Invited, not started",overdue:"Past the 14-day deadline"};
 let groupFilter="all", planAll=null, planRows=null;
 // "Updated" dots: each browser remembers when it last opened each group, so every staff member sees what's new to them.
 // Only organizer changes count; staff edits don't light the dot.
@@ -1790,8 +1792,29 @@ const orgChangedAt=r=>((r.history||[]).filter(h=>h.role!=="staff").map(h=>h.at).
 const isNewToMe=(r,m)=>{const t=orgChangedAt(r);return !!t&&t>(m[r.code]||m._since)};
 function whenText(iso){if(!iso)return "—";const d=new Date(iso),days=daysBetween(d,TODAY);
   return days===0?`Today<br><span class="small">${clock(iso)}</span>`:days===1?`Yesterday<br><span class="small">${clock(iso)}</span>`:fmtDate(d,{month:"short",day:"numeric"})}
+// A group is past once its last day is over (the morning after). Groups without dates stay current.
+const isPast=r=>{const last=r.endDate||r.startDate;return !!last&&last<iso(TODAY)};
+let pastView=false, pastQuery="";
+function pastGroupsView(){
+  const rows=(staffRows||[]).filter(isPast).sort((a,b)=>(b.endDate||b.startDate||"").localeCompare(a.endDate||a.startDate||""));
+  const q=pastQuery.trim().toLowerCase(),shown=q?rows.filter(r=>[r.group,r.code,r.contact,r.email].some(x=>String(x||"").toLowerCase().includes(q))):rows;
+  return `<div class="stack"><div class="panel" style="gap:14px">
+    <div class="row" style="justify-content:space-between"><div class="row"><button class="btn ghost" type="button" data-pastview="0">← Current &amp; upcoming</button><h2>Past groups</h2><span class="muted small">${rows.length} group${rows.length===1?"":"s"}</span></div>
+      ${rows.length?`<input type="search" id="pastsearch" value="${esc(pastQuery)}" placeholder="Find a group, code or contact" aria-label="Find a past group" style="max-width:280px">`:""}</div>
+    ${rows.length?`<div class="tablewrap"><table class="stafftable"><thead><tr><th>Group</th><th>Event</th><th>Guests</th><th>How it ended</th><th>Last updated</th><th></th></tr></thead><tbody>
+      ${shown.length?shown.map(r=>`<tr><td class="g"><b>${esc(r.group||"Untitled group")}</b><br><span class="mono small muted nowrap">${esc(r.code)}</span><br><span class="small muted">${esc(r.contact||"")}${r.email?" · "+esc(r.email):""}</span></td>
+        <td class="wrapc">${r.startDate?`<span class="nowrap">${fmtDate(r.startDate,{weekday:"short",month:"short",day:"numeric",year:"numeric"})}</span>`+(r.endDate&&r.endDate!==r.startDate?`<br><span class="nowrap">– ${fmtDate(r.endDate,{weekday:"short",month:"short",day:"numeric"})}</span>`:""):"—"}</td>
+        <td class="mono">${esc(r.headcount||"—")}</td>
+        <td>${r.status==="locked"?`<span class="pill locked">Locked in</span>`:`<span class="pill waiting">Never locked in</span>`}</td>
+        <td class="nowrap">${r.updatedAt?fmtDate(new Date(r.updatedAt),{month:"short",day:"numeric",year:"numeric"}):"—"}</td>
+        <td><button class="btn tiny" data-sheet="${esc(r.code)}">Final sheet</button></td></tr>`).join("")
+        :`<tr><td colspan="6"><div class="empty">No past groups match “${esc(pastQuery)}”.</div></td></tr>`}
+    </tbody></table></div>`:`<div class="empty">No past groups yet. A group moves here the morning after its last day.</div>`}
+    <p class="small muted" style="margin:0">Past groups are for reference: open the Final sheet to see everything they submitted. They can't be edited here. The full records are also in Backup &amp; system check.</p>
+  </div></div>`}
 function groupsView(){
-  const rows=staffRows;
+  if(pastView)return pastGroupsView();
+  const rows=staffRows.filter(r=>!isPast(r)),pastN=staffRows.length-rows.length;
   const sorted=[...rows].sort((a,b)=>(a.startDate||"9999").localeCompare(b.startDate||"9999"));
   const st=rows.map(stateOf), cnt=k=>k==="all"?rows.length:st.filter(x=>x.k===k).length;
   const shown=groupFilter==="all"?sorted:sorted.filter(r=>stateOf(r).k===groupFilter);
@@ -1803,7 +1826,7 @@ function groupsView(){
     </div>
     ${msgCard()}${startForm()}
     <div class="panel" style="gap:14px">
-      <div class="row" style="justify-content:space-between"><div class="row"><h2>${groupFilter==="all"?"Upcoming groups":esc(GROUP_FILTERS[groupFilter])}</h2>${freshN?`<span class="small"><span class="newdot" aria-hidden="true"></span>${freshN} updated since you last looked</span><button class="btn ghost tiny" type="button" data-seenall>Mark all as seen</button>`:""}${groupFilter==="all"?"":`<span class="muted small">${shown.length} of ${rows.length}</span><button class="btn ghost" type="button" data-gfilter="all">Show all groups</button>`}</div>${startOpen?"":`<button class="btn primary" data-startgroup>+ Start a group</button>`}</div>
+      <div class="row" style="justify-content:space-between"><div class="row"><h2>${groupFilter==="all"?"Current &amp; upcoming":esc(GROUP_FILTERS[groupFilter])}</h2>${freshN?`<span class="small"><span class="newdot" aria-hidden="true"></span>${freshN} updated since you last looked</span><button class="btn ghost tiny" type="button" data-seenall>Mark all as seen</button>`:""}${groupFilter==="all"?"":`<span class="muted small">${shown.length} of ${rows.length}</span><button class="btn ghost" type="button" data-gfilter="all">Show all groups</button>`}</div><div class="row">${pastN?`<button class="btn ghost" type="button" data-pastview="1">Past groups (${pastN})</button>`:""}${startOpen?"":`<button class="btn primary" data-startgroup>+ Start a group</button>`}</div></div>
       ${rows.length?`<div class="tablewrap"><table class="stafftable"><thead><tr><th>Group</th><th>Event</th><th>Guests</th><th>Form</th><th>Lock-in deadline</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead><tbody>
       ${shown.length?"":`<tr><td colspan="8"><div class="empty">No groups ${esc(GROUP_FILTERS[groupFilter].toLowerCase())} right now.</div></td></tr>`}
       ${shown.map(r=>{const dl=deadlineOf(r),left=dl?daysBetween(TODAY,dl):null,s=stateOf(r),locked=r.status==="locked",p=progressOf(r);
@@ -1823,7 +1846,7 @@ function groupsView(){
             ${locked?`<button role="menuitem" data-unlock="${esc(r.code)}">Reopen for changes</button>`:""}
             <hr class="amenu-sep"><button role="menuitem" class="danger-item" data-askdelete="${esc(r.code)}" aria-label="Delete ${esc(r.code)}">Delete</button>
           </div></details>${(()=>{const n=pendingReqs(r,(kitchenInfo||{})[r.code]).length;return n?`<button type="button" class="btn reviewbtn" data-treview="${esc(r.code)}">Review ${n} time change${n===1?"":"s"}</button>`:""})()}</div>`}</td></tr>`}).join("")}
-      </tbody></table></div>`:`<div class="empty">No groups yet. Start one with the button above, or an organizer can create one from the Organizer tab.</div>`}
+      </tbody></table></div>`:`<div class="empty">${pastN?"No current or upcoming groups. Past groups are under Past groups above.":"No groups yet. Start one with the button above, or an organizer can create one from the Organizer tab."}</div>`}
       <p class="small muted" style="margin:0">The list updates live as organizers type. "Form" counts the five required parts: contact, room, meals, allergies, checklist. In a production version this view would sit behind BYU sign-in.</p>
     </div>
   </div>`}
@@ -2170,7 +2193,7 @@ function roomsView(){
 function walksView(){
   if(kitchenInfo===null)return `<div class="empty">Loading walk-throughs…</div>`;
   const all=(staffRows||[]).map(r=>normalize(structuredClone(r)));
-  const rows=all.filter(wantsWalk).sort((a,b)=>(a.startDate||"").localeCompare(b.startDate||"")||(a.group||"").localeCompare(b.group||""));
+  const rows=all.filter(r=>wantsWalk(r)&&!isPast(r)).sort((a,b)=>(a.startDate||"").localeCompare(b.startDate||"")||(a.group||"").localeCompare(b.group||""));
   const stOf=r=>({status:"requested",date:"",time:"",note:"",...((kitchenInfo[r.code]||{}).walk||{})});
   const open=rows.filter(r=>stOf(r).status==="requested").length,sch=rows.filter(r=>stOf(r).status==="scheduled").length;
   const busy=(r,date)=>{const o=all.filter(x=>x.code!==r.code&&x.days.some(d=>d.date===date));
