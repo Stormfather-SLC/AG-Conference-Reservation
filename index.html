@@ -1526,10 +1526,16 @@ app.addEventListener("change",e=>{
   }
   if(el.dataset.path.endsWith(".vegChoice")){const cp=el.dataset.path.replace("vegChoice","vegCount");if(!v)setPath(res,cp,0);else if(!Number(getPath(res,cp))&&rosterVeg())setPath(res,cp,rosterVeg())}
   if(/^days\.\d+\.meals\.\w+\.(choice|on)$/.test(el.dataset.path)){const st=getPath(res,el.dataset.path.replace(/\.(choice|on)$/,""));st.auto=false;delete st.prev}
-  if(el.type==="checkbox"||el.type==="radio"||el.tagName==="SELECT"||el.type==="date"||el.dataset.path==="headcount")rerender();
+  if(el.dataset.path==="headcount"){setTimeout(rerender,0)}  // after the tapped field takes focus, so rerender can keep it
+  else if(el.type==="checkbox"||el.type==="radio"||el.tagName==="SELECT"||el.type==="date")rerender();
   scheduleSave();
 });
-function rerender(){const y=window.scrollY;view==="staffplan"?renderPlan():view==="review"?renderReview():view==="sheet"?renderSheet():view==="staff"?renderStaff():renderEditor();window.scrollTo(0,y)}
+// Re-rendering replaces every input, so put focus (and the caret) back on the field the person was in or had just tapped.
+// Without this, a tap on the next field is lost on phones and the keyboard closes.
+function rerender(){const y=window.scrollY,ae=document.activeElement,fid=ae&&ae!==document.body&&app.contains(ae)?(ae.id?"#"+CSS.escape(ae.id):ae.dataset.path?`[data-path="${CSS.escape(ae.dataset.path)}"]`:""):"";
+  let sel=null;try{if(fid&&typeof ae.selectionStart==="number")sel=[ae.selectionStart,ae.selectionEnd]}catch(e){}
+  view==="staffplan"?renderPlan():view==="review"?renderReview():view==="sheet"?renderSheet():view==="staff"?renderStaff():renderEditor();window.scrollTo(0,y);
+  if(fid){const n=app.querySelector(fid);if(n){n.focus({preventScroll:true});try{if(sel)n.setSelectionRange(sel[0],sel[1])}catch(e){}}}}
 app.addEventListener("click",async e=>{
   const b=e.target.closest("button,a");if(!b)return;
   {const c=b.dataset.sheet||b.dataset.open||b.dataset.plan||b.dataset.treview||b.dataset.remind||b.dataset.invite||b.dataset.unlock;if(c&&view==="staff")markSeen([c])}
