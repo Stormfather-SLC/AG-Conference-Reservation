@@ -54,6 +54,18 @@ What's in this phase, what's next, and what's parked: [docs/roadmap.md](docs/roa
 - **Opened directly in a browser:** the page runs in demo mode and saves to that browser only. This is useful for reviewing screens and text, not for real use.
 - **Published page, not signed in:** the page also runs in demo mode. Reservations made there are copied into the shared record the next time that person opens the page signed in on the same browser (the local copy is kept aside, not deleted).
 
+## Demo (GitHub Pages)
+
+The same `index.html` runs as a stand-alone demo on GitHub Pages (`*.github.io`) or at any address ending in `?demo`. The demo:
+
+- never connects to the shared record and needs no sign-in;
+- opens with five made-up sample groups (locked in, in progress and due soon, a pending time change, invited but not started, and a past group) whose dates move with today's date;
+- has **Reset demo**, which puts the samples back, and **Load example file**, which loads a backup-format `.json` file (the same shape as Conference Services › Backup › Full backup).
+
+Real examples (for example a group recreated from its paper packet) stay in a `.json` file on the presenter's computer and are loaded with **Load example file**. They are never committed: the repository and its Pages site are public, and `.gitignore` blocks `*.json`.
+
+To turn the demo on: repository **Settings › Pages**, Source **Deploy from a branch**, branch `main`, folder `/ (root)`. The demo is then at `https://stormfather-slc.github.io/AG-Conference-Reservation/`.
+
 ## Known limits (pilot)
 
 - Organizers must be signed in to Claude to save.

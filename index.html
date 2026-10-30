@@ -237,6 +237,7 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .plantable td.mono{white-space:nowrap}
 .locnote,.roomsel{margin-top:6px;display:block;width:100%}
 .tchg{display:inline-block;margin-left:4px;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:0 5px}
+.demobar{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;margin-bottom:16px;border-left:4px solid var(--spruce)}
 .tchange h3{font-size:1rem}.tcgrid{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px}@media (max-width:520px){.tcgrid{grid-template-columns:1fr}}
 /* staff */
 .stafftable td,.stafftable th{white-space:nowrap}
@@ -595,19 +596,25 @@ function rosterAt(di,k){if(!res.roster)return[];const idx=slotIdx(di,k);return r
 function applyRosterCounts(){res.days.forEach((d,di)=>MEALS.forEach(m=>{const st=d.meals[m.k],c=rosterAt(di,m.k).length;
   st.count=c;if(!isServed(m,st)&&!m.snack&&!st.choice&&c===0){st.choice="none";st.auto=true}}))}
 
+// ---------- demo ----------
+// The demo (GitHub Pages, or any address with ?demo) never touches the shared record. It opens with sample groups
+// saved in this browser, and the banner can reset them or load a backup-format file (e.g. a real example kept off GitHub).
+const DEMO=/[?&]demo(=|&|$)/.test(location.search)||/\.github\.io$/.test(location.hostname);
+const DEMO_FLAG="agdemo:v1";
 // ---------- storage: shared db when available, this browser otherwise ----------
 const store={db:null,mode:"pending",
  async init(){
-  try{ if(window.claude&&claude.use){ this.db=await claude.use("db") } }catch(e){ this.db=null }
+  try{ if(!DEMO&&window.claude&&claude.use){ this.db=await claude.use("db") } }catch(e){ this.db=null }
   this.mode=this.db?"db":"local"; renderBanner();
   if(this.db)await this.moveLocal();
+  if(DEMO){let seeded=true;try{seeded=!!localStorage.getItem(DEMO_FLAG)}catch(e){}if(!seeded)seedDemo()}
  },
  // Reservations made before signing in were saved in this browser only. Once signed in, copy them into the shared
  // record (unless the shared copy is newer), then set the local copy aside under "agmoved:" so it is never copied twice.
  async moveLocal(){
   let keys=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith("agres:")&&k!=="agres:AG-DEMO1")keys.push(k)}}catch(e){return}
   if(!keys.length)return;let moved=0;
-  for(const k of keys){try{const r=JSON.parse(localStorage.getItem(k));if(!r||!r.code)continue;
+  for(const k of keys){try{const r=JSON.parse(localStorage.getItem(k));if(!r||!r.code||r.demo)continue;
     const s=await this.db.doc("reservations/"+r.code).get(),cur=s.exists?s.data():null;
     if(!cur||(cur.updatedAt||"")<(r.updatedAt||"")){await this.db.doc("reservations/"+r.code).set(JSON.parse(JSON.stringify(r)));moved++}
     const sk="agstaff:"+r.code,sn=localStorage.getItem(sk);
@@ -674,6 +681,7 @@ addEventListener("scroll",()=>document.querySelectorAll("details.amenu[open]").f
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2600)}
 function renderBanner(){
   const b=document.getElementById("banner");
+  if(DEMO){b.innerHTML=`<div class="notice info demobar"><span><b>Demo with sample groups.</b> Changes you make stay on this computer.</span><span class="row"><button type="button" class="btn tiny" id="demo-load">Load example file</button><button type="button" class="btn tiny" id="demo-reset">Reset demo</button><input type="file" id="demo-file" accept=".json,application/json" hidden></span></div>`;return}
   b.innerHTML=store.mode==="local"?`<div class="notice warn" style="margin-bottom:16px">You're not signed in, so reservations are saved in this browser only. Sign in to Claude (top right) to see the shared Aspen Grove record; anything you create here is added to it when you sign in on this browser.</div>`:"";
 }
 
@@ -1738,7 +1746,7 @@ function planSave(){
 }
 
 // ---------- CONFERENCE SERVICES ----------
-const PAGE_URL="https://claude.ai/artifact/9kSo7EiZ3AAYSrh96k4yud";
+const PAGE_URL=DEMO?location.origin+location.pathname:"https://claude.ai/artifact/9kSo7EiZ3AAYSrh96k4yud";
 // Sections are grouped by who uses them. Each browser remembers its last section, so the kitchen, setup crew and office each land on their own view.
 const DEPTS=[{k:"groups",label:"Groups",tabs:[["groups","Groups"]]},
  {k:"kitchen",label:"Kitchen",tabs:[["kitchen","Daily production list"],["week","Weekly meal schedule"]]},
@@ -2373,6 +2381,63 @@ function localExample(){
   r.walk={want:"yes",choices:[{date:iso(w1),time:"Afternoon"},{date:iso(w2),time:"Morning"}],people:3,notes:"The main room and both breakout spaces"};
   normalize(r);res=null;return r;
 }
+
+// ---------- demo sample groups (made up; dates move with today) ----------
+function demoSeeds(){
+  const day=n=>{const d=new Date(TODAY);d.setDate(d.getDate()+n);return iso(d)},ago=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString()};
+  const build=(code,o,fill)=>{const r=blankRes(code);Object.assign(r,o,{demo:true,createdAt:o.createdAt||ago(20),updatedAt:o.updatedAt||ago(1)});
+    const prev=res;res=r;syncDays();res=prev;fill&&fill(r.days.map(d=>d.meals),r);
+    r.history=r.history||[{at:r.createdAt,role:"organizer",by:"",what:"Created by organizer"}];return normalize(r)};
+  const al=(name,allergy,type,severity)=>({name,allergy,type:type||"",severity:severity||"",mode:"all",meals:[],note:"",from:"",to:"",src:""});
+  const snack=(m,items)=>{m.on=true;m.items=items};
+  const out=[],notes={};
+  // 1. Locked in, everything chosen: Final sheet and production list
+  {const r=build("AG-CDR42",{group:"Cedar Ridge Leadership Retreat",contact:"Dana Whitfield",phone:"801-555-0117",email:"dana@cedarridge.example",headcount:42,startDate:day(9),endDate:day(10),
+      setup:"rounds",roomChanges:"no",av:["Projector","Screen","Microphone"],onsite:{same:true,name:"",phone:""},attendeeNotes:"Four board members join for lunch and dinner on the first day only.",
+      status:"locked",lockedAt:ago(3),checklist:{schedule:true,payment:true},breakoutNeed:"yes",walk:{...blankWalk(),want:"no"}},
+    (d)=>{d[0].breakfast.choice="none";snack(d[0].amSnack,["Muffins","Whole Fruit"]);d[0].lunch.choice="soupsand";d[0].lunch.count=46;
+      snack(d[0].pmSnack,["Veggie Tray","Cookie Tray"]);d[0].dinner.choice="pork";d[0].dinner.count=46;d[0].dinner.vegChoice="peppers";d[0].dinner.vegCount=2;
+      d[1].breakfast.choice="waffles";d[1].breakfast.addon=true;d[1].breakfast.timeReq={time:"07:30",note:"Early start so we can check out by 11",at:ago(6)};
+      d[1].lunch.choice="frenchdip";d[1].dinner.choice="none"});
+   r.allergies=[al("Marcus Lee","Peanuts","Allergy","Severe"),al("Priya Natarajan","Celiac disease","Medical"),al("Ellen Brooks","Vegetarian","Preference"),al("Ellen Brooks","Tree nuts","Allergy","Mild")];
+   r.breakouts=[{...blankBreakout(),id:"b0",name:"Team leads",people:12,days:[r.startDate],start:"14:00",end:"16:00",setup:"boardroom",av:["Screen"]}];
+   r.history.push({at:r.lockedAt,role:"organizer",by:"",what:"Locked in"});out.push(normalize(r));
+   const k=r.endDate+"|breakfast";notes[r.code]={code:r.code,locations:{},times:{[k]:"07:30"},timeDec:{[k]:{req:"07:30",at:ago(5),status:"approved"}},
+     timeLog:[{key:k,from:"08:00",to:"07:30",status:"approved",req:"07:30",note:"Early start so we can check out by 11",at:ago(5),by:""}],rooms:{main:{[r.startDate]:"Timp A & B",[r.endDate]:"Timp A & B"},bo:{b0:"Fir"}},updatedAt:ago(5)}}
+  // 2. In progress, due soon, with gaps to chase
+  {const r=build("AG-UVN65",{group:"Utah Valley Nurses Workshop",contact:"Carla Jensen",phone:"801-555-0164",email:"carla@uvnurses.example",headcount:65,startDate:day(19),endDate:day(19),setup:"theater",av:["Projector","Microphone"]},
+    (d)=>{d[0].breakfast.choice="pancakes";snack(d[0].amSnack,["Mixed Fruit Tray","Danish Pastries"]);d[0].lunch.choice="";d[0].dinner.choice="none"});
+   r.allergies=[al("Tom Reyes","Tree nuts"),al("","Crustacean shellfish","Allergy","Severe")];out.push(normalize(r))}
+  // 3. In progress, with a time change waiting for review
+  {const r=build("AG-RVC30",{group:"Riverside Community Choir",contact:"Helen Ortiz",phone:"801-555-0139",email:"helen@riversidechoir.example",headcount:30,startDate:day(30),endDate:day(32),setup:"rounds",roomChanges:"yes",
+      setupNotes:"Rounds for meals and rehearsal, risers cleared to the side on the second afternoon.",av:["Speakers / sound","Microphone"],attendeeNotes:"Our accompanist arrives the second morning."},
+    (d)=>{d[0].breakfast.choice="none";d[0].lunch.choice="none";d[0].dinner.choice="parm";d[0].dinner.vegChoice="veglasagna";d[0].dinner.vegCount=3;
+      d[1].breakfast.choice="omelets";d[1].lunch.choice="fajitas";d[1].lunch.meat="Beef";d[1].lunch.vegChoice="padthai";d[1].lunch.vegCount=3;
+      d[1].lunch.timeReq={time:"12:00",note:"Rehearsal starts at 1:00",at:ago(1)};snack(d[1].pmSnack,["Chips & Salsa","Brownies & Bars"]);d[1].dinner.choice="hanger";
+      d[2].breakfast.choice="pancakes";d[2].lunch.choice="soupsand";d[2].dinner.choice="none"});
+   r.allergies=[al("June Park","Vegetarian","Preference"),al("Ana Silva","Milk","Intolerance"),al("Grace Okafor","Vegan","Preference")];out.push(normalize(r))}
+  // 4. Invited, not started
+  {const r=build("AG-MWS25",{group:"Mountain West Software Offsite",contact:"Evan Holt",phone:"801-555-0190",email:"evan@mountainwest.example",headcount:25,startDate:day(34),endDate:day(35),createdBy:"staff"});
+   r.history=[{at:r.createdAt,role:"staff",by:"",what:"Started by Conference Services"}];out.push(r)}
+  // 5. Past group
+  {const r=build("AG-ABC18",{group:"Alpine Book Club Weekend",contact:"Ruth Callister",phone:"801-555-0102",email:"ruth@alpinebooks.example",headcount:18,startDate:day(-20),endDate:day(-19),setup:"rounds",
+      status:"locked",lockedAt:ago(40),createdAt:ago(60),updatedAt:ago(40),checklist:{schedule:true,payment:true}},
+    (d)=>{d[0].breakfast.choice="none";d[0].lunch.choice="ziti";d[0].dinner.choice="grilled";snack(d[0].pmSnack,["Bruschetta","Mini Cream Puffs"]);d[1].breakfast.choice="frenchtoast";d[1].lunch.choice="none";d[1].dinner.choice="none"});
+   r.allergies=[al("Ruth Callister","Wheat/Gluten","Intolerance")];out.push(normalize(r))}
+  return {reservations:out,staffNotes:notes};
+}
+function clearLocal(){try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/^ag(res|staff|bak):/.test(k))ks.push(k)}ks.forEach(k=>localStorage.removeItem(k))}catch(e){}}
+function putAll(data){let n=0;(data.reservations||[]).forEach(r=>{if(r&&r.code){localStorage.setItem("agres:"+r.code,JSON.stringify(r));n++}});
+  Object.entries(data.staffNotes||{}).forEach(([c,x])=>{if(x)localStorage.setItem("agstaff:"+c,JSON.stringify(x))});return n}
+function seedDemo(){try{putAll(demoSeeds());localStorage.setItem(DEMO_FLAG,new Date().toISOString())}catch(e){}}
+document.getElementById("banner").addEventListener("click",e=>{
+  if(e.target.id==="demo-reset"){if(!confirm("Put the demo back to its sample groups? Anything you added or changed here is removed."))return;
+    clearLocal();seedDemo();staffRows=null;kitchenInfo=null;res=null;renderHome();toast("Demo reset");return}
+  if(e.target.id==="demo-load")document.getElementById("demo-file").click()});
+document.getElementById("banner").addEventListener("change",async e=>{
+  if(e.target.id!=="demo-file")return;const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
+  try{const data=JSON.parse(await f.text());const n=putAll(data);if(!n)throw 0;staffRows=null;kitchenInfo=null;toast(`Loaded ${n} group${n===1?"":"s"} from ${f.name}`);setTab("staff");loadStaff()}
+  catch(err){toast("That file isn't a reservation file")}});
 
 // ---------- boot ----------
 document.getElementById("tab-org").onclick=async()=>{if(view==="edit"||view==="review"){clearTimeout(saveTimer);if(dirty)saveNow()}await saving;renderHome()};
