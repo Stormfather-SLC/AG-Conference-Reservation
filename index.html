@@ -236,7 +236,8 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .plantable tr.off th,.plantable tr.off td{color:var(--muted)}
 .plantable td.mono{white-space:nowrap}
 .locnote,.roomsel{margin-top:6px;display:block;width:100%}
-.timein{width:100%}
+.tchg{display:inline-block;margin-left:4px;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:0 5px}
+.tchange h3{font-size:1rem}.tcgrid{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px}@media (max-width:520px){.tcgrid{grid-template-columns:1fr}}
 /* staff */
 .stafftable td,.stafftable th{white-space:nowrap}
 .stafftable td.g{white-space:normal;min-width:180px}
@@ -800,7 +801,7 @@ function reqState(st,n,key){const q=st&&st.timeReq;if(!q||!q.time)return null;co
   if(d&&d.req===q.time&&d.at>=(q.at||""))return d.status;return "pending"}
 function pendingReqs(r,n){const out=[];(r.days||[]).forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k],key=slotKey(d.date,m.k);if(st&&isServed(m,st)&&reqState(st,n,key)==="pending")out.push({d,m,st,key})}));return out}
 // ---------- time change review dialog (from Groups) ----------
-let trCode=null;
+let trCode=null,tcKey="";
 function decideTime(n,r,key,approve){
   const[dd,mk]=key.split("|"),st=r.days.find(x=>x.date===dd).meals[mk],q=st.timeReq,from=(n.times||{})[key]||MEAL[mk].time,at=new Date().toISOString();
   n.times=n.times||{};n.timeDec=n.timeDec||{};
@@ -811,19 +812,30 @@ function decideTime(n,r,key,approve){
 function timeReviewHTML(){
   const r0=(staffRows||[]).find(x=>x.code===trCode);if(!r0)return "";
   const r=normalize(structuredClone(r0)),n=(kitchenInfo||{})[trCode]||{},pend=pendingReqs(r,n);
-  return `<div class="tdhead"><div><span class="eyebrow">Time change requests</span><h2>${esc(r.group||r.code)}</h2><span class="small muted mono">${esc(r.code)}</span></div><button class="btn ghost" data-trclose aria-label="Close">✕</button></div>
+  const slots=[];(r.days||[]).forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(st&&isPlanned(m,st)){const key=slotKey(d.date,m.k);slots.push({key,m,d,t:(n.times||{})[key]||m.time})}}));
+  if(!slots.some(x=>x.key===tcKey))tcKey=(slots[0]||{}).key||"";const cur=slots.find(x=>x.key===tcKey),log=n.timeLog||[];
+  const changeSec=`<div class="tditem tchange"><h3>Change a time</h3><p class="small muted" style="margin:0">For changes that come in by phone or email. The kitchen sees the new time right away on the production list and meal schedule.</p>
+    ${slots.length?`<div class="tcgrid"><label class="f" for="tc-slot">Meal or snack<select id="tc-slot">${slots.map(x=>`<option value="${x.key}" ${x.key===tcKey?"selected":""}>${fmtDate(x.d.date)} · ${x.m.label} · ${fmtTime(x.t)}${x.t!==x.m.time?" (changed)":""}</option>`).join("")}</select></label>
+      <label class="f" for="tc-time">New time<input type="time" id="tc-time" value="${cur?cur.t:""}"><span class="hint" id="tc-std">Standard: ${cur?fmtTime(cur.m.time):""}</span></label></div>
+      <label class="f" for="tc-note">Note (optional)<input type="text" id="tc-note" placeholder="For example: organizer called, session runs late"></label>
+      <div class="row"><button class="btn primary" data-tcsave>Save time</button></div>`:`<p class="small" style="margin:0">No meals or snacks are planned yet.</p>`}</div>`;
+  const hist=log.length?`<details class="tlog tditem"><summary>Time change history (${log.length})</summary><ul class="history">${[...log].reverse().map(e=>`<li><time>${fmtDate(new Date(e.at),{month:"short",day:"numeric"})}, ${clock(e.at)}</time><span>${esc(slotLabel(e.key))}: <b>${TIME_VERB[e.status]||e.status}</b>${e.status==="declined"?` (asked for ${fmtTime(e.req)}, stays ${fmtTime(e.from)})`:` · ${fmtTime(e.from)} → ${fmtTime(e.to)}`}${e.note?` <span class="who">· “${esc(e.note)}”</span>`:""}</span></li>`).join("")}</ul></details>`:"";
+  return `<div class="tdhead"><div><span class="eyebrow">Meal and snack times</span><h2>${esc(r.group||r.code)}</h2><span class="small muted mono">${esc(r.code)}</span></div><button class="btn ghost" data-trclose aria-label="Close">✕</button></div>
   ${pend.length?pend.map(x=>{const cur=(n.times||{})[x.key]||x.m.time;return `<div class="tditem"><div class="tdwhen"><b>${fmtDate(x.d.date,{weekday:"long",month:"short",day:"numeric"})} · ${x.m.label}</b>
       <span class="small muted">${mealCount(x.st,r)} guests · ${x.m.snack?esc(x.st.items.join(", ")):menuShort(x.m,x.st)}</span></div>
       <div class="tdchange"><span>${fmtTime(cur)}</span> → <b>${fmtTime(x.st.timeReq.time)}</b>${x.st.timeReq.time===x.m.time?` <span class="small muted">(back to standard)</span>`:cur!==x.m.time?` <span class="small muted">(standard ${fmtTime(x.m.time)})</span>`:""}</div>
       ${x.st.timeReq.note?`<p class="small" style="margin:0">Reason: “${esc(x.st.timeReq.note)}”</p>`:""}
       <p class="small muted" style="margin:0">Approving tells the kitchen right away: the new time shows on the production list and meal schedule.</p>
       <div class="row"><button class="btn primary" data-trapprove="${x.key}">Approve ${fmtTime(x.st.timeReq.time)}</button><button class="btn" data-trdecline="${x.key}">Decline, keep ${fmtTime(cur)}</button></div></div>`}).join("")
-    :`<div class="notice ok">All requests for this group have been reviewed.</div><div class="row"><button class="btn primary" data-trclose>Done</button></div>`}`}
-function openTimeReview(code){trCode=code;let d=document.getElementById("tdlg");
+    :""}${changeSec}${hist}`}
+function openTimeReview(code){if(trCode!==code)tcKey="";trCode=code;let d=document.getElementById("tdlg");
   if(!d){d=document.createElement("dialog");d.id="tdlg";d.className="tdlg";document.body.appendChild(d);
     d.addEventListener("close",()=>{trCode=null;if(view==="staff")renderStaff()});
+    d.addEventListener("change",e=>{if(e.target.id!=="tc-slot")return;tcKey=e.target.value;const[dd,mk]=tcKey.split("|"),n=(kitchenInfo||{})[trCode]||{},t=(n.times||{})[tcKey]||MEAL[mk].time;
+      d.querySelector("#tc-time").value=t;d.querySelector("#tc-std").textContent="Standard: "+fmtTime(MEAL[mk].time)});
     d.addEventListener("click",async e=>{const b=e.target.closest("button");if(e.target===d){d.close();return}if(!b)return;
       if(b.dataset.trclose!==undefined){d.close();return}
+      if(b.dataset.tcsave!==undefined){await saveStaffTime(d);return}
       const key=b.dataset.trapprove||b.dataset.trdecline;if(!key)return;
       const r0=staffRows.find(x=>x.code===trCode),r=normalize(structuredClone(r0)),base=structuredClone((kitchenInfo||{})[trCode]||{code:trCode,locations:{}});
       decideTime(base,r,key,!!b.dataset.trapprove);base.code=trCode;base.updatedAt=new Date().toISOString();
@@ -831,7 +843,22 @@ function openTimeReview(code){trCode=code;let d=document.getElementById("tdlg");
       try{await store.putStaff(trCode,base);kitchenInfo=kitchenInfo||{};kitchenInfo[trCode]=base;toast(b.dataset.trapprove?`Approved: ${slotLabel(key)} at ${fmtTime(base.times[key]||MEAL[key.split("|")[1]].time)}`:"Request declined")}
       catch(err){toast(err&&err.code==="invalid_argument"?"Only Aspen Grove staff can approve time changes":"Not saved. Check your connection.")}
       d.innerHTML=timeReviewHTML()})}
-  d.innerHTML=timeReviewHTML();if(!d.open)d.showModal();d.querySelector("[data-trapprove],[data-trclose]")?.focus()}
+  d.innerHTML=timeReviewHTML();if(!d.open)d.showModal();d.querySelector("[data-trapprove],#tc-slot,[data-trclose]")?.focus();
+  store.getStaff(code).then(x=>{if(x&&trCode===code){kitchenInfo=kitchenInfo||{};kitchenInfo[code]=x;if(!d.querySelector(":focus:not(#tc-slot):not([data-trapprove])"))d.innerHTML=timeReviewHTML()}}).catch(()=>{})}
+// Staff set a time directly (phone/email changes after lock-in). A matching pending request counts as approved.
+async function saveStaffTime(d){
+  const key=d.querySelector("#tc-slot")?.value,el=d.querySelector("#tc-time");if(!key||!el)return;const mk=key.split("|")[1],def=MEAL[mk].time,to=el.value||def,note=d.querySelector("#tc-note").value.trim();
+  const r0=staffRows.find(x=>x.code===trCode),r=normalize(structuredClone(r0));let fresh=null;try{fresh=await store.getStaff(trCode)}catch(e){}
+  const n=structuredClone(fresh||(kitchenInfo||{})[trCode]||{code:trCode,locations:{}});n.locations=n.locations||{};
+  n.times=n.times||{};n.timeDec=n.timeDec||{};const from=n.times[key]||def;if(from===to){toast("That's already the time");return}
+  if(to===def)delete n.times[key];else n.times[key]=to;
+  const[dd]=key.split("|"),st=(r.days.find(x=>x.date===dd)||{meals:{}}).meals[mk],q=st&&st.timeReq;
+  if(q&&q.time===to&&reqState(st,n,key)==="pending"){n.timeDec[key]={req:q.time,at:new Date().toISOString(),status:"approved"};logTime(n,{key,from,to,status:"approved",req:q.time,note:note||q.note||""})}
+  else logTime(n,{key,from,to,status:to===def?"reset":"changed",note});
+  n.code=trCode;n.updatedAt=new Date().toISOString();tcKey=key;d.querySelectorAll("button").forEach(x=>x.disabled=true);
+  try{await store.putStaff(trCode,n);kitchenInfo=kitchenInfo||{};kitchenInfo[trCode]=n;toast(`${slotLabel(key)} now at ${fmtTime(to)}`)}
+  catch(err){toast(err&&err.code==="invalid_argument"?"Only Aspen Grove staff can change times":"Not saved. Check your connection.")}
+  d.innerHTML=timeReviewHTML()}
 function logTime(n,e){n.timeLog=n.timeLog||[];n.timeLog.push({...e,at:new Date().toISOString(),by:who.id||""});if(n.timeLog.length>200)n.timeLog=n.timeLog.slice(-200)}
 const TIME_VERB={approved:"Request approved",declined:"Request declined",changed:"Changed by Aspen Grove",reset:"Back to standard time"};
 // Time is a meal-level setting: it lives in the meal header ("Change time"), and the editor opens just under it.
@@ -1469,12 +1496,6 @@ app.addEventListener("change",e=>{
   if(view==="staffplan"){
     if(el.classList.contains("locsel")){const key=el.dataset.key,prev=plan.locations[key];plan.locations[key]={place:el.value,note:el.value==="Other"?(prev&&prev.note)||"":"",room:el.value==="Conference room"?(prev&&prev.room)||"":""};planSave();
       rerender();if(el.value==="Other")document.getElementById("locnote-"+key)?.focus();if(el.value==="Conference room")document.getElementById("room-"+key)?.focus()}
-    else if(el.classList.contains("timein")){const key=el.dataset.key,from=plan.times[key]||el.dataset.def,to=el.value||el.dataset.def;if(from===to)return;
-      if(to===el.dataset.def)delete plan.times[key];else plan.times[key]=to;
-      const[dd,mk]=key.split("|"),st=(res.days.find(x=>x.date===dd)||{meals:{}}).meals[mk],q=st&&st.timeReq;
-      if(q&&q.time===to&&reqState(st,plan,key)==="pending"){plan.timeDec[key]={req:q.time,at:new Date().toISOString(),status:"approved"};logTime(plan,{key,from,to,status:"approved",req:q.time,note:q.note||""})}
-      else logTime(plan,{key,from,to,status:to===el.dataset.def?"reset":"changed"});
-      planSave();rerender()}
     else if(el.classList.contains("roomsel")){const key=el.dataset.key;const L=plan.locations[key]||{place:"Conference room",note:""};L.place="Conference room";L.room=el.value;plan.locations[key]=L;planSave();rerender()}
     if(el.classList.contains("mainroom")){if(el.value)plan.rooms.main[el.dataset.date]=el.value;else delete plan.rooms.main[el.dataset.date];planSave();rerender();return}
     if(el.id==="main-all"&&el.value){res.days.forEach(d=>plan.rooms.main[d.date]=el.value);planSave();rerender();toast(`${el.value} set for every day`);return}
@@ -1656,13 +1677,11 @@ function renderPlan(){
     ${r.days.map((d,di)=>`<div class="sumday"><h3>${fmtDate(d.date,{weekday:"long",month:"long",day:"numeric"})}</h3>
       <div class="tablewrap"><table class="plantable"><thead><tr><th>Meal</th><th>Time</th><th>Guests</th><th>Menu</th><th>Location</th></tr></thead><tbody>
       ${MEALS.map(m=>{const st=d.meals[m.k],key=slotKey(d.date,m.k),sv=isPlanned(m,st),L=locOf(key,m);
-        return `<tr class="${sv?"":"off"}"><th scope="row">${m.label}</th><td>${sv?(()=>{const t=plan.times[key]||m.time,ch=t!==m.time;return `<input type="time" class="timein" id="time-${key}" data-key="${key}" data-def="${m.time}" value="${t}" aria-label="Time for ${fmtDate(d.date)} ${m.label}">${ch?`<span class="warnline">Fee may apply (standard: ${fmtTime(m.time)})</span>`:""}${(()=>{const q=st.timeReq,rs=reqState(st,plan,key);if(!q||!q.time)return "";
-          if(rs==="pending")return `<div class="treq"><b>Requested ${fmtTime(q.time)}</b>${q.note?`<span class="small"> · ${esc(q.note)}</span>`:""}<span class="small">Review it from the Groups list.</span></div>`;
-          return `<span class="small muted">Request for ${fmtTime(q.time)} ${rs}</span>`})()}`})():""}</td><td class="mono">${sv?mealCount(st):""}</td><td>${sv?menuShort(m,st):`<span class="muted">Not served</span>`}</td>
+        return `<tr class="${sv?"":"off"}"><th scope="row">${m.label}</th><td class="nowrap">${sv?(()=>{const t=plan.times[key]||m.time;return fmtTime(t)+(t!==m.time?` <span class="tchg">Changed</span>`:"")})():""}</td><td class="mono">${sv?mealCount(st):""}</td><td>${sv?menuShort(m,st):`<span class="muted">Not served</span>`}</td>
         <td>${sv?`<select class="locsel" id="loc-${key}" data-key="${key}" aria-label="Location for ${fmtDate(d.date)} ${m.label}">${LOCS.map(o=>`<option value="${o}" ${L.place===o?"selected":""}>${o==="Meeting room"?`Their meeting room${mainRoomOn(plan,d.date)?" ("+mainRoomOn(plan,d.date)+")":""}`:o}</option>`).join("")}</select>${L.place==="Conference room"?roomSelect("roomsel","room-"+key,key,L.room||"","Conference room for "+fmtDate(d.date)+" "+m.label)+(L.room?"":`<span class="warnline">Choose a room</span>`):""}${L.place==="Other"?`<input type="text" class="locnote" id="locnote-${key}" data-key="${key}" value="${esc(L.note)}" placeholder="Where?" aria-label="Other location">`:""}`:""}</td></tr>`}).join("")}
       </tbody></table></div></div>`).join("")}`:`<div class="empty">This group hasn't set its event dates yet.</div>`}
-    <p class="small muted" style="margin:0">Meals default to the Dining hall and snacks to the Aspen Lobby until you change them. Times start at the standard schedule; a changed time is flagged because a fee may apply. Organizers see the locations on their review page but can't change them. “Their meeting room” follows the main room assigned above for that day.</p>
-    ${plan.timeLog.length?`<details class="tlog"><summary>Time change history (${plan.timeLog.length})</summary><ul class="history">${[...plan.timeLog].reverse().map(e=>`<li><time>${fmtDate(new Date(e.at),{month:"short",day:"numeric"})}, ${clock(e.at)}</time><span>${esc(slotLabel(e.key))}: <b>${TIME_VERB[e.status]||e.status}</b>${e.status==="declined"?` (asked for ${fmtTime(e.req)}, stays ${fmtTime(e.from)})`:` · ${fmtTime(e.from)} → ${fmtTime(e.to)}`}${e.note?` <span class="who">· “${esc(e.note)}”</span>`:""}</span></li>`).join("")}</ul></details>`:""}</section>
+    <p class="small muted" style="margin:0">Meals default to the Dining hall and snacks to the Aspen Lobby until you change them. Times are set from Groups (Actions › Meal &amp; snack times); “Changed” marks one that isn’t the standard time. Organizers see the locations on their review page but can't change them. “Their meeting room” follows the main room assigned above for that day.</p>
+    </section>
   </div>`;
 }
 function roomBookings(){
@@ -1869,6 +1888,7 @@ function groupsView(){
             <button role="menuitem" data-sheet="${esc(r.code)}">Final sheet</button>
             <button role="menuitem" data-open="${esc(r.code)}">Open form</button>
             <button role="menuitem" data-plan="${esc(r.code)}">Rooms &amp; locations</button>
+            <button role="menuitem" data-treview="${esc(r.code)}">Meal &amp; snack times</button>
             ${locked?"":s.k==="waiting"?`<button role="menuitem" data-invite="${esc(r.code)}">Invitation email</button>`:`<button role="menuitem" data-remind="${esc(r.code)}">Reminder email</button>`}
             ${locked?`<button role="menuitem" data-unlock="${esc(r.code)}">Reopen for changes</button>`:""}
             <hr class="amenu-sep"><button role="menuitem" class="danger-item" data-askdelete="${esc(r.code)}" aria-label="Delete ${esc(r.code)}">Delete</button>
