@@ -59,7 +59,8 @@ What's in this phase, what's next, and what's parked: [docs/roadmap.md](docs/roa
 The same `index.html` runs as a stand-alone demo on GitHub Pages (`*.github.io`) or at any address ending in `?demo`. The demo:
 
 - never connects to the shared record and needs no sign-in;
-- opens with five made-up sample groups (locked in, in progress and due soon, a pending time change, invited but not started, and a past group) whose dates move with today's date;
+- opens with six made-up sample groups whose dates move with today's date: two locked-in groups in camp the same week (Monday dinner–Friday breakfast and Tuesday lunch–Thursday dinner, the Monday of the week after next) so the kitchen list, weekly meal schedule and rooms show groups combined; one in progress and due soon; one with a pending time change; one invited but not started; and a past group;
+- when a newer set of samples ships, it replaces the old samples on the next visit but keeps groups loaded from a file;
 - has **Reset demo**, which puts the samples back, and **Load example file**, which loads a backup-format `.json` file (the same shape as Conference Services › Backup › Full backup).
 
 Real examples (for example a group recreated from its paper packet) stay in a `.json` file on the presenter's computer and are loaded with **Load example file**. They are never committed: the repository and its Pages site are public, and `.gitignore` blocks `*.json`.

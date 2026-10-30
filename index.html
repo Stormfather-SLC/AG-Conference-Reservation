@@ -600,14 +600,14 @@ function applyRosterCounts(){res.days.forEach((d,di)=>MEALS.forEach(m=>{const st
 // The demo (GitHub Pages, or any address with ?demo) never touches the shared record. It opens with sample groups
 // saved in this browser, and the banner can reset them or load a backup-format file (e.g. a real example kept off GitHub).
 const DEMO=/[?&]demo(=|&|$)/.test(location.search)||/\.github\.io$/.test(location.hostname);
-const DEMO_FLAG="agdemo:v1";
+const DEMO_FLAG="agdemo:v2";
 // ---------- storage: shared db when available, this browser otherwise ----------
 const store={db:null,mode:"pending",
  async init(){
   try{ if(!DEMO&&window.claude&&claude.use){ this.db=await claude.use("db") } }catch(e){ this.db=null }
   this.mode=this.db?"db":"local"; renderBanner();
   if(this.db)await this.moveLocal();
-  if(DEMO){let seeded=true;try{seeded=!!localStorage.getItem(DEMO_FLAG)}catch(e){}if(!seeded)seedDemo()}
+  if(DEMO){let seeded=true;try{seeded=!!localStorage.getItem(DEMO_FLAG)}catch(e){}if(!seeded){clearSamples();seedDemo()}}
  },
  // Reservations made before signing in were saved in this browser only. Once signed in, copy them into the shared
  // record (unless the shared copy is newer), then set the local copy aside under "agmoved:" so it is never copied twice.
@@ -2391,19 +2391,36 @@ function demoSeeds(){
   const al=(name,allergy,type,severity)=>({name,allergy,type:type||"",severity:severity||"",mode:"all",meals:[],note:"",from:"",to:"",src:""});
   const snack=(m,items)=>{m.on=true;m.items=items};
   const out=[],notes={};
-  // 1. Locked in, everything chosen: Final sheet and production list
-  {const r=build("AG-CDR42",{group:"Cedar Ridge Leadership Retreat",contact:"Dana Whitfield",phone:"801-555-0117",email:"dana@cedarridge.example",headcount:42,startDate:day(9),endDate:day(10),
-      setup:"rounds",roomChanges:"no",av:["Projector","Screen","Microphone"],onsite:{same:true,name:"",phone:""},attendeeNotes:"Four board members join for lunch and dinner on the first day only.",
-      status:"locked",lockedAt:ago(3),checklist:{schedule:true,payment:true},breakoutNeed:"yes",walk:{...blankWalk(),want:"no"}},
-    (d)=>{d[0].breakfast.choice="none";snack(d[0].amSnack,["Muffins","Whole Fruit"]);d[0].lunch.choice="soupsand";d[0].lunch.count=46;
-      snack(d[0].pmSnack,["Veggie Tray","Cookie Tray"]);d[0].dinner.choice="pork";d[0].dinner.count=46;d[0].dinner.vegChoice="peppers";d[0].dinner.vegCount=2;
-      d[1].breakfast.choice="waffles";d[1].breakfast.addon=true;d[1].breakfast.timeReq={time:"07:30",note:"Early start so we can check out by 11",at:ago(6)};
-      d[1].lunch.choice="frenchdip";d[1].dinner.choice="none"});
+  // 1 & 2. Two locked-in groups in camp the same week (Monday of the week after next), so the kitchen list, weekly
+  // meal schedule and room assignments show groups combined: different entrées at one lunch, the same dinner
+  // combined, an earlier lunch served separately, and special plates from both groups.
+  const mon=(()=>{const d=new Date(TODAY),dow=d.getDay();return 7+(((8-dow)%7)||7)})();
+  {const r=build("AG-CDR42",{group:"Cedar Ridge Leadership Retreat",contact:"Dana Whitfield",phone:"801-555-0117",email:"dana@cedarridge.example",headcount:42,startDate:day(mon),endDate:day(mon+4),
+      setup:"rounds",roomChanges:"no",av:["Projector","Screen","Microphone"],onsite:{same:true,name:"",phone:""},attendeeNotes:"We arrive Monday afternoon; dinner is our first meal. Breakfast Friday is our last.",
+      status:"locked",lockedAt:ago(4),checklist:{schedule:true,payment:true},breakoutNeed:"yes",walk:{...blankWalk(),want:"no"}},
+    (d)=>{d[0].breakfast.choice="none";d[0].lunch.choice="none";d[0].dinner.choice="pork";d[0].dinner.vegChoice="peppers";d[0].dinner.vegCount=2;
+      d[1].breakfast.choice="pancakes";d[1].breakfast.addon=true;snack(d[1].amSnack,["Muffins","Whole Fruit"]);d[1].lunch.choice="fajitas";d[1].lunch.meat="Chicken";d[1].lunch.vegChoice="peppers";d[1].lunch.vegCount=2;
+      snack(d[1].pmSnack,["Veggie Tray","Cookie Tray"]);d[1].dinner.choice="cordon";
+      d[2].breakfast.choice="waffles";d[2].lunch.choice="soupsand";snack(d[2].pmSnack,["Chips & Salsa","Brownies & Bars"]);d[2].dinner.choice="grilled";
+      d[3].breakfast.choice="omelets";d[3].breakfast.timeReq={time:"07:30",note:"Early start for our service project",at:ago(6)};d[3].lunch.choice="frenchdip";d[3].dinner.choice="hanger";
+      d[4].breakfast.choice="quiche";d[4].lunch.choice="none";d[4].dinner.choice="none"});
    r.allergies=[al("Marcus Lee","Peanuts","Allergy","Severe"),al("Priya Natarajan","Celiac disease","Medical"),al("Ellen Brooks","Vegetarian","Preference"),al("Ellen Brooks","Tree nuts","Allergy","Mild")];
-   r.breakouts=[{...blankBreakout(),id:"b0",name:"Team leads",people:12,days:[r.startDate],start:"14:00",end:"16:00",setup:"boardroom",av:["Screen"]}];
+   r.breakouts=[{...blankBreakout(),id:"b0",name:"Team leads",people:12,days:[r.days[1].date],start:"14:00",end:"16:00",setup:"boardroom",av:["Screen"]}];
    r.history.push({at:r.lockedAt,role:"organizer",by:"",what:"Locked in"});out.push(normalize(r));
-   const k=r.endDate+"|breakfast";notes[r.code]={code:r.code,locations:{},times:{[k]:"07:30"},timeDec:{[k]:{req:"07:30",at:ago(5),status:"approved"}},
-     timeLog:[{key:k,from:"08:00",to:"07:30",status:"approved",req:"07:30",note:"Early start so we can check out by 11",at:ago(5),by:""}],rooms:{main:{[r.startDate]:"Timp A & B",[r.endDate]:"Timp A & B"},bo:{b0:"Fir"}},updatedAt:ago(5)}}
+   const k=r.days[3].date+"|breakfast",main={};r.days.forEach(x=>main[x.date]="Timp A & B");
+   notes[r.code]={code:r.code,locations:{},times:{[k]:"07:30"},timeDec:{[k]:{req:"07:30",at:ago(5),status:"approved"}},
+     timeLog:[{key:k,from:"08:00",to:"07:30",status:"approved",req:"07:30",note:"Early start for our service project",at:ago(5),by:""}],rooms:{main,bo:{b0:"Fir"}},updatedAt:ago(5)}}
+  {const r=build("AG-SCU36",{group:"Summit Credit Union Managers",contact:"Brian Talbot",phone:"801-555-0156",email:"brian@summitcu.example",headcount:36,startDate:day(mon+1),endDate:day(mon+3),
+      setup:"theater",roomChanges:"no",av:["Projector","Screen","Speakers / sound"],onsite:{same:false,name:"Kelli Moss",phone:"801-555-0173"},attendeeNotes:"Arriving Tuesday in time for lunch; leaving after dinner Thursday.",
+      status:"locked",lockedAt:ago(2),createdAt:ago(25),checklist:{schedule:true,payment:true},breakoutNeed:"no",walk:{...blankWalk(),want:"no"}},
+    (d)=>{d[0].breakfast.choice="none";d[0].lunch.choice="ziti";d[0].lunch.vegChoice="padthai";d[0].lunch.vegCount=2;snack(d[0].pmSnack,["Bruschetta","Danish Pastries"]);d[0].dinner.choice="cordon";
+      d[1].breakfast.choice="pancakes";snack(d[1].amSnack,["Mixed Fruit Tray","Granola Bars"]);d[1].lunch.choice="soupsand";d[1].lunch.timeReq={time:"11:45",note:"Afternoon session starts at 12:45",at:ago(3)};d[1].dinner.choice="parm";
+      d[2].breakfast.choice="frenchtoast";d[2].lunch.choice="philly";d[2].dinner.choice="lasagna"});
+   r.allergies=[al("Daniel Kim","Sesame","Allergy","Severe"),al("Laura Bennett","Wheat/Gluten","Intolerance"),al("Sofia Martinez","Vegan","Preference")];
+   r.history.push({at:r.lockedAt,role:"organizer",by:"",what:"Locked in"});out.push(normalize(r));
+   const k=r.days[1].date+"|lunch",main={};r.days.forEach(x=>main[x.date]="Timp Room C");
+   notes[r.code]={code:r.code,locations:{},times:{[k]:"11:45"},timeDec:{[k]:{req:"11:45",at:ago(2),status:"approved"}},
+     timeLog:[{key:k,from:"12:30",to:"11:45",status:"approved",req:"11:45",note:"Afternoon session starts at 12:45",at:ago(2),by:""}],rooms:{main,bo:{}},updatedAt:ago(2)}}
   // 2. In progress, due soon, with gaps to chase
   {const r=build("AG-UVN65",{group:"Utah Valley Nurses Workshop",contact:"Carla Jensen",phone:"801-555-0164",email:"carla@uvnurses.example",headcount:65,startDate:day(19),endDate:day(19),setup:"theater",av:["Projector","Microphone"]},
     (d)=>{d[0].breakfast.choice="pancakes";snack(d[0].amSnack,["Mixed Fruit Tray","Danish Pastries"]);d[0].lunch.choice="";d[0].dinner.choice="none"});
@@ -2426,6 +2443,8 @@ function demoSeeds(){
    r.allergies=[al("Ruth Callister","Wheat/Gluten","Intolerance")];out.push(normalize(r))}
   return {reservations:out,staffNotes:notes};
 }
+// A newer set of samples replaces the old samples only; groups loaded from a file stay.
+function clearSamples(){try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith("agres:")){let r=null;try{r=JSON.parse(localStorage.getItem(k))}catch(e){}if(r&&r.demo)ks.push(k,"agstaff:"+k.slice(6),"agbak:"+k.slice(6))}}ks.forEach(k=>localStorage.removeItem(k))}catch(e){}}
 function clearLocal(){try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/^ag(res|staff|bak):/.test(k))ks.push(k)}ks.forEach(k=>localStorage.removeItem(k))}catch(e){}}
 function putAll(data){let n=0;(data.reservations||[]).forEach(r=>{if(r&&r.code){localStorage.setItem("agres:"+r.code,JSON.stringify(r));n++}});
   Object.entries(data.staffNotes||{}).forEach(([c,x])=>{if(x)localStorage.setItem("agstaff:"+c,JSON.stringify(x))});return n}
