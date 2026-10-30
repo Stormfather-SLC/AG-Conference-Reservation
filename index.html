@@ -237,6 +237,12 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .plantable td.mono{white-space:nowrap}
 .locnote,.roomsel{margin-top:6px;display:block;width:100%}
 .tchg{display:inline-block;margin-left:4px;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:0 5px}
+.chk.mealon{width:fit-content;min-height:44px}
+.expick{display:flex;flex-direction:column;gap:6px}.expick .exh{font-weight:600;font-size:.9rem}.expick .chk{min-height:44px}
+.exnote{margin:0;background:var(--sunk);border-radius:var(--r);padding:6px 10px}
+.dtl{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}.dts{font-size:.72rem;font-weight:400;opacity:.85}
+.dts.none{color:var(--warn);font-weight:600;opacity:1}.daytabs button[aria-pressed="true"] .dts.none{color:inherit}
+.mealcheck tr.emptyday th,.mealcheck tr.emptyday td{background:var(--warn-soft)}
 .demobar{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;margin-bottom:16px;border-left:4px solid var(--spruce)}
 .tchange h3{font-size:1rem}.tcgrid{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px}@media (max-width:520px){.tcgrid{grid-template-columns:1fr}}
 /* staff */
@@ -482,11 +488,11 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 <script>
 // ---------- Menu data (from the Final Details form & menus) ----------
 const BREAKFAST=[
- {id:"pancakes",name:"Pancakes",sides:"Yogurt cups, scrambled eggs, sausage, country potatoes"},
- {id:"frenchtoast",name:"French Toast",sides:"Bacon, parfait bar"},
- {id:"waffles",name:"Waffles",sides:"Strawberries and whipped cream, bacon, yogurt cups"},
- {id:"omelets",name:"Omelets",sides:"Ham, country potatoes, yogurt cups"},
- {id:"quiche",name:"Quiche",sides:"Sausage, parfait bar"}];
+ {id:"pancakes",name:"Pancakes",sides:"Yogurt cups, scrambled eggs, sausage, country potatoes",x:["Bacon"],has:"eggs, sausage and potatoes"},
+ {id:"frenchtoast",name:"French Toast",sides:"Bacon, parfait bar",x:["Sausage","Eggs","Potatoes"],has:"bacon"},
+ {id:"waffles",name:"Waffles",sides:"Strawberries and whipped cream, bacon, yogurt cups",x:["Sausage","Eggs","Potatoes"],has:"bacon"},
+ {id:"omelets",name:"Omelets",sides:"Ham, country potatoes, yogurt cups",x:["Sausage","Bacon"],has:"eggs, ham and potatoes"},
+ {id:"quiche",name:"Quiche",sides:"Sausage, parfait bar",x:["Bacon","Potatoes"],has:"eggs and sausage"}];
 const LUNCH=[
  {id:"philly",name:"Philly Cheese Steak Sandwiches",sides:"Sautéed mushrooms, peppers and onions, french fries",second:true},
  {id:"frenchdip",name:"French Dip Sandwiches",sides:"Au jus, crispy tater tots"},
@@ -513,6 +519,14 @@ const MEALS=[
  {k:"lunch",label:"Lunch",time:"12:30",list:LUNCH,base:"Salad served with every lunch.",incl:"salad"},
  {k:"pmSnack",label:"Afternoon snack",time:"15:00",snack:true},
  {k:"dinner",label:"Dinner",time:"18:00",list:DINNER,base:"Salad and dessert served with every dinner.",incl:"salad, dessert"}];
+// Breakfast extras: $1.50 per person for each. Each breakfast offers only what it doesn't already include (x).
+// st.extras holds the picked ones; an older reservation may have addon:true with no extras (picked before extras existed).
+const EXTRA_PP=1.5;
+function bfExtras(st){const o=BREAKFAST.find(x=>x.id===st.choice);return o?(st.extras||[]).filter(v=>o.x.includes(v)):[]}
+const bfLegacy=st=>!!st.addon&&!(st.extras||[]).length;
+const bfExtraN=st=>bfExtras(st).length+(bfLegacy(st)?1:0);
+const bfExtraText=st=>bfExtras(st).map(v=>v.toLowerCase()).concat(bfLegacy(st)?["add-on (items not picked)"]:[]).join(", ");
+const exNote=new Map();
 const AV=["Projector","Screen","Whiteboard","Microphone","Speakers / sound","Easel & flip chart"];
 const DEADLINE_DAYS=14, MAX_DAYS=7, TODAY=startOfDay(new Date());
 
@@ -528,7 +542,7 @@ function newCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i
 function codeBody(s){s=String(s||"").toUpperCase().replace(/[^A-Z0-9]/g,"");return s.length===7&&s.startsWith("AG")?s.slice(2):s}
 function normCode(s){const b=codeBody(s);return b?"AG-"+b:""}
 function deadlineOf(r){const d=parseDate(r.startDate);if(!d)return null;const x=new Date(d);x.setDate(x.getDate()-DEADLINE_DAYS);return x}
-function blankDay(date){const meals={};MEALS.forEach(m=>{meals[m.k]=m.snack?{on:false,time:m.time,items:[],count:""}:{choice:"",time:m.time,addon:false,second:false,meat:"Chicken",vegChoice:"",vegCount:0,count:"",service:"hall",location:""}});return {date,meals}}
+function blankDay(date){const meals={};MEALS.forEach(m=>{meals[m.k]=m.snack?{on:false,time:m.time,items:[],count:""}:{choice:"none",time:m.time,addon:false,extras:[],second:false,meat:"Chicken",vegChoice:"",vegCount:0,count:"",service:"hall",location:""}});return {date,meals}}
 function blankRes(code){return {code,status:"draft",group:"",contact:"",phone:"",email:"",headcount:"",startDate:"",endDate:"",attendeeNotes:"",setup:"",roomChanges:"",setupNotes:"",noAV:false,av:[],avOther:"",days:[],allergies:[],comments:"",onsite:{same:false,name:"",phone:""},firstMeal:"",lastMeal:"",roster:null,breakoutNeed:"",breakouts:[],walk:blankWalk(),checklist:{schedule:false,payment:false},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),lockedAt:null}}
 function blankWalk(){return {want:"",choices:[{date:"",time:""},{date:"",time:""}],people:"",notes:""}}
 function blankBreakout(){return {id:"b"+Math.random().toString(36).slice(2,8),name:"",people:"",days:[],start:"",end:"",setup:"",av:[],notes:""}}
@@ -574,7 +588,7 @@ function normalize(r){
   r.onsite=r.onsite||{same:false,name:"",phone:""};r.firstMeal=r.firstMeal||"";
   r.breakoutNeed=r.breakoutNeed||"";r.breakouts=(r.breakouts||[]).map((b,i)=>({...blankBreakout(),id:"b"+i,...b,av:b.av||[],days:(b.days||[]).filter(d=>r.days.some(x=>x.date===d))}));
   {const w=r.walk||{};r.walk={...blankWalk(),...w,choices:[0,1].map(i=>({date:"",time:"",...((w.choices||[])[i]||{})}))}}r.lastMeal=r.lastMeal||"";r.roster=r.roster||null;
-  r.days.forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(st.count===undefined)st.count="";if(!m.snack){if(!st.service)st.service="hall";if(st.location===undefined)st.location=""}}));
+  r.days.forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(st.count===undefined)st.count="";if(!m.snack){if(!st.service)st.service="hall";if(!Array.isArray(st.extras))st.extras=[];if(st.location===undefined)st.location=""}}));
   r.allergies=(r.allergies||[]).map(a=>({gid:a.gid||"",name:a.name||"",allergy:a.allergy||"",type:a.type||(a.allergy?"Allergy":""),severity:a.severity||"",mode:a.mode||"all",meals:Array.isArray(a.meals)?a.meals:[],note:typeof a.meals==="string"?a.meals:(a.note||""),from:a.from||"",to:a.to||"",src:a.src||"",other:a.other}));
   r.allergies.forEach(a=>{if(a.other===undefined){const m=matchRestriction(a.allergy);if(a.allergy&&RESTRICT_OPTS.includes(a.allergy))a.other=false;else if(a.allergy&&m&&a.allergy.trim().toLowerCase()===m.toLowerCase()){a.allergy=m;a.other=false}else a.other=!!a.allergy}if(!a.other&&a.allergy==="Wheat")a.allergy="Wheat/Gluten";if(a.other&&/^\s*(gluten|wheat)\s*$/i.test(a.allergy)){a.allergy="Wheat/Gluten";a.other=false}if(!a.other&&isCondition(a.allergy)){a.type="Medical";a.severity=""}else if(isDietRow(a)){if(a.type!=="Medical")a.type="Preference";a.severity=""}else if(!a.other&&a.allergy&&noSeverity(a))a.type="";});
   // Group restrictions by guest: rows without a guest id join the first row with the same name (older data had one row per restriction).
@@ -600,7 +614,7 @@ function applyRosterCounts(){res.days.forEach((d,di)=>MEALS.forEach(m=>{const st
 // The demo (GitHub Pages, or any address with ?demo) never touches the shared record. It opens with sample groups
 // saved in this browser, and the banner can reset them or load a backup-format file (e.g. a real example kept off GitHub).
 const DEMO=/[?&]demo(=|&|$)/.test(location.search)||/\.github\.io$/.test(location.hostname);
-const DEMO_FLAG="agdemo:v2";
+const DEMO_FLAG="agdemo:v3";
 // ---------- storage: shared db when available, this browser otherwise ----------
 const store={db:null,mode:"pending",
  async init(){
@@ -730,7 +744,7 @@ function extras(r){
   const n=Number(r.headcount)||0, lines=[];let total=0,market=false;
   r.days.forEach(d=>{
     const b=d.meals.breakfast,l=d.meals.lunch,dn=d.meals.dinner,nb=mealCount(b,r),nl=mealCount(l,r),nd=mealCount(dn,r),day=fmtDate(d.date);
-    if(b.choice&&b.choice!=="none"&&b.addon){lines.push([`${day} · Breakfast add-on, ${nb} × $1.50`,1.5*nb]);total+=1.5*nb}
+    if(b.choice&&b.choice!=="none"&&bfExtraN(b)){const k=bfExtraN(b),c=EXTRA_PP*k*nb;lines.push([`${day} · Breakfast extras (${bfExtraText(b)}), ${nb} × $1.50 × ${k}`,c]);total+=c}
     if(l.second&&LUNCH.find(x=>x.id===l.choice)?.second){lines.push([`${day} · Lunch 2nd protein, ${nl} × $3`,3*nl]);total+=3*nl}
     if(dn.choice==="hanger"){lines.push([`${day} · Hanger steak, ${nd} × $2`,2*nd]);total+=2*nd}
     if(dn.choice==="salmon"){market=true;lines.push([`${day} · Salmon, ${nd} guests (market price)`,null])}
@@ -917,24 +931,27 @@ function renderMeal(d,di,m){
     const n=st.items.length;
     return `<div class="meal"><div class="mealhead"><h3>${m.label}</h3>${mealHeadTime(d,di,m,st.on)}</div>
       ${timeReqBlock(d,di,m)}
-      <label class="chk" style="width:fit-content"><input type="checkbox" id="${p}.on" data-path="${p}.on" ${st.on?"checked":""}> Include ${m.k==="amSnack"?"a":"an"} ${m.label.toLowerCase()} break</label>
+      <label class="chk mealon"><input type="checkbox" id="${p}.on" data-path="${p}.on" ${st.on?"checked":""}> Include ${m.k==="amSnack"?"a":"an"} ${m.label.toLowerCase()} break</label>
       ${st.on?`<div class="row" style="justify-content:space-between"><span class="small muted">Choose up to 3 items across any category.</span><span class="count">${n} / 3 chosen</span></div>
       <div class="snackcats" id="snk-${p}">${Object.entries(SNACKS).map(([cat,items])=>`<div><h4>${cat}</h4><div class="checks">${items.map(it=>{const on=st.items.includes(it);const full=!on&&n>=3;return `<label class="chk${full?" full":""}"><input type="checkbox" data-snack="${p}" value="${esc(it)}" ${on?"checked":""} ${full?"disabled":""}>${esc(it)}</label>`}).join("")}</div></div>`).join("")}</div>
       <div class="grid2">${guestsField(p)}</div>`:""}
       ${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
     </div>`;
   }
-  const sel=m.list.find(x=>x.id===st.choice);
+  const sel=m.list.find(x=>x.id===st.choice),on=st.choice!=="none";
   const vegOK=m.k!=="breakfast";
+  const inc=`<label class="chk mealon"><input type="checkbox" id="${p}.on" data-mealon="${p}" ${on?"checked":""}> Include ${m.label.toLowerCase()}</label>`;
+  if(!on)return `<div class="meal"><div class="mealhead"><h3>${m.label}</h3>${mealHeadTime(d,di,m,false)}</div>${inc}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div></div>`;
   return `<div class="meal"><div class="mealhead"><h3>${m.label}</h3>${mealHeadTime(d,di,m,!!sel)}</div>
+    ${inc}
     ${timeReqBlock(d,di,m)}
     <div class="mealgrid3">
       <label class="f" for="${p}.choice">Entrée
-        <select id="${p}.choice" data-path="${p}.choice"><option value="">Choose a ${m.label.toLowerCase()} entrée</option>${m.list.map(x=>`<option value="${x.id}" ${st.choice===x.id?"selected":""}>${esc(x.name)} - Includes ${esc(x.sides.toLowerCase())}, ${m.incl}${x.pp?` (+$${x.pp} pp)`:""}${x.note?` (${x.note})`:""}</option>`).join("")}<option value="none" ${st.choice==="none"?"selected":""}>Not needed this day</option></select></label>
+        <select id="${p}.choice" data-path="${p}.choice"><option value="">Choose a ${m.label.toLowerCase()} entrée</option>${m.list.map(x=>`<option value="${x.id}" ${st.choice===x.id?"selected":""}>${esc(x.name)} - Includes ${esc(x.sides.toLowerCase())}, ${m.incl}${x.pp?` (+$${x.pp} pp)`:""}${x.note?` (${x.note})`:""}</option>`).join("")}</select></label>
       ${sel?guestsField(p):"<span></span>"}
     </div>
     ${(()=>{if(!st.choice||st.choice==="none")return "";const rp=res.days.map((x,i)=>i!==di&&x.meals[m.k].choice===st.choice?fmtDate(x.date):null).filter(Boolean);return rp.length?`<span class="flag">Also served ${rp.join(", ")}</span>`:""})()}
-    ${sel&&m.k==="breakfast"?`<label class="chk" style="width:fit-content"><input type="checkbox" data-path="${p}.addon" ${st.addon?"checked":""}> Add sausage, bacon, eggs or potatoes (+$1.50 pp)</label>`:""}
+    ${sel&&m.k==="breakfast"?extrasBlock(p,st,sel):""}
     ${sel&&sel.meat?`<div class="row"><span class="small" style="font-weight:600">Meat</span>${seg("Fajita meat",p+".meat",[["Beef","Beef"],["Chicken","Chicken"]])}</div>`:""}
     ${sel&&sel.second?`<label class="chk" style="width:fit-content"><input type="checkbox" data-path="${p}.second" ${st.second?"checked":""}> Add a 2nd protein (+$3 pp)</label>`:""}
     ${vegOK&&st.choice&&st.choice!=="none"?`<div class="grid2">
@@ -944,13 +961,23 @@ function renderMeal(d,di,m){
   </div>`;
 }
 
+function dayStatus(d){const meals=MAINS.filter(k=>d.meals[k].choice!=="none").length,snacks=["amSnack","pmSnack"].filter(k=>d.meals[k].on).length;
+  if(!meals&&!snacks)return {empty:true,text:"No meals yet"};
+  return {empty:false,text:[meals?`${meals} meal${meals===1?"":"s"}`:"",snacks?`${snacks} snack${snacks===1?"":"s"}`:""].filter(Boolean).join(" · ")}}
+const emptyDays=r=>r.days.filter(d=>dayStatus(d).empty).map(d=>d.date);
+function extrasBlock(p,st,o){const pick=bfExtras(st),n=mealCount(st),note=exNote.get(p);
+  return `<div class="expick"><span class="exh">Extras <span class="muted">(optional, $1.50 per person each)</span></span>
+    <div class="checks">${o.x.map(v=>`<label class="chk"><input type="checkbox" data-extra="${p}" value="${v}" ${pick.includes(v)?"checked":""}> ${v}</label>`).join("")}</div>
+    <span class="small muted">${o.name} already include${/s$/.test(o.name)?"":"s"} ${o.has}.</span>
+    ${note?`<p class="exnote small">${esc(note)}</p>`:""}${bfLegacy(st)?`<div class="notice warn small">An add-on was requested before extras could be picked. Check the ones you want.</div>`:""}
+    ${pick.length?`<span class="mono small">${pick.length} extra${pick.length===1?"":"s"} × ${n} guests × $1.50 = $${(pick.length*n*EXTRA_PP).toFixed(2)}</span>`:""}</div>`}
 function peekValue(m,st,di){
   const alTxt="";
   if(m.snack){if(!st.on)return `<span class="muted">No break</span>`;return (st.items.length?esc(st.items.join(", ")):`<span class="pk-miss">Pick items</span>`)+`<span class="muted"> · ${mealCount(st)}</span>`+alTxt}
   if(!st.choice)return `<span class="pk-miss">Not chosen yet</span>`;
-  if(st.choice==="none")return `<span class="muted">Not needed</span>`;
+  if(st.choice==="none")return `<span class="muted">Not included</span>`;
   const x=m.list.find(o=>o.id===st.choice);if(!x)return "—";
-  const extra=[`${mealCount(st)} guests`];if(x.meat)extra.push(st.meat||"Chicken");if(m.k==="breakfast"&&st.addon)extra.push("+ add-on");if(x.second&&st.second)extra.push("+ 2nd protein");
+  const extra=[`${mealCount(st)} guests`];if(x.meat)extra.push(st.meat||"Chicken");if(m.k==="breakfast"&&bfExtraN(st))extra.push("+ "+bfExtraText(st));if(x.second&&st.second)extra.push("+ 2nd protein");
   if(st.vegChoice){const v=VEG.find(v=>v.id===st.vegChoice);extra.push(`${Number(st.vegCount)||0} ${v?v.name:"veg"}`)}
   return `<b>${esc(x.name)}</b><span class="muted"> · ${esc(extra.join(" · "))}</span>`+alTxt;
 }
@@ -1204,8 +1231,8 @@ function renderEditor(){
 
       <section class="card" id="sec-meals"><div class="sechead"><h2><span class="num">05</span>Meals &amp; snacks</h2><span class="small muted">Dining hall · water, lemonade and soda included</span></div>
         ${r.days.length?`
-        <div class="stickybar"><div class="daytabs" role="group" aria-label="Event day">${r.days.map((d,i)=>{const done=["breakfast","lunch","dinner"].every(k=>d.meals[k].choice);return `<span class="dtab${r.days.length>2&&i>=r.days.length/2?" right":""}"><button data-day="${i}" aria-pressed="${i===activeDay}" aria-describedby="peek-${i}"><span class="dot ${done?"done":""}"></span>${fmtDate(d.date)}</button>${peek(d,i)}</span>`}).join("")}</div></div>
-        <div class="row" style="justify-content:space-between"><h3>${fmtDate(r.days[activeDay].date,{weekday:"long",month:"long",day:"numeric"})}</h3>${activeDay&&!locked?`<button class="btn" data-copyday="${activeDay}">Copy ${fmtDate(r.days[activeDay-1].date,{weekday:"long"})}'s meals</button>`:""}</div>
+        <div class="stickybar"><div class="daytabs" role="group" aria-label="Event day">${r.days.map((d,i)=>{const done=["breakfast","lunch","dinner"].every(k=>d.meals[k].choice),dst=dayStatus(d);return `<span class="dtab${r.days.length>2&&i>=r.days.length/2?" right":""}"><button data-day="${i}" aria-pressed="${i===activeDay}" aria-describedby="peek-${i}"><span class="dot ${done&&!dst.empty?"done":""}"></span><span class="dtl">${fmtDate(d.date)}<span class="dts${dst.empty?" none":""}">${dst.text}</span></span></button>${peek(d,i)}</span>`}).join("")}</div></div>
+        <div class="row" style="justify-content:space-between"><h3>${fmtDate(r.days[activeDay].date,{weekday:"long",month:"long",day:"numeric"})}</h3></div>
         ${MEALS.map(m=>renderMeal(r.days[activeDay],activeDay,m)).join("")}
         <div class="daynav">${activeDay?`<button class="btn" data-day="${activeDay-1}" data-top>← ${fmtDate(r.days[activeDay-1].date)}</button>`:"<span></span>"}${activeDay<r.days.length-1?`<button class="btn primary" data-day="${activeDay+1}" data-top>Next: ${fmtDate(r.days[activeDay+1].date)} →</button>`:`<span class="small muted">Last day of your event</span>`}</div>
         <p class="small muted" style="margin:0">Meals and snacks are served at the times shown. Need a different time? Use “Request a different time” on that meal or snack; Aspen Grove approves it and the time updates here. Need a meal boxed or served somewhere else? Mention it in Additional comments. Changes may carry a fee. When several groups are on site, Aspen Grove may pre-select meals.</p>`
@@ -1288,7 +1315,7 @@ function mealLine(m,st){
   const x=m.list.find(i=>i.id===st.choice);if(!x)return "—";
   const bits=[`<b>${esc(x.name)}</b>`];
   if(x.meat)bits.push(esc(st.meat||"Chicken"));
-  if(m.k==="breakfast"&&st.addon)bits.push("+ breakfast add-on");
+  if(m.k==="breakfast"&&bfExtraN(st))bits.push("+ extras: "+esc(bfExtraText(st)));
   if(x.second&&st.second)bits.push("+ 2nd protein");
   if(x.pp)bits.push(`+$${x.pp} pp`);
   if(x.note)bits.push(esc(x.note));
@@ -1414,8 +1441,14 @@ function renderLockbar(){
   const miss=missingItems(res);
   if(miss.length)return `<div class="notice bad needbox"><b>${miss.length} item${miss.length===1?"":"s"} left before you can lock in.</b> <span class="small">Select one to go straight to it. Missing fields are outlined in red.</span><ul class="missing small">${miss.slice(0,8).map((m,i)=>`<li><button type="button" class="needlink" data-need="${i}">${esc(m.t)}</button></li>`).join("")}${miss.length>8?`<li>and ${miss.length-8} more <button type="button" class="needlink" data-need="8">Go to the next one</button></li>`:""}</ul></div>
     <div class="row"><button class="btn gold" disabled>Lock in reservation</button><span class="small muted">Your draft is saved. Come back with code <span class="mono">${esc(res.code)}</span>.</span></div>`;
-  if(confirmingLock)return `<div class="confirm"><b>Lock in final details for ${esc(res.group)}?</b><span class="small">After you lock in, the form becomes read-only. Aspen Grove staff will need to reopen it for any changes.</span>
-    <div class="row"><button class="btn primary" id="dolock">Yes, lock in</button><button class="btn" id="cancellock">Keep editing</button></div></div>`;
+  if(confirmingLock){const ok=res.noMealDays||[],empty=emptyDays(res),open=empty.filter(d=>!ok.includes(d));
+    const list=`<div class="tablewrap"><table class="sumtable mealcheck"><tbody>${res.days.map((d,i)=>{const st=dayStatus(d),inc=MEALS.filter(m=>m.snack?d.meals[m.k].on:d.meals[m.k].choice!=="none").map(m=>m.label.toLowerCase());
+      return `<tr class="${st.empty?"emptyday":""}"><th scope="row">${fmtDate(d.date)}</th><td>${st.empty?`<b>No meals or snacks included</b> <button type="button" class="linkbtn" data-goday="${i}">Go to ${fmtDate(d.date,{weekday:"long"})}</button>`:esc(capFirst(inc.join(", ")))}</td></tr>`}).join("")}</tbody></table></div>`;
+    const conf=empty.map(dt=>`<label class="chk emptyok"><input type="checkbox" data-emptyok="${dt}" ${ok.includes(dt)?"checked":""}> Yes, we don't need any meals on ${fmtDate(dt,{weekday:"long",month:"short",day:"numeric"})}</label>`).join("");
+    return `<div class="confirm"><b>Lock in final details for ${esc(res.group)}?</b><span class="small">Check the meals included each day. Anything not listed won't be served.</span>${list}
+    ${empty.length?`<div class="notice warn small"><b>${empty.length===1?"One day has":empty.length+" days have"} no meals or snacks.</b> If your group won't eat at Aspen Grove then, confirm below. Otherwise, go back and include them.<div class="checks" style="margin-top:8px">${conf}</div></div>`:""}
+    <span class="small">After you lock in, the form becomes read-only. Aspen Grove staff will need to reopen it for any changes.</span>
+    <div class="row"><button class="btn primary" id="dolock" ${open.length?"disabled":""}>Yes, lock in</button><button class="btn" id="cancellock">Keep editing</button>${open.length?`<span class="small muted">Confirm the day${open.length===1?"":"s"} without meals to continue</span>`:""}</div></div>`}
   return `<div class="notice ok">Everything required is filled in.</div><div class="row"><button class="btn gold" id="lock">Lock in reservation</button></div>`;
 }
 let showNeeds=false;
@@ -1533,6 +1566,12 @@ app.addEventListener("change",e=>{
   if(el.dataset.snack!==undefined){const p=el.dataset.snack;const arr=getPath(res,p+".items");
     if(el.checked){if(arr.length<3)arr.push(el.value)}else{const i=arr.indexOf(el.value);if(i>=0)arr.splice(i,1)}
     rerender();scheduleSave();return}
+  if(el.dataset.mealon!==undefined){const p=el.dataset.mealon,st=getPath(res,p);
+    if(el.checked)st.choice=st.lastChoice&&st.lastChoice!=="none"?st.lastChoice:"";else{if(st.choice!=="none")st.lastChoice=st.choice;st.choice="none"}
+    st.auto=false;delete st.prev;rerender();scheduleSave();if(el.checked&&!st.choice)document.getElementById(p+".choice")?.focus();return}
+  if(el.dataset.extra!==undefined){const p=el.dataset.extra,st=getPath(res,p);st.extras=(st.extras||[]).filter(v=>v!==el.value);if(el.checked){st.extras.push(el.value);st.addon=false}
+    exNote.delete(p);rerender();scheduleSave();return}
+  if(el.dataset.emptyok!==undefined){const a=res.noMealDays=(res.noMealDays||[]).filter(d=>d!==el.dataset.emptyok);if(el.checked)a.push(el.dataset.emptyok);scheduleSave();refreshLive();return}
   if(el.dataset.bodays!==undefined||el.dataset.boav!==undefined){const b=res.breakouts[+(el.dataset.bodays??el.dataset.boav)],arr=el.dataset.bodays!==undefined?b.days:b.av,i=arr.indexOf(el.value);
     if(el.checked&&i<0)arr.push(el.value);if(!el.checked&&i>=0)arr.splice(i,1);b.days.sort();scheduleSave();refreshLive();return}
   if(el.dataset.av!==undefined){const i=res.av.indexOf(el.value);if(el.checked&&i<0)res.av.push(el.value);if(!el.checked&&i>=0)res.av.splice(i,1);scheduleSave();refreshLive();return}
@@ -1546,6 +1585,9 @@ app.addEventListener("change",e=>{
     if(el.dataset.path==="startDate"&&(!res.endDate||res.endDate<res.startDate))res.endDate=res.startDate;
     syncDays();
   }
+  {const bm=el.dataset.path.match(/^(days\.\d+\.meals\.breakfast)\.choice$/);if(bm){const p=bm[1],st=getPath(res,p),o=BREAKFAST.find(x=>x.id===st.choice);
+    if(o){const gone=(st.extras||[]).filter(v=>!o.x.includes(v));st.extras=(st.extras||[]).filter(v=>o.x.includes(v));
+      if(gone.length)exNote.set(p,`${capFirst(gone.join(" and ").toLowerCase())} ${gone.length>1?"were":"was"} removed from your extras: ${o.name.toLowerCase()} already include${/s$/.test(o.name)?"":"s"} ${gone.length>1?"them":"it"}.`);else exNote.delete(p)}}}
   if(el.dataset.path.endsWith(".vegChoice")){const cp=el.dataset.path.replace("vegChoice","vegCount");if(!v)setPath(res,cp,0);else if(!Number(getPath(res,cp))&&rosterVeg())setPath(res,cp,rosterVeg())}
   if(/^days\.\d+\.meals\.\w+\.(choice|on)$/.test(el.dataset.path)){const st=getPath(res,el.dataset.path.replace(/\.(choice|on)$/,""));st.auto=false;delete st.prev}
   if(el.dataset.path==="headcount"){setTimeout(rerender,0)}  // after the tapped field takes focus, so rerender can keep it
@@ -1591,7 +1633,6 @@ app.addEventListener("click",async e=>{
   if(b.dataset.goreview!==undefined){clearTimeout(saveTimer);if(saveState==="Saving…")saveNow();confirmingLock=false;renderReview();window.scrollTo(0,0);return}
   if(b.dataset.editsec){const sec=b.dataset.editsec;view="edit";renderEditor();const el=document.getElementById("sec-"+sec);if(el)el.scrollIntoView();else window.scrollTo(0,0);return}
   if(b.dataset.day){activeDay=Number(b.dataset.day);if("top" in b.dataset){renderEditor();document.getElementById("sec-meals")?.scrollIntoView()}else rerender();return}
-  if(b.dataset.copyday){const i=Number(b.dataset.copyday);if(i>0){res.days[i].meals=JSON.parse(JSON.stringify(res.days[i-1].meals));rerender();scheduleSave();toast("Copied "+fmtDate(res.days[i-1].date)+" to "+fmtDate(res.days[i].date))}return}
   if(b.dataset.pickfile!==undefined){document.getElementById("rosterfile")?.click();return}
   if(b.id==="dltemplate"){const ns=await dlNs;if(!ns){showTpl=true;rerender();return}
     try{await ns.save({filename:`${res.code}-attendee-list.csv`,data:templateCSV()});toast("Template saved")}catch(err){if(err&&err.code==="declined")return;showTpl=true;rerender()}return}
@@ -1620,6 +1661,7 @@ app.addEventListener("click",async e=>{
     const at=Math.max(...res.allergies.map((a,i)=>a.gid===to?i:-1))+1;res.allergies.splice(at,0,...moving);rerender();scheduleSave();toast(`Added to ${tg.name}`);return}
   if(b.dataset.delallergy){res.allergies.splice(Number(b.dataset.delallergy),1);rerender();scheduleSave();return}
   if(b.id==="lock"){confirmingLock=true;refreshLive();return}
+  if(b.dataset.goday!==undefined){confirmingLock=false;activeDay=Number(b.dataset.goday);view="edit";renderEditor();document.getElementById("sec-meals")?.scrollIntoView({block:"start"});return}
   if(b.id==="cancellock"){confirmingLock=false;refreshLive();return}
   if(b.id==="dolock"){
     clearTimeout(saveTimer);
@@ -2029,7 +2071,7 @@ function prodItems(m,es){
     es.forEach(x=>{if(x.veg){const v=VEG.find(v=>v.id===x.st.vegChoice);add((v?v.name:"Vegetarian plate")+" (vegetarian)",x.r.group,"veg",x.veg)}});
     entrees.forEach(e=>e.o.sides.split(/,\s*/).forEach(sd=>e.groups.forEach(g=>add(capFirst(sd.trim()),g,"side"))));
     es.forEach(x=>{const o=m.list.find(o=>o.id===x.st.choice);if(!o)return;
-      if(x.st.addon&&m.k==="breakfast")add("Breakfast add-on (sausage, bacon, eggs or potatoes)",x.r.group,"side");
+      if(m.k==="breakfast"){bfExtras(x.st).forEach(v=>add("Extra: "+v.toLowerCase(),x.r.group,"side"));if(bfLegacy(x.st))add("Breakfast add-on (items not picked; ask the group)",x.r.group,"side")}
       if(x.st.second&&o.second){const meat=x.st.meat||"Chicken";add(capFirst(o.meat?`2nd protein (${meat==="Beef"?"chicken":"beef"}) for fajitas`:`2nd protein for ${o.name.toLowerCase()}`),x.r.group,"side")}});
     (m.incl||"").split(/,\s*/).filter(Boolean).forEach(sd=>es.forEach(x=>add(capFirst(sd),x.r.group,"incl")));
   }
@@ -2043,7 +2085,7 @@ function prodItems(m,es){
     entrees.forEach(e=>{rows.push({kind:"entree",label:e.label,groups:e.groups});
       const subs=e.o.sides.split(/,\s*/).map(sd=>capFirst(sd.trim()));
       es.forEach(x=>{const o=m.list.find(o=>o.id===x.st.choice);if(o!==e.o||(o.meat&&(x.st.meat||"Chicken")!==e.label.match(/\((\w+)\)$/)?.[1]))return;
-        if(x.st.addon&&m.k==="breakfast"&&!subs.includes("Add-on: sausage, bacon, eggs or potatoes"))subs.push("Add-on: sausage, bacon, eggs or potatoes");
+        if(m.k==="breakfast"){bfExtras(x.st).forEach(v=>{const l="Extra: "+v.toLowerCase();if(!subs.includes(l))subs.push(l)});if(bfLegacy(x.st)&&!subs.includes("Add-on: items not picked"))subs.push("Add-on: items not picked")}
         if(x.st.second&&o.second){const l=o.meat?`2nd protein: ${(x.st.meat||"Chicken")==="Beef"?"chicken":"beef"}`:"2nd protein";if(!subs.includes(l))subs.push(l)}});
       subs.forEach(l=>rows.push({kind:"side",label:l,groups:new Set()}))});
     const veg=[...bag.values()].filter(i=>i.kind==="veg");
@@ -2169,11 +2211,11 @@ function weekView(){
 function downloadWeek(){if(!weekStart)return;saveFile(`Meal schedule week of ${weekStart}.html`,printableDoc(`Meal schedule · week of ${weekStart}`,weekBody(weekStart)),"Meal schedule saved. Open it and press Print.")}
 
 // ---------- meal schedule: one page per day ----------
-function menuKey(m,st){return m.snack?st.items.join("|"):[st.choice,st.meat||"",st.addon?1:0,st.second?1:0].join("|")}
+function menuKey(m,st){return m.snack?st.items.join("|"):[st.choice,st.meat||"",bfExtraText(st),st.second?1:0].join("|")}
 function menuFull(m,st){
   if(m.snack)return `<b>${esc(st.items.join(", ")||"Items not picked")}</b>`;
   const o=m.list.find(o=>o.id===st.choice);if(!o)return esc(st.choice);
-  const extra=[st.addon?"add-on +$1.50 pp":"",st.second?"2nd protein +$3 pp":""].filter(Boolean);
+  const extra=[bfExtraN(st)?"extras: "+bfExtraText(st)+" (+$1.50 pp each)":"",st.second?"2nd protein +$3 pp":""].filter(Boolean);
   return `<b>${esc(o.name)}${o.meat?` (${esc(st.meat||"Chicken")})`:""}</b> <span class="muted">— ${esc(o.sides.toLowerCase())}${m.incl?`; ${esc(m.incl)}`:""}</span>${extra.length?` <span class="miss">${esc(extra.join(", "))}</span>`:""}`}
 function dayPageBody(date,partial){
   const svc=MEALS.map(m=>({m,es:weekEntries(date,m)})).filter(x=>x.es.length);
@@ -2399,7 +2441,7 @@ function demoSeeds(){
       setup:"rounds",roomChanges:"no",av:["Projector","Screen","Microphone"],onsite:{same:true,name:"",phone:""},attendeeNotes:"We arrive Monday afternoon; dinner is our first meal. Breakfast Friday is our last.",
       status:"locked",lockedAt:ago(4),checklist:{schedule:true,payment:true},breakoutNeed:"yes",walk:{...blankWalk(),want:"no"}},
     (d)=>{d[0].breakfast.choice="none";d[0].lunch.choice="none";d[0].dinner.choice="pork";d[0].dinner.vegChoice="peppers";d[0].dinner.vegCount=2;
-      d[1].breakfast.choice="pancakes";d[1].breakfast.addon=true;snack(d[1].amSnack,["Muffins","Whole Fruit"]);d[1].lunch.choice="fajitas";d[1].lunch.meat="Chicken";d[1].lunch.vegChoice="peppers";d[1].lunch.vegCount=2;
+      d[1].breakfast.choice="pancakes";d[1].breakfast.extras=["Bacon"];snack(d[1].amSnack,["Muffins","Whole Fruit"]);d[1].lunch.choice="fajitas";d[1].lunch.meat="Chicken";d[1].lunch.vegChoice="peppers";d[1].lunch.vegCount=2;
       snack(d[1].pmSnack,["Veggie Tray","Cookie Tray"]);d[1].dinner.choice="cordon";
       d[2].breakfast.choice="waffles";d[2].lunch.choice="soupsand";snack(d[2].pmSnack,["Chips & Salsa","Brownies & Bars"]);d[2].dinner.choice="grilled";
       d[3].breakfast.choice="omelets";d[3].breakfast.timeReq={time:"07:30",note:"Early start for our service project",at:ago(6)};d[3].lunch.choice="frenchdip";d[3].dinner.choice="hanger";
@@ -2460,7 +2502,8 @@ document.getElementById("banner").addEventListener("change",async e=>{
 
 // ---------- boot ----------
 document.getElementById("tab-org").onclick=async()=>{if(view==="edit"||view==="review"){clearTimeout(saveTimer);if(dirty)saveNow()}await saving;renderHome()};
-document.getElementById("tab-staff").onclick=async()=>{if(view==="edit"||view==="review"){clearTimeout(saveTimer);if(dirty)saveNow()}await saving;setTab("staff");loadStaff()};
+// Conference Services works as a home button: it always opens Groups (Current & upcoming).
+document.getElementById("tab-staff").onclick=async()=>{if(view==="edit"||view==="review"){clearTimeout(saveTimer);if(dirty)saveNow()}await saving;pickStaffTab("groups");pastView=false;pastQuery="";staffMsg=null;startOpen=false;setTab("staff");loadStaff()};
 function setTab(t){document.getElementById("tab-org").setAttribute("aria-pressed",t==="org");document.getElementById("tab-staff").setAttribute("aria-pressed",t==="staff")}
 const ready=store.init();
 (async()=>{try{const u=window.claude&&claude.use?await claude.use("user"):null;if(!u)return;who.u=u;

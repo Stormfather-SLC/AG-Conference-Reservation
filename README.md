@@ -14,7 +14,7 @@ A prototype web form that replaces the paper **Conference Final Details** form a
 - Create a reservation, or open one from an invitation link (`…#AG-XXXXX`).
 - Fill in six sections: group and contact, attendee notes, rooms and A/V (including breakout rooms and an optional walk-through request), allergies (with an optional guest-list upload), meals and snacks by day, and comments.
 - Allergies show as a compact list, one line per guest with all their restrictions (and a search box once there are more than 15). Add a guest or Edit opens a dialog: the guest's name, a multi-select of allergens and diets plus anything not listed, and one "How serious" choice for each (intolerance; mild, severe or airborne allergy; medically prescribed). A name that's already listed offers to add to that guest instead. For large groups, the guest-list upload fills the list in one step.
-- Menu rules are built in: 3-item snack limit, vegetarian plates, fajita meat, add-ons, and an upgrade-cost estimate.
+- Menu rules are built in: each meal and snack is checked to include it (nothing is included by default), 3-item snack limit, vegetarian plates, fajita meat, breakfast extras ($1.50 per person for each, offering only what that breakfast doesn't already include), and an upgrade-cost estimate. Each day tab shows how many meals and snacks are included, and lock-in asks the organizer to confirm any day with none.
 - Review everything on one page, then lock in. The form becomes read-only.
 - Anything still missing is listed above the Lock in button. Each item links straight to the field that needs it, missing fields are outlined in red, and a "Go to next" button in the side rail steps through what's left.
 - Request a different time for any meal or snack with **Change time** in its header; the request covers the whole meal for every guest. The header and a notice under it show the request as pending until Aspen Grove approves or declines it, and the form then shows the outcome.
@@ -22,7 +22,7 @@ A prototype web form that replaces the paper **Conference Final Details** form a
 
 ### Conference Services
 
-Sections are grouped by who uses them: **Groups** (office and programs), **Kitchen**, and **Setup** (Rooms & A/V, Walk-throughs), with Backup & system check off to the side. Each browser remembers its last section, so each team lands on its own view.
+Sections are grouped by who uses them: **Groups** (office and programs), **Kitchen**, and **Setup** (Rooms & A/V, Walk-throughs), with Backup & system check off to the side. The Conference Services button works as a home button: it always opens Groups (Current & upcoming). Within Kitchen and Setup, the browser remembers which page was last used.
 
 - **Groups:** start a group from booking details and get a ready-to-send invitation email. See every group's status (Not started, In progress, Locked in, Past deadline) and progress. Copy a reminder that lists what's missing. Reopen or delete a reservation. An Updated column shows when each group last changed, and a dot marks groups the organizer changed since you last opened them (remembered per browser; opening the group or "Mark all as seen" clears it). The list shows current and upcoming groups; groups move to **Past groups** (read-only, searchable, Final sheet only) the morning after their last day.
 - **Final sheet:** a printable one-page summary of each group.

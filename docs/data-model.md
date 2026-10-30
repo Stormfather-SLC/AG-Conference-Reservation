@@ -34,6 +34,7 @@ The page stores data in the artifact's shared database. There are three collecti
 | `rosterFile`, `rosterAt` | string | Name and upload time of the imported guest list |
 | `days` | Day[] | One per event day; see below |
 | `checklist` | `{schedule, payment}` | Booleans |
+| `noMealDays` | string[] | Event dates the organizer confirmed need no meals or snacks. Lock-in asks for this for any day with nothing included |
 | `history` | Event[] | Change history, newest last, capped at 80 |
 | `createdAt`, `updatedAt`, `lockedAt` | ISO timestamp | `lockedAt` is null until locked |
 
@@ -89,10 +90,12 @@ Severe means `type` is `Medical`, or the severity is `Severe` or `Airborne`. A g
 
 | Field | Notes |
 |---|---|
-| `choice` | Menu item id, `"none"` (not needed), or `""` (not chosen yet) |
+| `choice` | Menu item id, `"none"` (meal not included; the default for every new day), or `""` (included, entrée not chosen yet) |
+| `lastChoice` | The entrée chosen before the organizer unchecked the meal, so rechecking it restores the choice |
 | `count` | Guests at this meal; `""` means use `headcount` |
 | `meat` | `"Beef"` or `"Chicken"` (fajitas) |
-| `addon` | Breakfast add-on, +$1.50 per person |
+| `extras` | Breakfast extras picked: `Sausage`, `Bacon`, `Eggs`, `Potatoes`, $1.50 per person for each. Only extras the breakfast doesn't already include are offered (Pancakes: Bacon; French Toast and Waffles: Sausage, Eggs, Potatoes; Omelets: Sausage, Bacon; Quiche: Bacon, Potatoes). Switching breakfasts drops extras the new one already includes |
+| `addon` | Older reservations only: `true` means an add-on was requested before extras could be picked. Counted as one $1.50 extra and shown as "items not picked" until the organizer picks extras |
 | `second` | Second protein, +$3 per person |
 | `vegChoice`, `vegCount` | Vegetarian option id and number of plates |
 
