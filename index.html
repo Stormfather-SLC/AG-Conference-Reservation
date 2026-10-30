@@ -317,6 +317,11 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .sheetwrap{overflow-x:auto}
 .kitchenpick{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
 .kitchenpick select{min-width:240px}
+.codebox{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:6px;background:var(--bg);overflow:hidden}
+.codebox:focus-within{outline:3px solid var(--aspen);outline-offset:2px}
+.codepre{display:flex;align-items:center;padding:0 2px 0 10px;font-family:var(--mono);color:var(--muted);user-select:none}
+.codebox input{border:0!important;background:transparent!important;padding-left:2px!important;letter-spacing:.06em}
+.codebox input:focus-visible{outline:0}
 .glisthead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .glisthead input{max-width:260px}
 .glist{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--r)}
@@ -511,7 +516,8 @@ function fmtTime(t){if(!t)return"";const[h,m]=t.split(":").map(Number);return ((
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function daysBetween(a,b){return Math.round((startOfDay(b)-startOfDay(a))/864e5)}
 function newCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<5;i++)s+=a[Math.floor(Math.random()*a.length)];return "AG-"+s}
-function normCode(s){s=(s||"").trim().toUpperCase().replace(/\s+/g,"");if(s&&!s.startsWith("AG-"))s="AG-"+s.replace(/^AG/,"");return s}
+function codeBody(s){s=String(s||"").toUpperCase().replace(/[^A-Z0-9]/g,"");return s.length===7&&s.startsWith("AG")?s.slice(2):s}
+function normCode(s){const b=codeBody(s);return b?"AG-"+b:""}
 function deadlineOf(r){const d=parseDate(r.startDate);if(!d)return null;const x=new Date(d);x.setDate(x.getDate()-DEADLINE_DAYS);return x}
 function blankDay(date){const meals={};MEALS.forEach(m=>{meals[m.k]=m.snack?{on:false,time:m.time,items:[],count:""}:{choice:"",time:m.time,addon:false,second:false,meat:"Chicken",vegChoice:"",vegCount:0,count:"",service:"hall",location:""}});return {date,meals}}
 function blankRes(code){return {code,status:"draft",group:"",contact:"",phone:"",email:"",headcount:"",startDate:"",endDate:"",attendeeNotes:"",setup:"",roomChanges:"",setupNotes:"",noAV:false,av:[],avOther:"",days:[],allergies:[],comments:"",onsite:{same:false,name:"",phone:""},firstMeal:"",lastMeal:"",roster:null,breakoutNeed:"",breakouts:[],walk:blankWalk(),checklist:{schedule:false,payment:false},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),lockedAt:null}}
@@ -632,7 +638,7 @@ const store={db:null,mode:"pending",
  }};
 
 // ---------- app state ----------
-let view="home", res=null, activeDay=0, confirmingLock=false, saveState="", saving=Promise.resolve(), saveTimer=null, staffRows=null, staffUnsub=null, homeMsg="", pendingDelete=null, pendingImport=null, rosterError="", showTpl=false, plan=null, planSaveT=null, planState="", staffInfo=null;
+let homeCode="", view="home", res=null, activeDay=0, confirmingLock=false, saveState="", saving=Promise.resolve(), saveTimer=null, staffRows=null, staffUnsub=null, homeMsg="", pendingDelete=null, pendingImport=null, rosterError="", showTpl=false, plan=null, planSaveT=null, planState="", staffInfo=null;
 const app=document.getElementById("app");
 
 document.addEventListener("toggle",e=>{const d=e.target;if(!d.classList||!d.classList.contains("amenu")||!d.open)return;
@@ -720,20 +726,25 @@ function renderHome(){
     </div>
     <form class="panel" id="lookup">
       <h2>Continue a reservation</h2>
-      <label class="f" for="code-in">Reservation code<span class="hint">Looks like AG-7KQ2M</span>
-        <input id="code-in" type="text" class="mono" autocomplete="off" placeholder="AG-" required></label>
+      <label class="f" for="code-in">Reservation code<span class="hint">The 5 characters after AG- in your email, like 7KQ2M</span>
+        <span class="codebox"><span class="codepre" aria-hidden="true">AG-</span><input id="code-in" type="text" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Reservation code, the 5 characters after AG-" value="${esc(homeCode)}" required></span></label>
       <div class="row"><button class="btn primary" type="submit">Open reservation</button>
       <button class="btn ghost" type="button" id="example">Open the example (AG-DEMO1)</button></div>
       ${homeMsg?`<div class="notice bad">${esc(homeMsg)}</div>`:""}
     </form>
   </div>`;
-  homeMsg="";
+  homeMsg="";homeCode="";
   document.getElementById("create").onclick=async()=>{
     let code=newCode();for(let i=0;i<3&&await store.get(code).catch(()=>null);i++)code=newCode();
     res=blankRes(code);actingAs="organizer";logEvent(res,"Created by organizer");
     try{await store.put(res)}catch(e){toast("Couldn't create the reservation. Try again in a moment.");return}
     openEditor(res);toast("Reservation "+code+" created");
   };
+  {const ci=document.getElementById("code-in");
+   // Pasting or typing the full "AG-7KQ2M" leaves just "7KQ2M" in the box, since AG- is shown in front of it.
+   ci.oninput=()=>{const raw=ci.value.toUpperCase().replace(/[^A-Z0-9]/g,"");if(raw.length===7&&raw.startsWith("AG")){ci.value=raw.slice(2);return}
+     if(ci.value!==ci.value.toUpperCase()){const p=ci.selectionStart;ci.value=ci.value.toUpperCase();ci.setSelectionRange(p,p)}};
+   if(homeCode){ci.focus();ci.select()}}
   document.getElementById("lookup").onsubmit=e=>{e.preventDefault();openCode(document.getElementById("code-in").value)};
   document.getElementById("example").onclick=()=>openCode("AG-DEMO1");
 }
@@ -741,7 +752,7 @@ async function openCode(raw){
   const code=normCode(raw);if(!code){return}
   let r=null;try{r=await store.get(code)}catch(e){}
   if(!r&&code==="AG-DEMO1"&&store.mode==="local"){r=localExample();await store.put(r).catch(()=>{})}
-  if(!r){homeMsg=`No reservation found for ${code}. Check the code in your confirmation email, or create a new one.`;renderHome();return}
+  if(!r){homeCode=code.slice(3);homeMsg=`No reservation found for ${code}. Check the code in your confirmation email, or create a new one.`;renderHome();return}
   openEditor(r);
 }
 
