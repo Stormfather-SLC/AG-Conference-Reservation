@@ -52,6 +52,7 @@ What's in this phase, what's next, and what's parked: [docs/roadmap.md](docs/roa
 
 - **Inside Claude (the live page):** shared saving, downloads and the change history all work.
 - **Opened directly in a browser:** the page runs in demo mode and saves to that browser only. This is useful for reviewing screens and text, not for real use.
+- **Published page, not signed in:** the page also runs in demo mode. Reservations made there are copied into the shared record the next time that person opens the page signed in on the same browser (the local copy is kept aside, not deleted).
 
 ## Known limits (pilot)
 

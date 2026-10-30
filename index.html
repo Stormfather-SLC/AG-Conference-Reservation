@@ -600,6 +600,20 @@ const store={db:null,mode:"pending",
  async init(){
   try{ if(window.claude&&claude.use){ this.db=await claude.use("db") } }catch(e){ this.db=null }
   this.mode=this.db?"db":"local"; renderBanner();
+  if(this.db)await this.moveLocal();
+ },
+ // Reservations made before signing in were saved in this browser only. Once signed in, copy them into the shared
+ // record (unless the shared copy is newer), then set the local copy aside under "agmoved:" so it is never copied twice.
+ async moveLocal(){
+  let keys=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith("agres:")&&k!=="agres:AG-DEMO1")keys.push(k)}}catch(e){return}
+  if(!keys.length)return;let moved=0;
+  for(const k of keys){try{const r=JSON.parse(localStorage.getItem(k));if(!r||!r.code)continue;
+    const s=await this.db.doc("reservations/"+r.code).get(),cur=s.exists?s.data():null;
+    if(!cur||(cur.updatedAt||"")<(r.updatedAt||"")){await this.db.doc("reservations/"+r.code).set(JSON.parse(JSON.stringify(r)));moved++}
+    const sk="agstaff:"+r.code,sn=localStorage.getItem(sk);
+    if(sn){const ss=await this.db.doc("staffnotes/"+r.code).get();if(!ss.exists)await this.db.doc("staffnotes/"+r.code).set(JSON.parse(sn));localStorage.setItem("agmoved:staff:"+r.code,sn);localStorage.removeItem(sk)}
+    localStorage.setItem("agmoved:"+r.code,localStorage.getItem(k));localStorage.removeItem(k)}catch(e){}}
+  if(moved)setTimeout(()=>toast(`Added ${moved} reservation${moved===1?"":"s"} from this browser to the shared record`),300);
  },
  async get(code){
   await ready;
@@ -660,7 +674,7 @@ addEventListener("scroll",()=>document.querySelectorAll("details.amenu[open]").f
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2600)}
 function renderBanner(){
   const b=document.getElementById("banner");
-  b.innerHTML=store.mode==="local"?`<div class="notice warn" style="margin-bottom:16px">Demo mode: reservations are saved in this browser only. Open the published page while signed in to share them with Aspen Grove staff.</div>`:"";
+  b.innerHTML=store.mode==="local"?`<div class="notice warn" style="margin-bottom:16px">You're not signed in, so reservations are saved in this browser only. Sign in to Claude (top right) to see the shared Aspen Grove record; anything you create here is added to it when you sign in on this browser.</div>`:"";
 }
 
 function isLocked(){return res&&res.status==="locked"}
