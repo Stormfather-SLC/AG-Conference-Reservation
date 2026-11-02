@@ -507,7 +507,7 @@ const DINNER=[
  {id:"grilled",name:"Grilled Chicken",sides:"Parmesan basil orzo, grilled asparagus"},
  {id:"parm",name:"Chicken Parmesan",sides:"Spaghetti, steamed broccoli"},
  {id:"hanger",name:"Hanger Steak",sides:"Demi-glace, herb roasted potatoes, steamed green beans",pp:2}];
-const VEG=[{id:"veglasagna",name:"Vegetarian Lasagna"},{id:"peppers",name:"Stuffed Bell Peppers"},{id:"padthai",name:"Tofu Pad Thai"},{id:"portobello",name:"Stuffed Portobello"}];
+const VEG=[{id:"chef",name:"Chef's Choice"},{id:"veglasagna",name:"Vegetarian Lasagna"},{id:"peppers",name:"Stuffed Bell Peppers"},{id:"padthai",name:"Tofu Pad Thai"},{id:"portobello",name:"Stuffed Portobello"}];
 const SNACKS={
  Fresh:["Whole Fruit","Mixed Fruit Tray","Veggie Tray","Relish Tray","Bruschetta","Caprese Skewers"],
  Dry:["Bagged Apple Chips","Mixed Nuts","Pub Mix","Chips","Granola Bars","Trail Mix Snack Bags","Pretzels"],
@@ -542,7 +542,7 @@ function newCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i
 function codeBody(s){s=String(s||"").toUpperCase().replace(/[^A-Z0-9]/g,"");return s.length===7&&s.startsWith("AG")?s.slice(2):s}
 function normCode(s){const b=codeBody(s);return b?"AG-"+b:""}
 function deadlineOf(r){const d=parseDate(r.startDate);if(!d)return null;const x=new Date(d);x.setDate(x.getDate()-DEADLINE_DAYS);return x}
-function blankDay(date){const meals={};MEALS.forEach(m=>{meals[m.k]=m.snack?{on:false,time:m.time,items:[],count:""}:{choice:"none",time:m.time,addon:false,extras:[],second:false,meat:"Chicken",vegChoice:"",vegCount:0,count:"",service:"hall",location:""}});return {date,meals}}
+function blankDay(date){const meals={};MEALS.forEach(m=>{meals[m.k]=m.snack?{on:false,time:m.time,items:[],count:""}:{choice:"none",time:m.time,addon:false,extras:[],second:false,meat:"Chicken",vegChoice:m.k==="breakfast"?"":"chef",vegCount:0,count:"",service:"hall",location:""}});return {date,meals}}
 function blankRes(code){return {code,status:"draft",group:"",contact:"",phone:"",email:"",headcount:"",startDate:"",endDate:"",attendeeNotes:"",setup:"",roomChanges:"",setupNotes:"",noAV:false,av:[],avOther:"",days:[],allergies:[],comments:"",onsite:{same:false,name:"",phone:""},firstMeal:"",lastMeal:"",roster:null,breakoutNeed:"",breakouts:[],walk:blankWalk(),checklist:{schedule:false,payment:false},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),lockedAt:null}}
 function blankWalk(){return {want:"",choices:[{date:"",time:""},{date:"",time:""}],people:"",notes:""}}
 function blankBreakout(){return {id:"b"+Math.random().toString(36).slice(2,8),name:"",people:"",days:[],start:"",end:"",setup:"",av:[],notes:""}}
@@ -922,6 +922,7 @@ function timeReqBlock(d,di,m){
   if(state==="pending")return `<div class="notice warn treqnote"><span><b>${Name} requested at ${fmtTime(q.time)} for ${who}.</b> Waiting for Aspen Grove to approve. Until then it’s served at ${fmtTime(cur)}, and a fee may apply.</span>${acts}</div>`;
   if(state==="approved")return `<div class="notice ok small"><b>Approved:</b> ${the}${mealName(m)} is now served at ${fmtTime(cur)}</div>`;
   return `<div class="notice bad small"><b>We couldn't move this ${m.snack?"snack":"meal"}.</b> It stays at ${fmtTime(cur)}; contact Conference Services with questions.</div>`}
+const vegShown=st=>!!st.vegChoice&&(st.vegChoice!=="chef"||Number(st.vegCount)>0);
 const rosterVeg=()=>new Set(res.allergies.filter(isDietRow).map(a=>a.name.trim().toLowerCase()).filter(Boolean)).size;
 function guestsField(p){const st=getPath(res,p),v=st.count===""||st.count==null?(headN()||""):st.count;return `<label class="f" for="f-${p}.count">Guests<input id="f-${p}.count" type="number" min="0" data-path="${p}.count" value="${esc(v)}"></label>`}
 
@@ -955,7 +956,7 @@ function renderMeal(d,di,m){
     ${sel&&sel.meat?`<div class="row"><span class="small" style="font-weight:600">Meat</span>${seg("Fajita meat",p+".meat",[["Beef","Beef"],["Chicken","Chicken"]])}</div>`:""}
     ${sel&&sel.second?`<label class="chk" style="width:fit-content"><input type="checkbox" data-path="${p}.second" ${st.second?"checked":""}> Add a 2nd protein (+$3 pp)</label>`:""}
     ${vegOK&&st.choice&&st.choice!=="none"?`<div class="grid2">
-      <label class="f" for="${p}.vegChoice">Vegetarian option<select id="${p}.vegChoice" data-path="${p}.vegChoice"><option value="">None</option>${VEG.map(v=>`<option value="${v.id}" ${st.vegChoice===v.id?"selected":""}>${v.name}</option>`).join("")}</select><span class="hint">Can also be prepared vegan</span></label>
+      <label class="f" for="${p}.vegChoice">Vegetarian option<select id="${p}.vegChoice" data-path="${p}.vegChoice">${VEG.map((v,i)=>`<option value="${v.id}" ${st.vegChoice===v.id?"selected":""}>${v.name}</option>${i===0?`<option value="" ${st.vegChoice?"":"selected"}>None</option>`:""}`).join("")}</select><span class="hint">Can also be prepared vegan</span></label>
       ${st.vegChoice?field("Vegetarian plates",p+".vegCount","number",rosterVeg()?`${rosterVeg()} vegetarian or vegan guest${rosterVeg()===1?"":"s"} listed in section 04`:"How many guests",'min="0"'):""}</div>`:""}
     ${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
   </div>`;
@@ -978,7 +979,7 @@ function peekValue(m,st,di){
   if(st.choice==="none")return `<span class="muted">Not included</span>`;
   const x=m.list.find(o=>o.id===st.choice);if(!x)return "—";
   const extra=[`${mealCount(st)} guests`];if(x.meat)extra.push(st.meat||"Chicken");if(m.k==="breakfast"&&bfExtraN(st))extra.push("+ "+bfExtraText(st));if(x.second&&st.second)extra.push("+ 2nd protein");
-  if(st.vegChoice){const v=VEG.find(v=>v.id===st.vegChoice);extra.push(`${Number(st.vegCount)||0} ${v?v.name:"veg"}`)}
+  if(vegShown(st)){const v=VEG.find(v=>v.id===st.vegChoice);extra.push(`${Number(st.vegCount)||0} ${v?v.name:"veg"}`)}
   return `<b>${esc(x.name)}</b><span class="muted"> · ${esc(extra.join(" · "))}</span>`+alTxt;
 }
 function peek(d,i){
@@ -1320,7 +1321,7 @@ function mealLine(m,st){
   if(x.pp)bits.push(`+$${x.pp} pp`);
   if(x.note)bits.push(esc(x.note));
   let out=bits.join(" · ")+`<div class="small muted">Includes ${esc(x.sides.toLowerCase())}, ${m.incl}</div>`;
-  if(st.vegChoice){const v=VEG.find(v=>v.id===st.vegChoice);out+=`<div class="small">Vegetarian: ${esc(v?v.name:"")} × ${Number(st.vegCount)||0}</div>`}
+  if(vegShown(st)){const v=VEG.find(v=>v.id===st.vegChoice);out+=`<div class="small">Vegetarian: ${esc(v?v.name:"")} × ${Number(st.vegCount)||0}</div>`}
   return out;
 }
 function sumHead(num,title,sec,locked){return `<div class="sechead"><h2><span class="num">${num}</span>${title}</h2>${locked?"":`<button class="btn ghost" data-editsec="${sec}">Edit</button>`}</div>`}
@@ -1727,7 +1728,7 @@ function menuShort(m,st){
   if(m.snack)return st.items.length?esc(st.items.join(", ")):`<span class="missingval">Items not picked</span>`;
   if(!st.choice)return `<span class="missingval">Not chosen yet</span>`;
   const x=m.list.find(o=>o.id===st.choice);let t=`<b>${esc(x?x.name:"")}</b>`;
-  if(st.vegChoice){const v=VEG.find(v=>v.id===st.vegChoice);t+=` <span class="muted small">+ ${Number(st.vegCount)||0} ${esc(v?v.name:"vegetarian")}</span>`}
+  if(vegShown(st)){const v=VEG.find(v=>v.id===st.vegChoice);t+=` <span class="muted small">+ ${Number(st.vegCount)||0} ${esc(v?v.name:"vegetarian")}</span>`}
   return t;
 }
 function renderPlan(){
