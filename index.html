@@ -923,6 +923,7 @@ function timeReqBlock(d,di,m){
   if(state==="approved")return `<div class="notice ok small"><b>Approved:</b> ${the}${mealName(m)} is now served at ${fmtTime(cur)}</div>`;
   return `<div class="notice bad small"><b>We couldn't move this ${m.snack?"snack":"meal"}.</b> It stays at ${fmtTime(cur)}; contact Conference Services with questions.</div>`}
 const vegShown=st=>!!st.vegChoice&&(st.vegChoice!=="chef"||Number(st.vegCount)>0);
+const fillVeg=st=>{if(st&&st.vegChoice&&st.choice&&st.choice!=="none"&&!Number(st.vegCount)&&rosterVeg())st.vegCount=rosterVeg()};
 const rosterVeg=()=>new Set(res.allergies.filter(isDietRow).map(a=>a.name.trim().toLowerCase()).filter(Boolean)).size;
 function guestsField(p){const st=getPath(res,p),v=st.count===""||st.count==null?(headN()||""):st.count;return `<label class="f" for="f-${p}.count">Guests<input id="f-${p}.count" type="number" min="0" data-path="${p}.count" value="${esc(v)}"></label>`}
 
@@ -1568,7 +1569,7 @@ app.addEventListener("change",e=>{
     if(el.checked){if(arr.length<3)arr.push(el.value)}else{const i=arr.indexOf(el.value);if(i>=0)arr.splice(i,1)}
     rerender();scheduleSave();return}
   if(el.dataset.mealon!==undefined){const p=el.dataset.mealon,st=getPath(res,p);
-    if(el.checked)st.choice=st.lastChoice&&st.lastChoice!=="none"?st.lastChoice:"";else{if(st.choice!=="none")st.lastChoice=st.choice;st.choice="none"}
+    if(el.checked){st.choice=st.lastChoice&&st.lastChoice!=="none"?st.lastChoice:"";if(/\.(lunch|dinner)$/.test(p))fillVeg(st)}else{if(st.choice!=="none")st.lastChoice=st.choice;st.choice="none"}
     st.auto=false;delete st.prev;rerender();scheduleSave();if(el.checked&&!st.choice)document.getElementById(p+".choice")?.focus();return}
   if(el.dataset.extra!==undefined){const p=el.dataset.extra,st=getPath(res,p);st.extras=(st.extras||[]).filter(v=>v!==el.value);if(el.checked){st.extras.push(el.value);st.addon=false}
     exNote.delete(p);rerender();scheduleSave();return}
@@ -1590,6 +1591,7 @@ app.addEventListener("change",e=>{
     if(o){const gone=(st.extras||[]).filter(v=>!o.x.includes(v));st.extras=(st.extras||[]).filter(v=>o.x.includes(v));
       if(gone.length)exNote.set(p,`${capFirst(gone.join(" and ").toLowerCase())} ${gone.length>1?"were":"was"} removed from your extras: ${o.name.toLowerCase()} already include${/s$/.test(o.name)?"":"s"} ${gone.length>1?"them":"it"}.`);else exNote.delete(p)}}}
   if(el.dataset.path.endsWith(".vegChoice")){const cp=el.dataset.path.replace("vegChoice","vegCount");if(!v)setPath(res,cp,0);else if(!Number(getPath(res,cp))&&rosterVeg())setPath(res,cp,rosterVeg())}
+  {const lm=el.dataset.path.match(/^(days\.\d+\.meals\.(?:lunch|dinner))\.choice$/);if(lm)fillVeg(getPath(res,lm[1]))}
   if(/^days\.\d+\.meals\.\w+\.(choice|on)$/.test(el.dataset.path)){const st=getPath(res,el.dataset.path.replace(/\.(choice|on)$/,""));st.auto=false;delete st.prev}
   if(el.dataset.path==="headcount"){setTimeout(rerender,0)}  // after the tapped field takes focus, so rerender can keep it
   else if(el.type==="checkbox"||el.type==="radio"||el.tagName==="SELECT"||el.type==="date")rerender();
