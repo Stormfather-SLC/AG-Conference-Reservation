@@ -72,7 +72,8 @@ To turn the demo on: repository **Settings › Pages**, Source **Deploy from a b
 ## Known limits (pilot)
 
 - Organizers must be signed in to Claude to save.
-- Invitation and reminder emails are copied and pasted. Nothing sends automatically.
+- Invitation and reminder emails are sent from the staff member's own email program: **Send email** opens a new message with the organizer's address, subject and text filled in, and the staff member presses Send there (the change history notes that it was opened to send). Nothing sends automatically. If the browser isn't set up to open the email program (common with Outlook on the web), use Copy message.
+- In the demo, data lives in one browser, so an invitation link only opens the group on the computer that created it.
 - There is no real staff sign-in. Guests see only the organizer view; the Conference Services tab appears in a simulated **staff view**, turned on with Alt+Shift+S, a link ending in `?staff` (demo: `?demo&staff`), or five quick taps on "Aspen Grove" in the header, and it lasts for that browser tab. This is for demos, not security: real sign-in comes with BYU hosting.
 - The office phone number shown to organizers is `OFFICE_PHONE` near the top of the script (blank for now, so the text says "call the Aspen Grove office").
 - Menus and prices are written into the code (`BREAKFAST`, `LUNCH`, `DINNER`, `SNACKS`, `VEG` near the top of the script).

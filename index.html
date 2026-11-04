@@ -62,6 +62,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn:hover{border-color:var(--spruce)}
 .btn.primary{background:var(--spruce);color:var(--spruce-ink);border-color:var(--spruce)}
 .btn.primary:hover{background:var(--navy);border-color:var(--navy);color:var(--navy-ink)}
+a.btn{text-decoration:none}
 .btn.gold{background:var(--navy);color:var(--navy-ink);border-color:var(--navy)}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--spruce);padding-inline:8px}
 .btn.danger{background:var(--bad);color:var(--surface);border-color:var(--bad)}
@@ -1580,6 +1581,7 @@ async function fillNames(){if(!who.u||!who.u.profiles)return;const els=[...docum
 // ---------- events ----------
 app.addEventListener("input",e=>{
   const el=e.target;
+  if(el.id==="msgtext"&&staffMsg){staffMsg.text=el.value;const a=document.getElementById("mailmsg");if(a&&staffMsg.to)a.href=mailtoFor(staffMsg.to,el.value);return}
   if(el.id==="pastsearch"){pastQuery=el.value;const pos=el.selectionStart;renderStaff();const n=document.getElementById("pastsearch");if(n){n.focus();n.setSelectionRange(pos,pos)}return}
   if(el.id==="alsearch"){const q=el.value.trim().toLowerCase();document.querySelectorAll(".glist li").forEach(li=>li.hidden=!!q&&!li.dataset.name.includes(q));return}
   if(view==="staffplan"){if(el.classList.contains("locnote")){const L=plan.locations[el.dataset.key];if(L){L.note=el.value;planSave()}}return}if((view!=="edit"&&view!=="review")||!el.dataset.path||el.type==="checkbox"||el.type==="radio"||el.tagName==="SELECT"||el.type==="date")return;
@@ -1651,6 +1653,10 @@ function rerender(){const y=window.scrollY,ae=document.activeElement,fid=ae&&ae!
 app.addEventListener("click",async e=>{
   const b=e.target.closest("button,a");if(!b)return;
   {const c=b.dataset.sheet||b.dataset.open||b.dataset.plan||b.dataset.treview||b.dataset.remind||b.dataset.invite||b.dataset.unlock;if(c&&view==="staff")markSeen([c])}
+  if(b.dataset.mailmsg){const code=b.dataset.mailmsg,kind=/^Reminder/.test(staffMsg&&staffMsg.title||"")?"Reminder":"Invitation";
+    // Let the mailto: link open the email program, then note it in the change history.
+    setTimeout(async()=>{if(staffMsg&&staffMsg.code===code){staffMsg.sentAt=new Date().toISOString();renderStaff()}
+      try{const r=await store.get(code);if(!r)return;const a=actingAs;actingAs="staff";logEvent(r,`${kind} email opened to send${r.email?" to "+r.email:""}`);actingAs=a;await store.put(r);const row=(staffRows||[]).find(x=>x.code===code);if(row)row.history=r.history}catch(err){}},300);return}
   if(b.dataset.seenall!==undefined){markSeen((staffRows||[]).map(r=>r.code));renderStaff();return}
   if(b.matches(".rail a")){e.preventDefault();document.querySelector(b.getAttribute("href"))?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});return}
   if(b.id==="back"){await saving;if(actingAs==="staff"){setTab("staff");loadStaff()}else renderHome();return}
@@ -1908,12 +1914,16 @@ function remindFor(code){const r=(staffRows||[]).find(x=>x.code===code);if(!r)re
 function msgCard(){const m=staffMsg;if(!m)return "";
   return `<section class="panel msgcard" aria-label="${esc(m.title)}">
     <div class="row" style="justify-content:space-between"><h2>${esc(m.title)}</h2><button class="btn ghost" data-closemsg>Close</button></div>
-    <p class="small" style="margin:0">Copy this into an email to the organizer. Nothing is sent automatically from the prototype.</p>
+    <p class="small" style="margin:0"><b>Send email</b> opens a new message in your email program, addressed and filled in. Look it over, then press Send there. It goes from your own mailbox, so replies come back to you.</p>
     <div class="copyline"><span>To:</span>${m.to?`<code>${esc(m.to)}</code><button class="btn tiny" data-copylink="${esc(m.to)}">Copy</button>`:`<span class="missingval">No email on file</span>`}</div>
     <div class="copyline"><span>Form link:</span><code>${esc(linkFor(m.code))}</code><button class="btn tiny" data-copylink="${esc(linkFor(m.code))}">Copy</button></div>
     <label class="f" for="msgtext">Message<textarea id="msgtext">${esc(m.text)}</textarea></label>
-    <div class="row"><button class="btn primary" data-copymsg>Copy message</button></div>
+    <div class="row">${m.to?`<a class="btn primary" id="mailmsg" data-mailmsg="${esc(m.code)}" href="${esc(mailtoFor(m.to,m.text))}">Send email</a>`:`<span class="small muted">Add the organizer's email to the group to send from here.</span>`}<button class="btn" data-copymsg>Copy message</button></div>
+    ${m.sentAt?`<p class="small muted" style="margin:0">Opened in your email program at ${clock(m.sentAt)}. If it didn't open, use Copy message and paste it into an email.</p>`:""}
   </section>`}
+// A mailto: link: the message opens in the staff member's own email program, ready to send. The first line "Subject: …" becomes the subject.
+function mailtoFor(to,text){const t=String(text||"").replace(/\r\n/g,"\n"),m=t.match(/^Subject:\s*(.*)\n+/);const subject=m?m[1].trim():"",body=(m?t.slice(m[0].length):t).replace(/\n/g,"\r\n");
+  return `mailto:${encodeURIComponent(to).replace(/%40/g,"@")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
 
 function startForm(){if(!startOpen)return "";
   return `<form class="panel startform" id="startform">
