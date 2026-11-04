@@ -358,6 +358,14 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .warnlink{color:var(--warn);font-weight:600;font-size:.875rem}.warnlink:hover{color:var(--fg)}
 .tdlg{border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--fg);box-shadow:0 18px 48px rgba(0,0,0,.25)}
 .tdlg::backdrop{background:rgba(0,24,50,.45)}
+/* Simulated sign-in: the Organizer / Conference Services tabs only show in staff view (Alt+Shift+S, ?staff, or tap the Aspen Grove name 5 times). */
+body:not(.staffmode) .strip .tabs{display:none}
+.staffbadge{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--aspen-soft);color:var(--aspen);margin-left:8px}
+input.lockedf{background:var(--sunk);color:var(--muted);border-style:dashed;cursor:not-allowed}
+.lockhint{display:flex;gap:6px;align-items:center}
+.donedlg h2{margin:2px 0 8px}
+.donedlg .big{font-size:2rem;line-height:1}
+@media print{body.sheetview header,body.sheetview #banner,body.sheetview .sheetbar,body.sheetview .toast,body.sheetview dialog{display:none!important}body.sheetview .wrap{padding:0;margin:0;max-width:none}body.sheetview .sheetwrap{padding:0;overflow:visible;background:none}}
 .tdhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
 .tdhead .eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--aspen);font-weight:700}
 .tditem{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding:14px 0}
@@ -468,7 +476,7 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 
 <header>
     <div class="band"><div class="band-in">
-      <div class="lockup"><span>Aspen Grove</span><span class="div" aria-hidden="true"></span><span class="sub">Conference Services</span></div>
+      <div class="lockup" id="lockup"><span>Aspen Grove</span><span class="div" aria-hidden="true"></span><span class="sub">Conference Services</span></div>
       <span class="proto">Prototype</span>
     </div></div>
     <div class="strip"><div class="strip-in">
@@ -486,6 +494,11 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 <div id="toast" class="toast" hidden></div>
 
 <script>
+// Staff view (simulated sign-in). Declared first because the banner and home screen read it. See "simulated sign-in" below.
+const STAFF_KEY="agstaffview";
+let staffMode=false;
+try{staffMode=sessionStorage.getItem(STAFF_KEY)==="1"}catch(e){}
+if(/[?&]staff(=|&|$)/.test(location.search)){staffMode=true;try{sessionStorage.setItem(STAFF_KEY,"1")}catch(e){}}
 // ---------- Menu data (from the Final Details form & menus) ----------
 const BREAKFAST=[
  {id:"pancakes",name:"Pancakes",sides:"Yogurt cups, scrambled eggs, sausage, country potatoes",x:["Bacon"],has:"eggs, sausage and potatoes"},
@@ -529,6 +542,9 @@ const bfExtraText=st=>bfExtras(st).map(v=>v.toLowerCase()).concat(bfLegacy(st)?[
 const exNote=new Map();
 const AV=["Projector","Screen","Whiteboard","Microphone","Speakers / sound","Easel & flip chart"];
 const DEADLINE_DAYS=14, MAX_DAYS=7, TODAY=startOfDay(new Date());
+// Aspen Grove office phone shown to organizers (lock-in message, start page). Leave "" to say "call the office" without a number.
+const OFFICE_PHONE="";
+const officeCall=()=>`call the Aspen Grove office${OFFICE_PHONE?` at <b>${esc(OFFICE_PHONE)}</b>`:""}`;
 
 // ---------- helpers ----------
 function startOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x}
@@ -695,7 +711,7 @@ addEventListener("scroll",()=>document.querySelectorAll("details.amenu[open]").f
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2600)}
 function renderBanner(){
   const b=document.getElementById("banner");
-  if(DEMO){b.innerHTML=`<div class="notice info demobar"><span><b>Demo with sample groups.</b> Changes you make stay on this computer.</span><span class="row"><button type="button" class="btn tiny" id="demo-load">Load example file</button><button type="button" class="btn tiny" id="demo-reset">Reset demo</button><input type="file" id="demo-file" accept=".json,application/json" hidden></span></div>`;return}
+  if(DEMO){b.innerHTML=`<div class="notice info demobar"><span><b>Demo with sample groups.</b> Changes you make stay on this computer.</span><span class="row">${staffMode?`<button type="button" class="btn tiny" id="demo-load">Load example file</button>`:""}<button type="button" class="btn tiny" id="demo-reset">Reset demo</button><input type="file" id="demo-file" accept=".json,application/json" hidden></span></div>`;return}
   b.innerHTML=store.mode==="local"?`<div class="notice warn" style="margin-bottom:16px">You're not signed in, so reservations are saved in this browser only. Sign in to Claude (top right) to see the shared Aspen Grove record; anything you create here is added to it when you sign in on this browser.</div>`:"";
 }
 
@@ -759,14 +775,15 @@ function renderHome(){
   app.innerHTML=`
   <div class="home">
     <div class="panel">
-      <h2>Start your final details</h2>
-      <p class="muted">For group organizers with a confirmed event at Aspen Grove. You'll get a reservation code so you can come back and make changes.</p>
+      <h2>Your final details</h2>
+      <p class="muted">For group organizers with a confirmed event at Aspen Grove. Aspen Grove starts your reservation and emails you a link and a reservation code.</p>
       <ol class="steps">
-        <li><b>Create</b> your reservation and fill in what you know.</li>
-        <li><b>Modify</b> any time with your code. Changes save as you go.</li>
+        <li><b>Open</b> your reservation from the link in your email, or enter your code here.</li>
+        <li><b>Fill in</b> what you know and come back any time. Changes save as you go.</li>
         <li><b>Lock in</b> when everything is final, at least ${DEADLINE_DAYS} days before your event.</li>
       </ol>
-      <div class="row"><button class="btn primary" id="create">Create a reservation</button></div>
+      <p class="small muted" style="margin:0">Don't have a code yet? Contact Aspen Grove Conference Services${OFFICE_PHONE?` at ${esc(OFFICE_PHONE)}`:""}.</p>
+      ${staffMode?`<p class="small muted" style="margin:0">Staff: start a new group from Conference Services › Groups.</p>`:""}
     </div>
     <form class="panel" id="lookup">
       <h2>Continue a reservation</h2>
@@ -778,12 +795,6 @@ function renderHome(){
     </form>
   </div>`;
   homeMsg="";homeCode="";
-  document.getElementById("create").onclick=async()=>{
-    let code=newCode();for(let i=0;i<3&&await store.get(code).catch(()=>null);i++)code=newCode();
-    res=blankRes(code);actingAs="organizer";logEvent(res,"Created by organizer");
-    try{await store.put(res)}catch(e){toast("Couldn't create the reservation. Try again in a moment.");return}
-    openEditor(res);toast("Reservation "+code+" created");
-  };
   {const ci=document.getElementById("code-in");
    // Pasting or typing the full "AG-7KQ2M" leaves just "7KQ2M" in the box, since AG- is shown in front of it.
    ci.oninput=()=>{const raw=ci.value.toUpperCase().replace(/[^A-Z0-9]/g,"");if(raw.length===7&&raw.startsWith("AG")){ci.value=raw.slice(2);return}
@@ -809,8 +820,12 @@ function openEditor(r){view="edit";showNeeds=false;res=normalize(r);lastSig=sect
 function syncDays(){
   const s=parseDate(res.startDate),e=parseDate(res.endDate);
   if(!s||!e||e<s){return}
-  const keep=Object.fromEntries(res.days.map(d=>[d.date,d]));const out=[];
+  const parked=res.parkedDays||{};
+  const keep={...parked,...Object.fromEntries(res.days.map(d=>[d.date,d]))};const out=[];
   for(let d=new Date(s),i=0;d<=e&&i<MAX_DAYS;d.setDate(d.getDate()+1),i++){const k=iso(d);out.push(keep[k]||blankDay(k))}
+  const inRange=new Set(out.map(d=>d.date)),np={};
+  Object.values(keep).forEach(d=>{if(!inRange.has(d.date)&&dayPicks(d).length)np[d.date]=d});
+  if(Object.keys(np).length)res.parkedDays=np;else delete res.parkedDays;
   res.days=out;activeDay=Math.min(activeDay,out.length-1);
 }
 
@@ -819,6 +834,19 @@ function field(label,path,type="text",hint="",attrs=""){
   return `<label class="f" for="f-${path}">${label}
   ${type==="textarea"?`<textarea id="f-${path}" data-path="${path}" ${attrs}>${esc(v)}</textarea>`:`<input id="f-${path}" type="${type}" data-path="${path}" value="${esc(v)}" ${attrs}>`}${hint?`<span class="hint">${hint}</span>`:""}</label>`;
 }
+// Key booking details: group name and dates stay in step with the office's registration, so organizers can't change them once set.
+// Staff (Conference Services) can. An empty value stays editable so an older reservation is never stuck.
+const KEY_FIELDS=["group","startDate","endDate"];
+const keyLocked=r=>actingAs!=="staff"&&KEY_FIELDS.some(f=>r[f]);
+function keyField(label,path,type="text",hint=""){
+  if(actingAs==="staff"||!res[path])return field(label,path,type,hint);
+  const shown=type==="date"?fmtDate(res[path],{weekday:"short",month:"long",day:"numeric",year:"numeric"}):res[path];
+  return `<label class="f" for="f-${path}">${label}<input id="f-${path}" type="text" class="lockedf" value="${esc(shown)}" readonly aria-readonly="true" title="Set by Aspen Grove"></label>`}
+// Days dropped by a staff date change keep their selections here (res.parkedDays, by date) until the dates come back or staff discard them.
+function dayPicks(d){return MEALS.filter(m=>m.snack?d.meals[m.k].on:d.meals[m.k].choice!=="none").map(m=>m.label.toLowerCase())}
+function parkedNote(r){const ds=Object.values(r.parkedDays||{}).sort((a,b)=>a.date.localeCompare(b.date));if(!ds.length)return "";
+  return `<div class="notice warn small"><b>Removed from the event dates, selections kept aside:</b> ${ds.map(d=>`${esc(fmtDate(d.date,{weekday:"short",month:"short",day:"numeric"}))} (${esc(dayPicks(d).join(", "))})`).join("; ")}. They come back if the dates include ${ds.length===1?"that day":"those days"} again.
+    <div class="row" style="margin-top:6px"><button type="button" class="btn tiny" data-discardparked>Discard them</button></div></div>`}
 function seg(name,path,opts){const v=getPath(res,path);return `<div class="seg" id="seg-${path}" role="radiogroup" aria-label="${name}">${opts.map(([val,l])=>`<label><input type="radio" name="${path}" data-path="${path}" value="${val}" ${v===val?"checked":""}>${l}</label>`).join("")}</div>`}
 
 function mealWarn(di,m){const st=res.days[di].meals[m.k];if(!isServed(m,st))return "";const n=mealCount(st),h=headN(),w=[];
@@ -1194,10 +1222,12 @@ function renderEditor(){
     <div class="form" id="form">
       ${restoreOffer?`<div class="notice warn" role="alert"><b>This device has changes from ${fmtDate(new Date(restoreOffer.updatedAt),{month:"short",day:"numeric"})} at ${clock(restoreOffer.updatedAt)} that didn't reach Aspen Grove.</b> Restore them to pick up where you left off.<div class="row" style="margin-top:8px"><button class="btn primary" data-restore>Restore my changes</button><button class="btn" data-discard>Discard them</button></div></div>`:""}
       ${actingAs==="staff"?`<div class="notice info small">You're editing as <b>Conference Services</b>. Changes are labeled that way in the change history.</div>`:""}
-      ${locked?`<div class="notice ok"><b>Locked in ${r.lockedAt?fmtDate(new Date(r.lockedAt),{month:"long",day:"numeric"}):""}.</b> Aspen Grove has your final details. To change anything, contact Conference Services and they can reopen it.</div>`:""}
+      ${locked?`<div class="notice ok"><b>Locked in ${r.lockedAt?fmtDate(new Date(r.lockedAt),{month:"long",day:"numeric"}):""}.</b> Aspen Grove has your final details. You're done editing; for any changes, ${officeCall()}.</div>`:""}
       <section class="card" id="sec-contact"><div class="sechead"><h2><span class="num">01</span>Group &amp; contact</h2></div>
-        <div class="grid2">${field("Group name","group")}${field("Final headcount","headcount","number","","min=\"1\"")}</div>
-        <div class="grid2">${field("First day","startDate","date")}${field("Last day","endDate","date","Up to "+MAX_DAYS+" days")}</div>
+        ${keyLocked(r)?`<div class="notice info small lockhint"><span aria-hidden="true">🔒</span><span>Your group name and event dates are set by Aspen Grove so they match your booking. To change them, ${officeCall()}.</span></div>`:""}
+        <div class="grid2">${keyField("Group name","group")}${field("Final headcount","headcount","number","","min=\"1\"")}</div>
+        <div class="grid2">${keyField("First day","startDate","date")}${keyField("Last day","endDate","date","Up to "+MAX_DAYS+" days")}</div>
+        ${actingAs==="staff"?parkedNote(r):""}
         <div class="grid2">${field("Your name","contact")}${field("Phone number","phone","tel")}${field("Email","email","email")}</div>
         <div class="subhead">On-site contact</div><span class="small muted" style="margin-top:-8px">Who should we call if something comes up while your group is here?</span>
         <label class="chk" style="width:fit-content"><input type="checkbox" data-path="onsite.same" ${r.onsite.same?"checked":""}> I'll be on site. Contact me.</label>
@@ -1356,7 +1386,7 @@ function renderReview(){
       </div>
       ${deadlineNote}
       <button class="btn" data-editsec="contact">${locked?"View full form":"← Back to editing"}</button>
-      <button class="btn" data-sheet="${esc(r.code)}">${locked?"Get a printable copy":"Preview printable sheet"}</button>
+      <button class="btn${locked?" primary":""}" data-sheet="${esc(r.code)}">${locked?"Print or download final report":"Preview printable sheet"}</button>
       <button class="btn ghost" id="back" style="justify-content:flex-start">${actingAs==="staff"?"← Back to groups":"← Start page"}</button>
     </aside>
     <div class="form" id="form">
@@ -1365,7 +1395,7 @@ function renderReview(){
         <h2 class="rtitle">${val(r.group,"Untitled group")}</h2>
         <p class="muted" style="margin:0">${dates?esc(dates):"Dates not set"}${nDays?` · ${nDays} day${nDays===1?"":"s"}`:""}${r.headcount?` · ${esc(r.headcount)} guests`:""}</p>
       </div>
-      ${locked?`<div class="notice ok"><b>Locked in ${r.lockedAt?fmtDate(new Date(r.lockedAt),{month:"long",day:"numeric"}):""}.</b> Aspen Grove has your final details. To change anything, contact Conference Services and they can reopen it.</div>`:""}
+      ${locked?`<div class="notice ok"><b>Locked in ${r.lockedAt?fmtDate(new Date(r.lockedAt),{month:"long",day:"numeric"}):""}.</b> Aspen Grove has your final details. You're done editing; for any changes, ${officeCall()}.</div>`:""}
 
       <section class="card">${sumHead("01","Group &amp; contact","contact",locked)}
         <dl class="kv">
@@ -1439,7 +1469,7 @@ function renderReview(){
 }
 
 function renderLockbar(){
-  if(isLocked())return `<div class="notice ok">Locked in. Questions or changes go to Aspen Grove Conference Services.</div><div class="row"><button class="btn" data-sheet="${esc(res.code)}">Get a printable copy</button></div>`;
+  if(isLocked())return `<div class="notice ok">Locked in. You're done editing. For any changes, ${officeCall()}.</div><div class="row"><button class="btn primary" data-sheet="${esc(res.code)}">Print or download final report</button></div>`;
   const miss=missingItems(res);
   if(miss.length)return `<div class="notice bad needbox"><b>${miss.length} item${miss.length===1?"":"s"} left before you can lock in.</b> <span class="small">Select one to go straight to it. Missing fields are outlined in red.</span><ul class="missing small">${miss.slice(0,8).map((m,i)=>`<li><button type="button" class="needlink" data-need="${i}">${esc(m.t)}</button></li>`).join("")}${miss.length>8?`<li>and ${miss.length-8} more <button type="button" class="needlink" data-need="8">Go to the next one</button></li>`:""}</ul></div>
     <div class="row"><button class="btn gold" disabled>Lock in reservation</button><span class="small muted">Your draft is saved. Come back with code <span class="mono">${esc(res.code)}</span>.</span></div>`;
@@ -1449,10 +1479,21 @@ function renderLockbar(){
     const conf=empty.map(dt=>`<label class="chk emptyok"><input type="checkbox" data-emptyok="${dt}" ${ok.includes(dt)?"checked":""}> Yes, we don't need any meals on ${fmtDate(dt,{weekday:"long",month:"short",day:"numeric"})}</label>`).join("");
     return `<div class="confirm"><b>Lock in final details for ${esc(res.group)}?</b><span class="small">Check the meals included each day. Anything not listed won't be served.</span>${list}
     ${empty.length?`<div class="notice warn small"><b>${empty.length===1?"One day has":empty.length+" days have"} no meals or snacks.</b> If your group won't eat at Aspen Grove then, confirm below. Otherwise, go back and include them.<div class="checks" style="margin-top:8px">${conf}</div></div>`:""}
-    <span class="small">After you lock in, the form becomes read-only. Aspen Grove staff will need to reopen it for any changes.</span>
+    <div class="notice info small"><b>Locking in means you're done editing.</b> The form becomes read-only, and any changes after this need a phone call: ${officeCall()}.</div>
     <div class="row"><button class="btn primary" id="dolock" ${open.length?"disabled":""}>Yes, lock in</button><button class="btn" id="cancellock">Keep editing</button>${open.length?`<span class="small muted">Confirm the day${open.length===1?"":"s"} without meals to continue</span>`:""}</div></div>`}
   return `<div class="notice ok">Everything required is filled in.</div><div class="row"><button class="btn gold" id="lock">Lock in reservation</button></div>`;
 }
+// Pop-up after a successful lock-in: the organizer is done; changes now go through the office.
+function showLockedDone(){let d=document.getElementById("donedlg");
+  if(!d){d=document.createElement("dialog");d.id="donedlg";d.className="tdlg donedlg";document.body.appendChild(d);
+    d.addEventListener("click",e=>{if(e.target===d){d.close();return}const b=e.target.closest("button");if(!b)return;
+      if(b.dataset.doneclose!==undefined){d.close();return}
+      if(b.dataset.donesheet){const c=b.dataset.donesheet;d.close();openSheet(c);return}})}
+  d.innerHTML=`<div class="tdhead"><div><span class="eyebrow">Locked in</span><h2>You're all set</h2></div><button class="btn ghost" data-doneclose aria-label="Close">✕</button></div>
+    <p style="margin:0 0 10px">Aspen Grove has the final details for <b>${esc(res.group||res.code)}</b>. You're done editing, and the form is now read-only.</p>
+    <div class="notice warn small" style="margin-bottom:14px"><b>Need to change something?</b> Please ${officeCall()}. Our team will update your reservation for you.</div>
+    <div class="row"><button class="btn primary" data-donesheet="${esc(res.code)}">Print or download final report</button><button class="btn" data-doneclose>Close</button></div>`;
+  d.showModal();d.querySelector("[data-donesheet]")?.focus()}
 let showNeeds=false;
 // Outline every missing field on screen. Turned on once someone reaches the review page or follows a missing-item link.
 function markNeeds(){
@@ -1516,7 +1557,7 @@ window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.return
 
 // ---------- change history ----------
 const who={id:"",name:"",u:null};
-const SECTION_FIELDS={"Group & contact":["group","contact","phone","email","headcount","startDate","endDate","onsite"],"Attendee notes":["attendeeNotes"],"Room & A/V":["setup","roomChanges","setupNotes","noAV","av","avOther"],"Breakout rooms":["breakoutNeed","breakouts"],"Walk-through":["walk"],"Allergies":["allergies","noAllergies","roster"],"Meals & snacks":["days","firstMeal","lastMeal"],"Comments":["comments"],"Checklist":["checklist"]};
+const SECTION_FIELDS={"Group & contact":["group","contact","phone","email","headcount","startDate","endDate","onsite"],"Attendee notes":["attendeeNotes"],"Room & A/V":["setup","roomChanges","setupNotes","noAV","av","avOther"],"Breakout rooms":["breakoutNeed","breakouts"],"Walk-through":["walk"],"Allergies":["allergies","noAllergies","roster"],"Meals & snacks":["days","firstMeal","lastMeal","parkedDays"],"Comments":["comments"],"Checklist":["checklist"]};
 function sectionSig(r){const o={};for(const[k,fs]of Object.entries(SECTION_FIELDS))o[k]=JSON.stringify(fs.map(f=>r[f]));return o}
 let lastSig=null, actingAs="organizer";
 function logEvent(r,what,extra){r.history=r.history||[];r.history.push({at:new Date().toISOString(),role:actingAs,by:who.id||"",what,...(extra||{})});if(r.history.length>80)r.history=r.history.slice(-80)}
@@ -1579,6 +1620,10 @@ app.addEventListener("change",e=>{
   if(el.dataset.av!==undefined){const i=res.av.indexOf(el.value);if(el.checked&&i<0)res.av.push(el.value);if(!el.checked&&i>=0)res.av.splice(i,1);scheduleSave();refreshLive();return}
   if(!el.dataset.path)return;
   let v=el.type==="checkbox"?el.checked:el.type==="number"?(el.value===""||(/\.count$/.test(el.dataset.path)&&Number(el.value)===headN())?"":Number(el.value)):el.value;
+  if((el.dataset.path==="startDate"||el.dataset.path==="endDate")&&v){
+    let ns=el.dataset.path==="startDate"?v:res.startDate,ne=el.dataset.path==="endDate"?v:res.endDate;if(el.dataset.path==="startDate"&&(!ne||ne<ns))ne=ns;
+    const lost=res.days.filter(d=>(d.date<ns||d.date>ne)&&dayPicks(d).length);
+    if(lost.length&&!confirm(`This date change removes ${lost.map(d=>fmtDate(d.date,{weekday:"long",month:"short",day:"numeric"})).join(", ")}, which ${lost.length===1?"has":"have"} meals or snacks selected.\n\nTheir selections are kept aside and come back if you change the dates back. Continue?`)){el.value=getPath(res,el.dataset.path)||"";return}}
   setPath(res,el.dataset.path,v);
   if(el.dataset.gid){res.allergies.forEach(a=>{if(a.gid===el.dataset.gid)a.name=el.value});scheduleSave();rerender();return}
   if(el.dataset.path.endsWith(".timeReq.time")){setPath(res,el.dataset.path.replace(/\.time$/,".at"),new Date().toISOString());scheduleSave();rerender();return}
@@ -1614,6 +1659,7 @@ app.addEventListener("click",async e=>{
   if(b.dataset.sheet){await saving;openSheet(b.dataset.sheet);return}
   if(b.dataset.sheetback!==undefined){sheetBack();return}
   if(b.dataset.sheetdl!==undefined){downloadSheet();return}
+  if(b.dataset.sheetprint!==undefined){window.print();return}
   if(b.dataset.dept){const d=DEPTS.find(x=>x.k===b.dataset.dept),last=prefGet("ag:lastTab:"+d.k);b.dataset.stab=d.tabs.some(([k])=>k===last)?last:d.tabs[0][0]}
   if(b.dataset.treview){openTimeReview(b.dataset.treview);return}
   if(b.dataset.pastview){pastView=b.dataset.pastview==="1";pastQuery="";renderStaff();window.scrollTo(0,0);return}
@@ -1663,6 +1709,7 @@ app.addEventListener("click",async e=>{
     const moving=res.allergies.filter(a=>a.gid===from).map(a=>({...a,gid:to,name:tg.name}));res.allergies=res.allergies.filter(a=>a.gid!==from);
     const at=Math.max(...res.allergies.map((a,i)=>a.gid===to?i:-1))+1;res.allergies.splice(at,0,...moving);rerender();scheduleSave();toast(`Added to ${tg.name}`);return}
   if(b.dataset.delallergy){res.allergies.splice(Number(b.dataset.delallergy),1);rerender();scheduleSave();return}
+  if(b.dataset.discardparked!==undefined){delete res.parkedDays;rerender();scheduleSave();toast("Removed days discarded");return}
   if(b.id==="lock"){confirmingLock=true;refreshLive();return}
   if(b.dataset.goday!==undefined){confirmingLock=false;activeDay=Number(b.dataset.goday);view="edit";renderEditor();document.getElementById("sec-meals")?.scrollIntoView({block:"start"});return}
   if(b.id==="cancellock"){confirmingLock=false;refreshLive();return}
@@ -1671,7 +1718,7 @@ app.addEventListener("click",async e=>{
     res.status="locked";res.lockedAt=new Date().toISOString();logEdits(res);logEvent(res,"Locked in");
     const p=saveNow();await p;
     if(saveKind==="bad"){res.status="draft";res.lockedAt=null;res.history.pop();refreshLive();toast("Couldn't lock in. Your draft is unchanged.");return}
-    confirmingLock=false;rerender();toast("Locked in. Aspen Grove has your final details.");return}
+    confirmingLock=false;rerender();showLockedDone();return}
   if(b.dataset.open){actingAs="staff";openCode(b.dataset.open);return}
   if(b.dataset.plan){openPlan(b.dataset.plan);return}
   if(b.dataset.backstaff!==undefined){clearTimeout(planSaveT);if(planState==="Saving…"){try{await store.putStaff(res.code,{...plan,code:res.code,updatedAt:new Date().toISOString()})}catch(err){}}loadStaff();return}
@@ -2035,8 +2082,9 @@ async function openSheet(code){
 }
 function renderSheet(){view="sheet";const {r,info}=sheetCtx;
   app.innerHTML=`<div class="stack"><div class="sheetbar"><button class="btn ghost" data-sheetback>← Back</button>
-    <div class="row"><span class="small muted">Download, open the file, and print it or save it as a PDF.</span><button class="btn primary" data-sheetdl>Download to print</button></div></div>
-    <div class="sheetwrap"><article class="sheet">${sheetBody(r,info)}</article></div></div>`}
+    <div class="row"><span class="small muted">To save a PDF, choose <b>Save as PDF</b> in the print window.</span><button class="btn primary" data-sheetprint>Print or save as PDF</button><button class="btn" data-sheetdl hidden>Download file</button></div></div>
+    <div class="sheetwrap"><article class="sheet">${sheetBody(r,info)}</article></div></div>`;
+  dlNs.then(ns=>{const b=app.querySelector("[data-sheetdl]");if(ns&&b)b.hidden=false})}
 function sheetBack(){const f=sheetCtx&&sheetCtx.from;sheetCtx=null;
   if(f==="staff"){loadStaff();return}
   if(res){view=f==="edit"?"edit":"review";rerender();return}
@@ -2503,10 +2551,24 @@ document.getElementById("banner").addEventListener("change",async e=>{
   try{const data=JSON.parse(await f.text());const n=putAll(data);if(!n)throw 0;staffRows=null;kitchenInfo=null;toast(`Loaded ${n} group${n===1?"":"s"} from ${f.name}`);setTab("staff");loadStaff()}
   catch(err){toast("That file isn't a reservation file")}});
 
+// ---------- simulated sign-in: guest view vs. staff view ----------
+// Not security: a stand-in for BYU sign-in so the demo can show what each audience sees.
+// Guests never see the Conference Services tab. Staff view turns on with Alt+Shift+S, a link ending in ?staff
+// (also ?demo&staff), or five quick taps on "Aspen Grove" in the header. It lasts for this browser tab only.
+function applyStaffMode(){document.body.classList.toggle("staffmode",staffMode);
+  const sub=document.querySelector("#lockup .staffbadge");if(staffMode&&!sub)document.getElementById("lockup").insertAdjacentHTML("beforeend",`<span class="staffbadge">Staff view</span>`);if(!staffMode&&sub)sub.remove()}
+async function setStaffMode(on){staffMode=on;try{sessionStorage.setItem(STAFF_KEY,on?"1":"0")}catch(e){}applyStaffMode();renderBanner();
+  if(!on&&(view==="staff"||view==="staffplan"||actingAs==="staff"||(view==="sheet"&&sheetCtx&&sheetCtx.from==="staff"))){if(view==="edit"||view==="review"){clearTimeout(saveTimer);if(dirty)saveNow()}await saving;document.querySelectorAll("dialog[open]").forEach(d=>d.close());renderHome()}
+  else if(view==="home")renderHome();
+  toast(on?"Staff view on: Conference Services is shown":"Guest view: what organizers see")}
+document.addEventListener("keydown",e=>{if(e.altKey&&e.shiftKey&&!e.ctrlKey&&!e.metaKey&&e.code==="KeyS"){e.preventDefault();setStaffMode(!staffMode)}});
+{let taps=[];document.getElementById("lockup").addEventListener("click",()=>{const t=Date.now();taps=taps.filter(x=>t-x<3000);taps.push(t);if(taps.length>=5){taps=[];setStaffMode(!staffMode)}})}
+applyStaffMode();
+
 // ---------- boot ----------
 document.getElementById("tab-org").onclick=async()=>{if(view==="edit"||view==="review"){clearTimeout(saveTimer);if(dirty)saveNow()}await saving;renderHome()};
 // Conference Services works as a home button: it always opens Groups (Current & upcoming).
-document.getElementById("tab-staff").onclick=async()=>{if(view==="edit"||view==="review"){clearTimeout(saveTimer);if(dirty)saveNow()}await saving;pickStaffTab("groups");pastView=false;pastQuery="";staffMsg=null;startOpen=false;setTab("staff");loadStaff()};
+document.getElementById("tab-staff").onclick=async()=>{if(!staffMode)return;if(view==="edit"||view==="review"){clearTimeout(saveTimer);if(dirty)saveNow()}await saving;pickStaffTab("groups");pastView=false;pastQuery="";staffMsg=null;startOpen=false;setTab("staff");loadStaff()};
 function setTab(t){document.getElementById("tab-org").setAttribute("aria-pressed",t==="org");document.getElementById("tab-staff").setAttribute("aria-pressed",t==="staff")}
 const ready=store.init();
 (async()=>{try{const u=window.claude&&claude.use?await claude.use("user"):null;if(!u)return;who.u=u;
@@ -2520,7 +2582,7 @@ let restoring=false;
 function navState(){const code=view==="sheet"?(sheetCtx&&sheetCtx.r.code)||"":(view==="home"||view==="staff")?"":(res&&res.code)||"";
   const past=view==="staff"&&staffTab==="groups"&&pastView;
   const st={v:view,tab:view==="staff"?staffTab:"",past,code,act:actingAs,from:view==="sheet"&&sheetCtx?sheetCtx.from:""};st.key=st.v+"|"+st.tab+(past?":past":"")+"|"+st.code;return st}
-function remember(){try{const st=navState(),cur=history.state;if(cur&&cur.key===st.key)return;
+function remember(){document.body.classList.toggle("sheetview",view==="sheet");try{const st=navState(),cur=history.state;if(cur&&cur.key===st.key)return;
   if(restoring||!cur||!cur.key)history.replaceState(st,"");else history.pushState(st,"")}catch(e){}}
 ["renderHome","renderEditor","renderReview","renderSheet","renderStaff","renderPlan"].forEach(n=>{const f=window[n];window[n]=function(...a){const out=f.apply(this,a);remember();return out}});
 async function restoreNav(st){

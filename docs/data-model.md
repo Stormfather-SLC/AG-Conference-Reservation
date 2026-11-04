@@ -15,9 +15,9 @@ The page stores data in the artifact's shared database. There are three collecti
 | `code` | string | `AG-` plus 5 characters (no 0, O, 1 or I) |
 | `status` | `"draft"` or `"locked"` | Only an organizer locks; only Conference Services reopens |
 | `createdBy` | `"staff"` or missing | `"staff"` when started from Conference Services |
-| `group`, `contact`, `phone`, `email` | string | |
+| `group`, `contact`, `phone`, `email` | string | Organizers can't change `group` once it is set; Conference Services can |
 | `headcount` | number or `""` | Final headcount; the default guest count for every meal |
-| `startDate`, `endDate` | `YYYY-MM-DD` | Up to 7 days |
+| `startDate`, `endDate` | `YYYY-MM-DD` | Up to 7 days. Read-only for organizers once set; Conference Services can change them |
 | `onsite` | `{same, name, phone}` | On-site contact; `same: true` means the organizer |
 | `attendeeNotes` | string | Partial attendance, arrivals and departures |
 | `setup` | `"theater"`, `"rounds"` or `""` | Preferred setup for the main room |
@@ -33,6 +33,7 @@ The page stores data in the artifact's shared database. There are three collecti
 | `roster` | array or null | Imported guest list rows `{name, diet, allergy, type, severity}` |
 | `rosterFile`, `rosterAt` | string | Name and upload time of the imported guest list |
 | `days` | Day[] | One per event day; see below |
+| `parkedDays` | object or missing | Days dropped by a date change that had meals or snacks, keyed by date (`YYYY-MM-DD` → Day). Restored if the dates include them again; staff can discard them |
 | `checklist` | `{schedule, payment}` | Booleans |
 | `noMealDays` | string[] | Event dates the organizer confirmed need no meals or snacks. Lock-in asks for this for any day with nothing included |
 | `history` | Event[] | Change history, newest last, capped at 80 |
