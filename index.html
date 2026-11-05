@@ -265,6 +265,17 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .subnav button{border:0;background:none;padding:9px 14px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;font-size:.95rem}
 .subnav button[aria-pressed="true"]{color:var(--title);border-bottom-color:var(--spruce)}
 .subnav .admin{margin-left:auto;font-weight:500;font-size:.85rem}
+.subnav .admin~.admin{margin-left:0}
+.cfglist{display:grid;gap:10px}
+.cfgitem{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:start;border:1px solid var(--rule);border-radius:var(--r);padding:12px 14px}
+.cfgitem.off{background:var(--sunk)}
+.cfgitem.off .cfgmain{opacity:.75}
+.cfgmain{display:grid;gap:10px;min-width:0}
+.cfgside{display:grid;gap:6px;justify-items:end;min-width:120px}
+.cfgbar{position:sticky;bottom:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
+.cfgbar.quiet{position:static;box-shadow:none;padding:0}
+.cfgbar ul{margin:6px 0 0;padding-left:18px}
+@media (max-width:640px){.cfgitem{grid-template-columns:1fr}.cfgside{justify-items:start;grid-auto-flow:column;align-items:center}}
 .reportnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-4px 0 16px}
 .reportnav .lbl{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-right:4px}
 .reportnav button{border:1px solid var(--line);background:var(--surface);padding:6px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.88rem;color:var(--fg)}
@@ -638,6 +649,7 @@ const store={db:null,mode:"pending",
   try{ if(!DEMO&&window.claude&&claude.use){ this.db=await claude.use("db") } }catch(e){ this.db=null }
   this.mode=this.db?"db":"local"; renderBanner();
   if(this.db)await this.moveLocal();
+  settingsDoc=await this.loadSettings();if(settingsDoc)applyCatalog(settingsDoc.catalog);
   if(DEMO){let seeded=true;try{seeded=!!localStorage.getItem(DEMO_FLAG)}catch(e){}if(!seeded){clearSamples();seedDemo()}}
  },
  // Reservations made before signing in were saved in this browser only. Once signed in, copy them into the shared
@@ -663,6 +675,12 @@ const store={db:null,mode:"pending",
   if(this.db){await this.db.doc("reservations/"+r.code).set(JSON.parse(JSON.stringify(r)));return}
   try{localStorage.setItem("agres:"+r.code,JSON.stringify(r))}catch(e){throw {code:"local",message:"This browser won't store data."}}
  },
+ // Menus and rooms from the Settings page: one shared record. Read without waiting on init, since init loads it.
+ async loadSettings(){try{if(this.db){const d=await this.db.doc("settings/catalog").get();return d.exists?structuredClone(d.data()):null}
+  const raw=localStorage.getItem("agsettings");return raw?JSON.parse(raw):null}catch(e){return null}},
+ async putSettings(doc){await ready;
+  if(this.db){await this.db.doc("settings/catalog").set(JSON.parse(JSON.stringify(doc)));return}
+  try{localStorage.setItem("agsettings",JSON.stringify(doc))}catch(e){throw {code:"local"}}},
  async del(code){
   await ready;
   if(this.db){await this.db.doc("reservations/"+code).delete();this.db.doc("staffnotes/"+code).delete().catch(()=>{});return}
@@ -964,7 +982,7 @@ function renderMeal(d,di,m){
       ${timeReqBlock(d,di,m)}
       <label class="chk mealon"><input type="checkbox" id="${p}.on" data-path="${p}.on" ${st.on?"checked":""}> Include ${m.k==="amSnack"?"a":"an"} ${m.label.toLowerCase()} break</label>
       ${st.on?`<div class="row" style="justify-content:space-between"><span class="small muted">Choose up to 3 items across any category.</span><span class="count">${n} / 3 chosen</span></div>
-      <div class="snackcats" id="snk-${p}">${Object.entries(SNACKS).map(([cat,items])=>`<div><h4>${cat}</h4><div class="checks">${items.map(it=>{const on=st.items.includes(it);const full=!on&&n>=3;return `<label class="chk${full?" full":""}"><input type="checkbox" data-snack="${p}" value="${esc(it)}" ${on?"checked":""} ${full?"disabled":""}>${esc(it)}</label>`}).join("")}</div></div>`).join("")}</div>
+      <div class="snackcats" id="snk-${p}">${[...Object.entries(SNACKS).map(([cat,items])=>[cat,items.filter(it=>!SNACK_OFF.has(it)||st.items.includes(it))]),["Already chosen",st.items.filter(it=>!Object.values(SNACKS).some(a=>a.includes(it)))]].filter(([,a])=>a.length).map(([cat,items])=>`<div><h4>${esc(cat)}</h4><div class="checks">${items.map(it=>{const on=st.items.includes(it);const full=!on&&n>=3;return `<label class="chk${full?" full":""}"><input type="checkbox" data-snack="${p}" value="${esc(it)}" ${on?"checked":""} ${full?"disabled":""}>${esc(it)}</label>`}).join("")}</div></div>`).join("")}</div>
       <div class="grid2">${guestsField(p)}</div>`:""}
       ${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
     </div>`;
@@ -978,7 +996,7 @@ function renderMeal(d,di,m){
     ${timeReqBlock(d,di,m)}
     <div class="mealgrid3">
       <label class="f" for="${p}.choice">Entrée
-        <select id="${p}.choice" data-path="${p}.choice"><option value="">Choose a ${m.label.toLowerCase()} entrée</option>${m.list.map(x=>`<option value="${x.id}" ${st.choice===x.id?"selected":""}>${esc(x.name)} - Includes ${esc(x.sides.toLowerCase())}, ${m.incl}${x.pp?` (+$${x.pp} pp)`:""}${x.note?` (${x.note})`:""}</option>`).join("")}</select></label>
+        <select id="${p}.choice" data-path="${p}.choice"><option value="">Choose a ${m.label.toLowerCase()} entrée</option>${offered(m.list,st.choice).map(x=>`<option value="${x.id}" ${st.choice===x.id?"selected":""}>${esc(x.name)} - Includes ${esc(x.sides.toLowerCase())}, ${m.incl}${x.pp?` (+$${x.pp} pp)`:""}${x.note?` (${x.note})`:""}</option>`).join("")}</select></label>
       ${sel?guestsField(p):"<span></span>"}
     </div>
     ${(()=>{if(!st.choice||st.choice==="none")return "";const rp=res.days.map((x,i)=>i!==di&&x.meals[m.k].choice===st.choice?fmtDate(x.date):null).filter(Boolean);return rp.length?`<span class="flag">Also served ${rp.join(", ")}</span>`:""})()}
@@ -986,7 +1004,7 @@ function renderMeal(d,di,m){
     ${sel&&sel.meat?`<div class="row"><span class="small" style="font-weight:600">Meat</span>${seg("Fajita meat",p+".meat",[["Beef","Beef"],["Chicken","Chicken"]])}</div>`:""}
     ${sel&&sel.second?`<label class="chk" style="width:fit-content"><input type="checkbox" data-path="${p}.second" ${st.second?"checked":""}> Add a 2nd protein (+$3 pp)</label>`:""}
     ${vegOK&&st.choice&&st.choice!=="none"?`<div class="grid2">
-      <label class="f" for="${p}.vegChoice">Vegetarian option<select id="${p}.vegChoice" data-path="${p}.vegChoice">${VEG.map((v,i)=>`<option value="${v.id}" ${st.vegChoice===v.id?"selected":""}>${v.name}</option>${i===0?`<option value="" ${st.vegChoice?"":"selected"}>None</option>`:""}`).join("")}</select><span class="hint">Can also be prepared vegan</span></label>
+      <label class="f" for="${p}.vegChoice">Vegetarian option<select id="${p}.vegChoice" data-path="${p}.vegChoice">${offered(VEG,st.vegChoice).map((v,i)=>`<option value="${v.id}" ${st.vegChoice===v.id?"selected":""}>${esc(v.name)}</option>${i===0?`<option value="" ${st.vegChoice?"":"selected"}>None</option>`:""}`).join("")}</select><span class="hint">Can also be prepared vegan</span></label>
       ${st.vegChoice?field("Vegetarian plates",p+".vegCount","number",rosterVeg()?`${rosterVeg()} vegetarian or vegan guest${rosterVeg()===1?"":"s"} listed in section 04`:"How many guests",'min="0"'):""}</div>`:""}
     ${rosterHint(di,m)}<div class="mwarn" id="mw-${di}-${m.k}">${mealWarn(di,m)}</div>
   </div>`;
@@ -1666,6 +1684,7 @@ app.addEventListener("click",async e=>{
   if(b.dataset.sheetback!==undefined){sheetBack();return}
   if(b.dataset.sheetdl!==undefined){downloadSheet();return}
   if(b.dataset.sheetprint!==undefined){window.print();return}
+  if((b.dataset.dept||(b.dataset.stab&&b.dataset.stab!=="settings"))&&view==="staff"&&staffTab==="settings"&&cfgDirty()){if(!confirm("You have unsaved settings changes. Leave without saving?"))return;cfgDraft=null}
   if(b.dataset.dept){const d=DEPTS.find(x=>x.k===b.dataset.dept),last=prefGet("ag:lastTab:"+d.k);b.dataset.stab=d.tabs.some(([k])=>k===last)?last:d.tabs[0][0]}
   if(b.dataset.treview){openTimeReview(b.dataset.treview);return}
   if(b.dataset.pastview){pastView=b.dataset.pastview==="1";pastQuery="";renderStaff();window.scrollTo(0,0);return}
@@ -1752,15 +1771,20 @@ const LOCS=["Dining hall","Meeting room","Conference room","Aspen Lobby","Boxed 
 const LOC_TEXT={"Meeting room":"Their meeting room"};
 const ROOMS=["Timp Room A","Timp Room B","Timp Room C","Fir","Pine","Spruce"];
 // Connected rooms, in their physical order. Neighbors can be booked together; rooms that aren't side by side can't.
-const ROOM_SETS=[{label:"Timp rooms",short:x=>x.replace("Timp Room ",""),parts:["Timp Room A","Timp Room B","Timp Room C"]},
- {label:"Tree rooms",short:x=>x,parts:["Fir","Pine","Spruce"]}];
-// Every bookable option: each single room, then each run of neighbors. Value = label, e.g. "Timp A & B", "Fir, Spruce & Pine (all)".
-const ROOM_OPTS=ROOM_SETS.map(set=>{const p=set.parts,o=[];
-  for(let n=1;n<=p.length;n++)for(let i=0;i+n<=p.length;i++){const run=p.slice(i,i+n);
-    const lab=n===1?run[0]:(set.label==="Timp rooms"?"Timp ":"")+(n===2?run.map(set.short).join(" & "):run.slice(0,-1).map(set.short).join(", ")+" & "+set.short(run[n-1]))+(n===p.length?" (all)":"");
-    o.push({label:lab,parts:run})}
-  return {label:set.label,opts:o}});
-const ROOM_PARTS=Object.fromEntries(ROOM_OPTS.flatMap(g=>g.opts.map(o=>[o.label,o.parts])));
+// "short" is the room's name inside a combined label, and "prefix" starts that label: Timp A & B. Staff can change these in Settings.
+let ROOM_SETS=[{label:"Timp rooms",prefix:"Timp ",rooms:[{name:"Timp Room A",short:"A"},{name:"Timp Room B",short:"B"},{name:"Timp Room C",short:"C"}]},
+ {label:"Tree rooms",prefix:"",rooms:[{name:"Fir",short:"Fir"},{name:"Pine",short:"Pine"},{name:"Spruce",short:"Spruce"}]}];
+// Every bookable option: each single room, then each run of neighbors. Value = label, e.g. "Timp A & B", "Fir, Pine & Spruce (all)".
+// A run that includes a room no longer offered isn't offered either, but ROOM_PARTS still knows it so past bookings read correctly.
+let ROOM_OPTS=[],ROOM_PARTS={};
+function buildRooms(){const all=[];
+  ROOM_OPTS=ROOM_SETS.map(set=>{const p=set.rooms,o=[];
+    for(let n=1;n<=p.length;n++)for(let i=0;i+n<=p.length;i++){const run=p.slice(i,i+n),sh=run.map(r=>r.short||r.name);
+      const lab=n===1?run[0].name:(set.prefix||"")+(n===2?sh.join(" & "):sh.slice(0,-1).join(", ")+" & "+sh[n-1])+(n===p.length?" (all)":"");
+      const opt={label:lab,parts:run.map(r=>r.name)};all.push(opt);if(!run.some(r=>r.off))o.push(opt)}
+    return {label:set.label,opts:o}}).filter(g=>g.opts.length);
+  ROOM_PARTS=Object.fromEntries(all.map(o=>[o.label,o.parts]))}
+buildRooms();
 const roomParts=x=>x?ROOM_PARTS[x]||[x]:[];
 const roomsOverlap=(a,b)=>roomParts(a).some(p=>roomParts(b).includes(p));
 const roomOptions=cur=>ROOM_OPTS.map(g=>`<optgroup label="${g.label}">${g.opts.map(o=>`<option value="${esc(o.label)}" ${cur===o.label?"selected":""}>${esc(o.label)}</option>`).join("")}</optgroup>`).join("")+(cur&&!ROOM_PARTS[cur]?`<option selected>${esc(cur)}</option>`:"");
@@ -1846,12 +1870,176 @@ function planSave(){
 }
 
 // ---------- CONFERENCE SERVICES ----------
+
+// ---------- Settings: menus and rooms that staff can change ----------
+// The menus and rooms written above are the built-in starting point. Staff change them on the Settings page, and the
+// saved version replaces them when the page loads. Nothing is ever deleted: each item is either offered or not, so a
+// group that already picked something keeps it and it still prints for the kitchen. Arrays are refilled in place so
+// every lookup elsewhere (reports, totals, the kitchen lists) keeps finding retired items by id.
+const CFG_MEALS=[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"]];
+const BF_EXTRAS=["Sausage","Bacon","Eggs","Potatoes"];
+let SNACK_OFF=new Set(), settingsDoc=null;
+const CATALOG_DEFAULT={menus:{breakfast:structuredClone(BREAKFAST),lunch:structuredClone(LUNCH),dinner:structuredClone(DINNER),veg:structuredClone(VEG)},
+  included:Object.fromEntries(CFG_MEALS.map(([k])=>[k,{base:MEAL[k].base,incl:MEAL[k].incl}])),
+  snacks:Object.fromEntries(Object.entries(SNACKS).map(([c,a])=>[c,a.map(name=>({name}))])),
+  rooms:structuredClone(ROOM_SETS)};
+// A saved catalog with any part missing falls back to the built-in part.
+function fullCatalog(c){c=c||{};const D=CATALOG_DEFAULT,m=c.menus||{};
+  return structuredClone({menus:{breakfast:m.breakfast||D.menus.breakfast,lunch:m.lunch||D.menus.lunch,dinner:m.dinner||D.menus.dinner,veg:m.veg||D.menus.veg},
+    included:{...D.included,...(c.included||{})},snacks:c.snacks||D.snacks,rooms:c.rooms||D.rooms})}
+function applyCatalog(c){c=fullCatalog(c);
+  const fill=(arr,items)=>arr.splice(0,arr.length,...items);
+  fill(BREAKFAST,c.menus.breakfast.map(x=>({sides:"",has:"",...x,x:x.x||[]})));
+  fill(LUNCH,c.menus.lunch.map(x=>({sides:"",...x})));
+  fill(DINNER,c.menus.dinner.map(x=>({sides:"",...x})));
+  fill(VEG,c.menus.veg);
+  CFG_MEALS.forEach(([k])=>{const i=c.included[k];if(i){MEAL[k].base=i.base||"";MEAL[k].incl=i.incl||""}});
+  Object.keys(SNACKS).forEach(k=>delete SNACKS[k]);SNACK_OFF=new Set();
+  Object.entries(c.snacks).forEach(([cat,a])=>{SNACKS[cat]=a.map(s=>s.name);a.forEach(s=>{if(s.off)SNACK_OFF.add(s.name)})});
+  ROOM_SETS=c.rooms;buildRooms()}
+// What organizers can pick: offered items, plus whatever this group already picked.
+const offered=(list,cur)=>list.filter(x=>!x.off||x.id===cur);
+
+// --- the Settings page ---
+let cfgDraft=null, cfgBase=null, cfgBaseAt="", cfgSec="breakfast", cfgErr=[], cfgConflict=false, cfgBusy=false, cfgFocus="";
+const CFG_SECS=[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["veg","Vegetarian"],["snacks","Snacks"],["rooms","Rooms"],["history","Change history"]];
+const cfgKey=()=>"k"+Math.random().toString(36).slice(2,9);
+// Snacks, rooms and room groups get a temporary key while editing so changes can be described; it is removed on save.
+function cfgKeyed(c){Object.values(c.snacks).forEach(a=>a.forEach(s=>s._k=cfgKey()));c.rooms.forEach(s=>{s._k=cfgKey();s.rooms.forEach(r=>r._k=cfgKey())});return c}
+function cfgStrip(c){c=structuredClone(c);Object.values(c.snacks).forEach(a=>a.forEach(s=>delete s._k));c.rooms.forEach(s=>{delete s._k;s.rooms.forEach(r=>delete r._k)});return c}
+function cfgOpen(){cfgBase=cfgKeyed(fullCatalog(settingsDoc&&settingsDoc.catalog));cfgDraft=structuredClone(cfgBase);cfgBaseAt=(settingsDoc&&settingsDoc.updatedAt)||"";cfgErr=[];cfgConflict=false}
+const cfgDirty=()=>!!cfgDraft&&cfgChanges().length>0;
+const cfgGet=path=>path.split(".").reduce((o,k)=>o==null?o:o[k],cfgDraft);
+function cfgSet(path,v){const ks=path.split("."),last=ks.pop(),o=ks.reduce((o,k)=>o[k],cfgDraft);if(v===false||v==null)delete o[last];else o[last]=v}
+const CFG_WORD={sides:"what it comes with",x:"extras",has:"already includes",second:"2nd protein",meat:"beef or chicken choice",short:"short name"};
+const cfgVal=v=>JSON.stringify(v===false||v==null?"":v);
+function cfgDiffList(label,a,b,key){const out=[],am=new Map(a.map(x=>[key(x),x])),bk=new Set(b.map(key)),nm=x=>x.name||"(no name)";
+  b.forEach(x=>{const o=am.get(key(x));if(!o){out.push(`${label}: added ${nm(x)}${x.off?" (not offered)":""}`);return}
+    if(o.name!==x.name)out.push(`${label}: renamed ${nm(o)} to ${nm(x)}`);
+    if(!!o.off!==!!x.off)out.push(`${label}: ${x.off?"stopped offering":"offering again"} ${nm(x)}`);
+    const other=[...new Set([...Object.keys(o),...Object.keys(x)])].filter(k=>!["name","off","_k","id"].includes(k)&&cfgVal(o[k])!==cfgVal(x[k]));
+    if(other.length)out.push(`${label}: changed ${other.map(k=>CFG_WORD[k]||k).join(" and ")} for ${nm(x)}`)});
+  a.forEach(o=>{if(!bk.has(key(o)))out.push(`${label}: removed ${nm(o)}`)});
+  if(a.map(key).filter(k=>bk.has(k)).join()!==b.map(key).filter(k=>am.has(k)).join())out.push(`${label}: changed the order`);
+  return out}
+function cfgChanges(){if(!cfgDraft)return [];const a=cfgBase,b=cfgDraft,out=[],byId=x=>x.id,byK=x=>x._k;
+  CFG_MEALS.forEach(([k,l])=>{const i=a.included[k],j=b.included[k];if(i.base!==j.base||i.incl!==j.incl)out.push(`${l}: changed what's served with every ${l.toLowerCase()}`);
+    out.push(...cfgDiffList(l,a.menus[k],b.menus[k],byId))});
+  out.push(...cfgDiffList("Vegetarian",a.menus.veg,b.menus.veg,byId));
+  Object.keys(b.snacks).forEach(c=>out.push(...cfgDiffList(`Snacks (${c})`,a.snacks[c]||[],b.snacks[c],byK)));
+  const as=new Map(a.rooms.map(s=>[s._k,s]));
+  b.rooms.forEach(s=>{const o=as.get(s._k),l=s.label||"New room group";
+    if(!o){out.push(`Rooms: added the ${l} group with ${s.rooms.map(r=>r.name||"(no name)").join(", ")}`);return}
+    if(o.label!==s.label)out.push(`Rooms: renamed the ${o.label} group to ${l}`);
+    if((o.prefix||"")!==(s.prefix||""))out.push(`Rooms (${l}): changed how combined rooms are named`);
+    out.push(...cfgDiffList(`Rooms (${l})`,o.rooms,s.rooms,byK))});
+  return out}
+function cfgProblems(){const d=cfgDraft,out=[],dup=(label,names)=>{const seen=new Set();names.forEach(n=>{const k=n.trim().toLowerCase();if(!k)return;if(seen.has(k))out.push(`${label}: "${n.trim()}" is listed twice.`);seen.add(k)})};
+  CFG_MEALS.forEach(([k,l])=>{const L=d.menus[k];if(L.some(x=>!x.name.trim()))out.push(`${l}: an entrée has no name.`);dup(l,L.map(x=>x.name));
+    if(!L.some(x=>!x.off))out.push(`${l}: at least one entrée must be offered.`)});
+  if(d.menus.veg.some(x=>!x.name.trim()))out.push("Vegetarian: an option has no name.");dup("Vegetarian",d.menus.veg.map(x=>x.name));
+  const allSn=Object.values(d.snacks).flat();if(allSn.some(s=>!s.name.trim()))out.push("Snacks: an item has no name.");dup("Snacks",allSn.map(s=>s.name));
+  const allR=d.rooms.flatMap(s=>s.rooms);if(allR.some(r=>!r.name.trim()))out.push("Rooms: a room has no name.");dup("Rooms",allR.map(r=>r.name));
+  if(d.rooms.some(s=>!s.label.trim()))out.push("Rooms: a room group has no name.");
+  if(!allR.some(r=>!r.off))out.push("Rooms: at least one room must be offered.");
+  return out}
+async function cfgSave(force){
+  const probs=cfgProblems();if(probs.length){cfgErr=probs;renderStaff();document.getElementById("cfgerr")?.focus();return}
+  const changes=cfgChanges();if(!changes.length)return;
+  cfgBusy=true;cfgErr=[];renderStaff();
+  try{const cur=await store.loadSettings();
+    if(!force&&((cur&&cur.updatedAt)||"")!==cfgBaseAt){cfgConflict=true;cfgBusy=false;renderStaff();return}
+    const now=new Date().toISOString(),cat=cfgStrip(cfgDraft);
+    // Trim names so "Pancakes " and "Pancakes" stay one item.
+    Object.values(cat.menus).forEach(L=>L.forEach(x=>{x.name=x.name.trim();if(x.sides!=null)x.sides=x.sides.trim()}));Object.values(cat.snacks).forEach(L=>L.forEach(s=>s.name=s.name.trim()));
+    cat.rooms.forEach(s=>{s.label=s.label.trim();s.rooms.forEach(r=>{r.name=r.name.trim();r.short=(r.short||"").trim()||r.name})});
+    const doc={catalog:cat,updatedAt:now,by:who.id||"",history:[{at:now,by:who.id||"",what:changes},...((cur&&cur.history)||[])].slice(0,200)};
+    await store.putSettings(doc);settingsDoc=doc;applyCatalog(doc.catalog);cfgOpen();toast(`Settings saved (${changes.length} change${changes.length===1?"":"s"})`)}
+  catch(e){cfgErr=["Couldn't save. Check your connection and try again. Your changes are still here."]}
+  cfgBusy=false;renderStaff()}
+
+function cfgBar(){const ch=cfgChanges();
+  if(cfgConflict)return `<div class="notice warn cfgbar" id="cfgbar" role="alert"><span><b>Someone else saved settings after you opened this page.</b> Saving now would replace their changes.</span>
+    <span class="row"><button class="btn" data-cfg-reload>Discard mine and load theirs</button><button class="btn primary" data-cfg-force>Save mine anyway</button></span></div>`;
+  if(!ch.length)return `<div class="cfgbar quiet" id="cfgbar"><span class="small muted">${settingsDoc?`All changes saved. Last saved ${fmtDate(new Date(settingsDoc.updatedAt),{month:"short",day:"numeric"})}, ${clock(settingsDoc.updatedAt)}.`:"Showing the built-in menus and rooms. Nothing has been changed yet."}</span></div>`;
+  return `<div class="notice warn cfgbar" id="cfgbar"><details><summary><b>${ch.length} unsaved change${ch.length===1?"":"s"}</b></summary><ul class="small">${ch.map(c=>`<li>${esc(c)}</li>`).join("")}</ul></details>
+    <span class="row"><button class="btn" data-cfg-discard>Discard</button><button class="btn primary" data-cfg-save ${cfgBusy?"disabled":""}>${cfgBusy?"Saving…":"Save changes"}</button></span></div>`}
+const cfgIn=(label,path,hint,attrs)=>{const id="cfg-"+path.replace(/\./g,"-");return `<label class="f" for="${id}">${label}<input type="text" id="${id}" data-cfg-field="${path}" value="${esc(cfgGet(path)||"")}" ${attrs||""}>${hint?`<span class="hint">${hint}</span>`:""}</label>`};
+function cfgStatus(path,i,x,locked){
+  return `<div class="cfgside"><span class="pill ${x.off?"waiting":"locked"}">${x.off?"Not offered":"Offered"}</span>
+    ${locked?`<span class="small muted">${locked}</span>`:`<button class="btn tiny" data-cfg-toggle="${path}" data-i="${i}">${x.off?"Offer again":"Stop offering"}</button>`}
+    <span class="row" style="gap:4px"><button class="btn tiny ghost" data-cfg-move="${path}" data-i="${i}" data-d="-1" aria-label="Move ${esc(x.name)} up" ${i===0?"disabled":""}>&#8593;</button><button class="btn tiny ghost" data-cfg-move="${path}" data-i="${i}" data-d="1" aria-label="Move ${esc(x.name)} down" ${i===cfgGet(path).length-1?"disabled":""}>&#8595;</button></span></div>`}
+function cfgMealSec(k,label){const path=`menus.${k}`,L=cfgGet(path),lc=label.toLowerCase(),inc=k==="veg"?null:`included.${k}`;
+  const price=x=>[x.pp?`+$${x.pp} per person`:"",x.note?x.note.replace(/^\+\s*/,""):""].filter(Boolean).join(", ");
+  return `<div class="panel">
+    ${inc?`<div class="grid2">${cfgIn(`Served with every ${lc}`,inc+".base","Shown to organizers under the menu.")}${cfgIn("Short version for reports",inc+".incl",'For example "salad, dessert".')}</div>`
+      :`<p class="small" style="margin:0">Groups can pick one of these for lunch or dinner, in place of the entrée for some guests. Each can also be made vegan.</p>`}
+    <div class="cfglist">${L.map((x,i)=>`<div class="cfgitem${x.off?" off":""}"><div class="cfgmain">
+        <div class="grid2">${cfgIn("Name",`${path}.${i}.name`)}${k==="veg"?"":cfgIn("Comes with",`${path}.${i}.sides`)}</div>
+        ${k==="breakfast"?`<div class="grid2"><div class="f"><span>Extras guests can add <span class="muted">($1.50 per person each)</span></span><div class="checks">${BF_EXTRAS.map(v=>`<label class="chk"><input type="checkbox" data-cfg-arr="${path}.${i}.x" value="${v}" ${(x.x||[]).includes(v)?"checked":""}> ${v}</label>`).join("")}</div></div>
+          ${cfgIn("Already includes",`${path}.${i}.has`,`Shown under the extras, as in "${esc(x.name||"Pancakes")} already include eggs, sausage and potatoes."`)}</div>`:""}
+        ${k==="lunch"?`<div class="checks"><label class="chk"><input type="checkbox" data-cfg-bool="${path}.${i}.second" ${x.second?"checked":""}> Offer a 2nd protein (+$3 per person)</label><label class="chk"><input type="checkbox" data-cfg-bool="${path}.${i}.meat" ${x.meat?"checked":""}> Group chooses beef or chicken</label></div>`:""}
+        ${price(x)?`<span class="small muted">Price: ${esc(price(x))}. Prices can't be changed here yet.</span>`:""}
+      </div>${cfgStatus(path,i,x,k==="veg"&&x.id==="chef"?"Always offered. It's the default for every meal.":"")}</div>`).join("")}</div>
+    <div><button class="btn" data-cfg-add="${path}">+ Add ${k==="veg"?"a vegetarian option":`a ${lc} entrée`}</button></div>
+    ${k==="veg"?"":`<p class="small muted" style="margin:0">Renaming an item changes it everywhere, including for groups that already picked it. To replace a dish, stop offering the old one and add the new one.</p>`}
+  </div>`}
+function cfgSnackSec(){return Object.keys(cfgDraft.snacks).map(cat=>{const path=`snacks.${cat}`,L=cfgGet(path);
+  return `<div class="panel"><h3 style="margin:0">${esc(cat)}</h3><div class="cfglist">${L.map((s,i)=>`<div class="cfgitem${s.off?" off":""}"><div class="cfgmain">${cfgIn("Name",`${path}.${i}.name`,"",`aria-label="${esc(cat)} snack name"`)}</div>${cfgStatus(path,i,s)}</div>`).join("")}</div>
+    <div><button class="btn" data-cfg-add="${path}">+ Add a ${esc(cat.toLowerCase())} snack</button></div></div>`}).join("")
+  +`<p class="small muted">Groups that already picked a snack keep it, even if it's renamed or no longer offered.</p>`}
+function cfgRoomSec(){const saveSets=ROOM_SETS,saveO=ROOM_OPTS,saveP=ROOM_PARTS;
+  ROOM_SETS=cfgDraft.rooms;buildRooms();const preview=ROOM_OPTS;ROOM_SETS=saveSets;ROOM_OPTS=saveO;ROOM_PARTS=saveP;
+  return `<div class="panel" style="gap:6px"><p class="small" style="margin:0">These are the rooms staff can assign on the Setup tab. Rooms in the same group are connected and listed in their order in the building, so neighbors can be booked together. Groups already assigned a room keep it, even if it's renamed or no longer offered.</p></div>`
+  +cfgDraft.rooms.map((s,si)=>{const path=`rooms.${si}.rooms`;
+    return `<div class="panel"><div class="grid2">${cfgIn("Group name",`rooms.${si}.label`,"For example \"Timp rooms\". Shown as a heading in the room list.")}${cfgIn("Start of combined names",`rooms.${si}.prefix`,'Optional. "Timp " makes rooms A and B read "Timp A & B".')}</div>
+      <div class="cfglist">${s.rooms.map((r,i)=>`<div class="cfgitem${r.off?" off":""}"><div class="cfgmain"><div class="grid2">${cfgIn("Room name",`${path}.${i}.name`)}${cfgIn("Short name in combined rooms",`${path}.${i}.short`,"For example \"A\". Leave blank to use the full name.")}</div></div>${cfgStatus(path,i,r)}</div>`).join("")}</div>
+      <div><button class="btn" data-cfg-add="${path}">+ Add a room to ${esc(s.label||"this group")}</button></div></div>`}).join("")
+  +`<div><button class="btn" data-cfg-addset>+ Add a room group</button> <span class="small muted">For a room that isn't connected to others, make it a group of one.</span></div>
+   <div class="panel"><h3 style="margin:0">Staff will be able to choose</h3>${preview.length?preview.map(g=>`<p class="small" style="margin:0"><b>${esc(g.label)}:</b> ${g.opts.map(o=>esc(o.label)).join(" · ")}</p>`).join(""):`<p class="small muted" style="margin:0">No rooms offered.</p>`}</div>`}
+function cfgHistorySec(){const h=(settingsDoc&&settingsDoc.history)||[];
+  if(!h.length)return `<div class="panel"><p class="small muted" style="margin:0">No settings changes yet. Every save is recorded here with who made it.</p></div>`;
+  return `<div class="panel"><ul class="history">${h.map(x=>`<li><time datetime="${esc(x.at)}">${fmtDate(new Date(x.at),{month:"short",day:"numeric",year:"numeric"})} · ${clock(x.at)}</time><span>${x.what.map(w=>esc(w)).join("<br>")} <span class="muted" data-uid="${esc(x.by||"")}"></span></span></li>`).join("")}</ul></div>`}
+function settingsView(){if(!cfgDraft)cfgOpen();
+  const body=cfgSec==="snacks"?cfgSnackSec():cfgSec==="rooms"?cfgRoomSec():cfgSec==="history"?cfgHistorySec():cfgMealSec(cfgSec,CFG_SECS.find(s=>s[0]===cfgSec)[1]);
+  return `<div class="stack" id="cfgview">
+    <div class="panel" style="gap:6px"><h2 style="margin:0">Settings</h2><p class="small" style="margin:0">The menus and rooms offered to groups. Saved changes show up for every group that hasn't locked in. Groups keep anything they already picked, even if it's no longer offered, and it still prints for the kitchen. Locked-in groups never change. Nothing is ever deleted, so anything you stop offering can be offered again.</p></div>
+    <div class="reportnav" role="group" aria-label="Settings sections">${CFG_SECS.map(([k,l])=>`<button data-cfg-sec="${k}" aria-pressed="${cfgSec===k}">${l}</button>`).join("")}</div>
+    ${cfgChanges().length||cfgConflict?"":cfgBar()}
+    ${cfgErr.length?`<div class="notice bad" id="cfgerr" tabindex="-1" role="alert"><b>Not saved yet.</b> Fix these first:<ul class="small" style="margin:4px 0 0">${cfgErr.map(e=>`<li>${esc(e)}</li>`).join("")}</ul></div>`:""}
+    ${body}
+    ${cfgChanges().length||cfgConflict?cfgBar():""}
+  </div>`}
+// The saved/unsaved line sits under the section buttons when everything is saved, and pins to the bottom while there are changes.
+const cfgRefreshBar=()=>{const v=document.getElementById("cfgview");if(!v)return;const cur=document.getElementById("cfgbar"),html=cfgBar();
+  // Leave the bar alone when nothing changed: replacing it mid-click would swallow a press of Save.
+  if(cur&&cur.outerHTML===new DOMParser().parseFromString(html,"text/html").body.firstElementChild.outerHTML)return;cur?.remove();
+  const dirty=cfgChanges().length||cfgConflict;if(dirty)v.insertAdjacentHTML("beforeend",cfgBar());else v.querySelector(".reportnav")?.insertAdjacentHTML("afterend",cfgBar())};
+app.addEventListener("input",e=>{const el=e.target;if(view!=="staff"||staffTab!=="settings"||!el.dataset.cfgField)return;cfgSet(el.dataset.cfgField,el.value);cfgRefreshBar()});
+app.addEventListener("change",e=>{const el=e.target;if(view!=="staff"||staffTab!=="settings")return;
+  if(el.dataset.cfgBool){cfgSet(el.dataset.cfgBool,el.checked);cfgRefreshBar();return}
+  if(el.dataset.cfgArr){const a=cfgGet(el.dataset.cfgArr)||[],v=el.value;cfgSet(el.dataset.cfgArr,BF_EXTRAS.filter(x=>x===v?el.checked:a.includes(x)));cfgRefreshBar();return}
+});
+app.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b||view!=="staff"||staffTab!=="settings")return;const d=b.dataset;
+  if(d.cfgSec){cfgSec=d.cfgSec;renderStaff();return}
+  if(d.cfgToggle){const x=cfgGet(d.cfgToggle)[+d.i];if(x.off)delete x.off;else x.off=true;renderStaff();return}
+  if(d.cfgMove){const L=cfgGet(d.cfgMove),i=+d.i,j=i+Number(d.cfgD||d.d);if(j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];renderStaff();document.querySelector(`[data-cfg-move="${d.cfgMove}"][data-i="${j}"][data-d="${d.d}"]`)?.focus();return}
+  if(d.cfgAdd){const L=cfgGet(d.cfgAdd),p=d.cfgAdd,k=p.split(".")[1];
+    L.push(p.startsWith("menus.")?(k==="breakfast"?{id:"m"+cfgKey(),name:"",sides:"",x:[...BF_EXTRAS],has:""}:k==="veg"?{id:"m"+cfgKey(),name:""}:{id:"m"+cfgKey(),name:"",sides:""}):p.startsWith("rooms.")?{name:"",short:"",_k:cfgKey()}:{name:"",_k:cfgKey()});
+    renderStaff();document.getElementById(`cfg-${p.replace(/\./g,"-")}-${L.length-1}-name`)?.focus();return}
+  if(d.cfgAddset!==undefined){cfgDraft.rooms.push({label:"",prefix:"",rooms:[{name:"",short:"",_k:cfgKey()}],_k:cfgKey()});renderStaff();document.getElementById(`cfg-rooms-${cfgDraft.rooms.length-1}-label`)?.focus();return}
+  if(d.cfgDiscard!==undefined){if(!confirm("Discard your unsaved changes?"))return;cfgOpen();renderStaff();return}
+  if(d.cfgReload!==undefined){settingsDoc=await store.loadSettings();applyCatalog(settingsDoc&&settingsDoc.catalog);cfgOpen();renderStaff();toast("Loaded the latest settings");return}
+  if(d.cfgSave!==undefined){cfgSave(false);return}
+  if(d.cfgForce!==undefined){cfgSave(true);return}});
+addEventListener("beforeunload",e=>{if(cfgDirty()){e.preventDefault();e.returnValue=""}});
+
 const PAGE_URL=DEMO?location.href.split("#")[0].split("?")[0]:"https://claude.ai/artifact/9kSo7EiZ3AAYSrh96k4yud";
 // Sections are grouped by who uses them. Each browser remembers its last section, so the kitchen, setup crew and office each land on their own view.
 const DEPTS=[{k:"groups",label:"Groups",tabs:[["groups","Groups"]]},
  {k:"kitchen",label:"Kitchen",tabs:[["kitchen","Daily production list"],["week","Weekly meal schedule"]]},
  {k:"setup",label:"Setup",tabs:[["rooms","Rooms & A/V"],["walks","Walk-throughs"]]}];
-const STAFF_TABS=["groups","kitchen","week","rooms","walks","backup"];
+const STAFF_TABS=["groups","kitchen","week","rooms","walks","settings","backup"];
 const needsInfo=()=>["groups","kitchen","week","rooms","walks"].includes(staffTab);
 const deptOf=t=>(DEPTS.find(d=>d.tabs.some(([k])=>k===t))||{k:t}).k;
 function prefGet(k){try{return localStorage.getItem(k)||""}catch(e){return ""}}
@@ -1969,14 +2157,14 @@ function startForm(){if(!startOpen)return "";
 function renderStaff(){
   view="staff";setTab("staff");
   const cur=deptOf(staffTab),dept=DEPTS.find(d=>d.k===cur);
-  const nav=`<nav class="subnav" aria-label="Conference Services">${DEPTS.map(d=>`<button data-dept="${d.k}" aria-pressed="${cur===d.k}">${d.label}</button>`).join("")}<button class="admin" data-stab="backup" aria-pressed="${staffTab==="backup"}">Backup &amp; system check</button></nav>`
+  const nav=`<nav class="subnav" aria-label="Conference Services">${DEPTS.map(d=>`<button data-dept="${d.k}" aria-pressed="${cur===d.k}">${d.label}</button>`).join("")}<button class="admin" data-stab="settings" aria-pressed="${staffTab==="settings"}">Settings</button><button class="admin" data-stab="backup" aria-pressed="${staffTab==="backup"}">Backup &amp; system check</button></nav>`
     +(dept&&dept.tabs.length>1?`<div class="reportnav" role="group" aria-label="${dept.label} reports">${dept.tabs.map(([k,l])=>`<button data-stab="${k}" aria-pressed="${staffTab===k}">${l}</button>`).join("")}</div>`:"");
   if(staffRows===null){app.innerHTML=nav+`<div class="empty">Loading reservations…</div>`;return}
-  const body=staffTab==="kitchen"?kitchenView():staffTab==="week"?weekView():staffTab==="rooms"?roomsView():staffTab==="walks"?walksView():staffTab==="backup"?backupView():groupsView();
+  const body=staffTab==="kitchen"?kitchenView():staffTab==="week"?weekView():staffTab==="rooms"?roomsView():staffTab==="walks"?walksView():staffTab==="backup"?backupView():staffTab==="settings"?settingsView():groupsView();
   const keep={};document.querySelectorAll("#startform input,#msgtext").forEach(el=>keep[el.id]=el.value);const foc=document.activeElement&&document.activeElement.id;
   app.innerHTML=nav+body;
   for(const[id,v]of Object.entries(keep)){const el=document.getElementById(id);if(el)el.value=v}if(foc)document.getElementById(foc)?.focus();
-  if(staffTab==="backup")fillNames();
+  if(staffTab==="backup"||staffTab==="settings")fillNames();
 }
 
 const GROUP_FILTERS={all:"Current & upcoming",locked:"Locked in",progress:"Organizer working on it",waiting:"Invited, not started",overdue:"Past the 14-day deadline"};
@@ -2443,7 +2631,7 @@ async function exportData(kind){
     await saveFile(`Aspen Grove meals ${stamp}.csv`,csv(out),"Meal list saved");
   }else{
     let info={};try{info=await store.allStaff()}catch(e){}
-    const ok=await saveFile(`Aspen Grove backup ${stamp}.json`,JSON.stringify({exportedAt:new Date().toISOString(),reservations:staffRows,staffNotes:info},null,2),"Full backup saved");
+    const ok=await saveFile(`Aspen Grove backup ${stamp}.json`,JSON.stringify({exportedAt:new Date().toISOString(),reservations:staffRows,staffNotes:info,settings:settingsDoc},null,2),"Full backup saved");
     if(ok)try{localStorage.setItem("aglastbackup",new Date().toISOString())}catch(e){}
     renderStaff();
   }
@@ -2575,7 +2763,7 @@ function putAll(data){let n=0;(data.reservations||[]).forEach(r=>{if(r&&r.code){
 function seedDemo(){try{putAll(demoSeeds());localStorage.setItem(DEMO_FLAG,new Date().toISOString())}catch(e){}}
 document.getElementById("banner").addEventListener("click",e=>{
   if(e.target.id==="demo-reset"){if(!confirm("Put the demo back to its sample groups? Anything you added or changed here is removed."))return;
-    clearLocal();seedDemo();staffRows=null;kitchenInfo=null;res=null;renderHome();toast("Demo reset");return}
+    clearLocal();try{localStorage.removeItem("agsettings")}catch(err){}settingsDoc=null;applyCatalog(null);cfgDraft=null;seedDemo();staffRows=null;kitchenInfo=null;res=null;renderHome();toast("Demo reset");return}
   if(e.target.id==="demo-load")document.getElementById("demo-file").click()});
 document.getElementById("banner").addEventListener("change",async e=>{
   if(e.target.id!=="demo-file")return;const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
