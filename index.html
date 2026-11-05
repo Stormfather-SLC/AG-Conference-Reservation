@@ -1675,7 +1675,7 @@ app.addEventListener("click",async e=>{
   if(b.dataset.invite){inviteFor(b.dataset.invite);return}
   if(b.dataset.remind){remindFor(b.dataset.remind);return}
   if(b.dataset.closemsg!==undefined){staffMsg=null;renderStaff();return}
-  if(b.dataset.copymsg!==undefined){const t=document.getElementById("msgtext");try{await navigator.clipboard.writeText(t.value);toast("Message copied. Paste it into an email.")}catch(err){t.focus();t.select();toast("Press Ctrl+C or Cmd+C to copy")}return}
+  if(b.dataset.copymsg!==undefined){const t=document.getElementById("msgtext");try{await copyRich(t.value);toast("Message copied with a clickable link. Paste it into an email.")}catch(err){t.focus();t.select();toast("Press Ctrl+C or Cmd+C to copy")}return}
   if(b.dataset.copylink!==undefined){const v=b.dataset.copylink;try{await navigator.clipboard.writeText(v);toast("Copied")}catch(err){toast("Select the text and copy it")}return}
   if(b.dataset.kdl!==undefined){downloadKitchen();return}
   if(b.dataset.wdl!==undefined){downloadWeek();return}
@@ -1844,7 +1844,7 @@ function planSave(){
 }
 
 // ---------- CONFERENCE SERVICES ----------
-const PAGE_URL=DEMO?location.origin+location.pathname:"https://claude.ai/artifact/9kSo7EiZ3AAYSrh96k4yud";
+const PAGE_URL=DEMO?location.href.split("#")[0].split("?")[0]:"https://claude.ai/artifact/9kSo7EiZ3AAYSrh96k4yud";
 // Sections are grouped by who uses them. Each browser remembers its last section, so the kitchen, setup crew and office each land on their own view.
 const DEPTS=[{k:"groups",label:"Groups",tabs:[["groups","Groups"]]},
  {k:"kitchen",label:"Kitchen",tabs:[["kitchen","Daily production list"],["week","Weekly meal schedule"]]},
@@ -1879,7 +1879,9 @@ We're looking forward to hosting ${r.group||"your group"} at Aspen Grove on ${da
 
 Please fill in your group's final details online: meals and snacks for each day, room setup, audio/visual needs, and guest allergies. It saves as you type, so you can stop and come back any time before you lock it in. We've already filled in what we have on file.
 
-Open your form: ${linkFor(r.code)}
+Open your form here:
+${linkFor(r.code)}
+
 Your reservation code: ${r.code}
 
 Please lock in your final details by ${dl?longDate(iso(dl)):"two weeks before you arrive"}. That gives our kitchen time to plan for every allergy.
@@ -1902,7 +1904,9 @@ ${miss.slice(0,12).map(m=>"  - "+m).join("\n")}${miss.length>12?`\n  - and ${mis
 
 Everything is filled in. The last step is to review and press Lock in.`}
 
-Open your form: ${linkFor(r.code)}
+Open your form here:
+${linkFor(r.code)}
+
 Your reservation code: ${r.code}
 
 Thank you,
@@ -1914,13 +1918,20 @@ function remindFor(code){const r=(staffRows||[]).find(x=>x.code===code);if(!r)re
 function msgCard(){const m=staffMsg;if(!m)return "";
   return `<section class="panel msgcard" aria-label="${esc(m.title)}">
     <div class="row" style="justify-content:space-between"><h2>${esc(m.title)}</h2><button class="btn ghost" data-closemsg>Close</button></div>
-    <p class="small" style="margin:0"><b>Send email</b> opens a new message in your email program, addressed and filled in. Look it over, then press Send there. It goes from your own mailbox, so replies come back to you.</p>
+    <p class="small" style="margin:0"><b>Send email</b> opens a new message in your email program, addressed and filled in. Look it over, then press Send there. It goes from your own mailbox, so replies come back to you. If the form link doesn't show as a link in your email program, use <b>Copy message</b> instead and paste it into a new email: the link stays clickable.</p>
     <div class="copyline"><span>To:</span>${m.to?`<code>${esc(m.to)}</code><button class="btn tiny" data-copylink="${esc(m.to)}">Copy</button>`:`<span class="missingval">No email on file</span>`}</div>
     <div class="copyline"><span>Form link:</span><code>${esc(linkFor(m.code))}</code><button class="btn tiny" data-copylink="${esc(linkFor(m.code))}">Copy</button></div>
     <label class="f" for="msgtext">Message<textarea id="msgtext">${esc(m.text)}</textarea></label>
     <div class="row">${m.to?`<a class="btn primary" id="mailmsg" data-mailmsg="${esc(m.code)}" href="${esc(mailtoFor(m.to,m.text))}">Send email</a>`:`<span class="small muted">Add the organizer's email to the group to send from here.</span>`}<button class="btn" data-copymsg>Copy message</button></div>
     ${m.sentAt?`<p class="small muted" style="margin:0">Opened in your email program at ${clock(m.sentAt)}. If it didn't open, use Copy message and paste it into an email.</p>`:""}
   </section>`}
+// Message text as email HTML: web addresses become real links.
+function msgHTML(text){const body=String(text||"").replace(/\r\n/g,"\n");
+  return `<div style="font-family:Arial,sans-serif;font-size:14px">${esc(body).replace(/https?:\/\/[^\s<]+/g,u=>`<a href="${u}">${u}</a>`).replace(/\n/g,"<br>")}</div>`}
+// Copies both a formatted version (link stays clickable when pasted into Outlook, Gmail, etc.) and plain text.
+async function copyRich(text){const plain=String(text||"");
+  if(window.ClipboardItem&&navigator.clipboard.write){try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([msgHTML(text)],{type:"text/html"}),"text/plain":new Blob([plain],{type:"text/plain"})})]);return}catch(e){}}
+  await navigator.clipboard.writeText(plain)}
 // A mailto: link: the message opens in the staff member's own email program, ready to send. The first line "Subject: …" becomes the subject.
 function mailtoFor(to,text){const t=String(text||"").replace(/\r\n/g,"\n"),m=t.match(/^Subject:\s*(.*)\n+/);const subject=m?m[1].trim():"",body=(m?t.slice(m[0].length):t).replace(/\n/g,"\r\n");
   return `mailto:${encodeURIComponent(to).replace(/%40/g,"@")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
