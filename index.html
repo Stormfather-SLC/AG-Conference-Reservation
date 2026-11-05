@@ -276,6 +276,7 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .cfgbar.quiet{position:static;box-shadow:none;padding:0}
 input.cfgro{background:var(--sunk);color:var(--muted);border-style:dashed}
 .cfguse{text-align:right;max-width:170px}
+.cfguse .nowrap{white-space:nowrap}
 .cfgbar ul{margin:6px 0 0;padding-left:18px}
 @media (max-width:640px){.cfgitem{grid-template-columns:1fr}.cfgside{justify-items:start;grid-auto-flow:column;align-items:center}}
 .reportnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-4px 0 16px}
@@ -2003,7 +2004,7 @@ function cfgBar(){const ch=cfgChanges();
   return `<div class="notice warn cfgbar" id="cfgbar"><details><summary><b>${ch.length} unsaved change${ch.length===1?"":"s"}</b></summary><ul class="small">${ch.map(c=>`<li>${esc(c)}</li>`).join("")}</ul></details>
     <span class="row"><button class="btn" data-cfg-discard>Discard</button><button class="btn primary" data-cfg-save ${cfgBusy?"disabled":""}>${cfgBusy?"Saving…":"Save changes"}</button></span></div>`}
 const cfgIn=(label,path,hint,attrs,ro)=>{const id="cfg-"+path.replace(/\./g,"-");return `<label class="f" for="${id}">${label}<input type="text" id="${id}" data-cfg-field="${path}" value="${esc(cfgGet(path)||"")}" ${ro?`readonly class="cfgro"`:""} ${attrs||""}>${hint&&!ro?`<span class="hint">${hint}</span>`:""}</label>`};
-const cfgUseText=(u,room)=>u===undefined?(cfgUse==="error"?"Couldn't check orders, so this is locked for now.":"Checking orders…"):u===null?"New, not saved yet":!u.n?(room?"Never assigned":"Never ordered"):`${room?"Assigned to":"Ordered by"} ${u.n} group${u.n===1?"":"s"}${u.last?`, latest ${fmtDate(new Date(u.last+"T12:00"),{month:"short",day:"numeric",year:"numeric"})}`:""}`;
+const cfgUseText=(u,room)=>u===undefined?(cfgUse==="error"?"Couldn't check orders, so this is locked for now.":"Checking orders…"):u===null?"New, not saved yet":!u.n?(room?"Never assigned":"Never ordered"):`${room?"Assigned to":"Ordered by"} ${u.n} group${u.n===1?"":"s"}${u.last?`<br><span class="nowrap">latest ${fmtDate(new Date(u.last+"T12:00"),{month:"short",day:"numeric",year:"numeric"})}</span>`:""}`;
 function cfgStatus(path,i,x,locked){const u=cfgUseOf(path,x),canDel=!locked&&!cfgLocked(u);
   return `<div class="cfgside"><span class="pill ${x.off?"waiting":"locked"}">${x.off?"Not offered":"Offered"}</span>
     ${locked?`<span class="small muted">${locked}</span>`:`<button class="btn tiny" data-cfg-toggle="${path}" data-i="${i}">${x.off?"Offer again":"Stop offering"}</button>`}
