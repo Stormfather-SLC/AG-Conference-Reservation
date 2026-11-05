@@ -274,6 +274,8 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .cfgside{display:grid;gap:6px;justify-items:end;min-width:120px}
 .cfgbar{position:sticky;bottom:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
 .cfgbar.quiet{position:static;box-shadow:none;padding:0}
+input.cfgro{background:var(--sunk);color:var(--muted);border-style:dashed}
+.cfguse{text-align:right;max-width:170px}
 .cfgbar ul{margin:6px 0 0;padding-left:18px}
 @media (max-width:640px){.cfgitem{grid-template-columns:1fr}.cfgside{justify-items:start;grid-auto-flow:column;align-items:center}}
 .reportnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-4px 0 16px}
@@ -1901,13 +1903,37 @@ function applyCatalog(c){c=fullCatalog(c);
 const offered=(list,cur)=>list.filter(x=>!x.off||x.id===cur);
 
 // --- the Settings page ---
-let cfgDraft=null, cfgBase=null, cfgBaseAt="", cfgSec="breakfast", cfgErr=[], cfgConflict=false, cfgBusy=false, cfgFocus="";
+let cfgDraft=null, cfgBase=null, cfgBaseAt="", cfgSec="breakfast", cfgErr=[], cfgConflict=false, cfgBusy=false, cfgFocus="", cfgUse=null, cfgUseAt=0;
+// Which items groups have ordered, worked out from the groups themselves each time (never stored, so it can't drift).
+// Every group counts, past and current. Key: "m:<meal>:<id>" for entrées and vegetarian options, "s:<name>" for snacks,
+// "r:<name>" for rooms. Value: {n: number of groups, last: latest date served}.
+function cfgScan(rows,notes){const use=new Map(),add=(key,code,date)=>{let u=use.get(key);if(!u)use.set(key,u={codes:new Set(),last:""});u.codes.add(code);if(date&&date>u.last)u.last=date};
+  (rows||[]).forEach(r=>{(r.days||[]).forEach(d=>{const M=d.meals||{};
+    CFG_MEALS.forEach(([k])=>{const st=M[k];if(!st)return;if(st.choice&&st.choice!=="none")add(`m:${k}:${st.choice}`,r.code,d.date);
+      if(k!=="breakfast"&&st.choice&&st.choice!=="none"&&st.vegChoice&&(st.vegChoice!=="chef"||Number(st.vegCount)>0))add(`m:veg:${st.vegChoice}`,r.code,d.date)});
+    ["amSnack","pmSnack"].forEach(k=>(M[k]&&M[k].items||[]).forEach(it=>add("s:"+it,r.code,d.date)))})});
+  const byCode=Object.fromEntries((rows||[]).map(r=>[r.code,r]));
+  Object.entries(notes||{}).forEach(([code,n])=>{const R=(n&&n.rooms)||{},end=(byCode[code]&&(byCode[code].endDate||byCode[code].startDate))||"";
+    const room=(label,date)=>roomParts(label).forEach(nm=>add("r:"+nm,code,date));
+    Object.entries(R.main||{}).forEach(([date,l])=>room(l,date));Object.values(R.bo||{}).forEach(l=>room(l,end));
+    Object.entries((n&&n.locations)||{}).forEach(([key,L])=>{if(L&&L.room)room(L.room,key.split("|")[0])})});
+  use.forEach(u=>u.n=u.codes.size);return use}
+async function cfgLoadUse(){const at=Date.now();cfgUseAt=at;
+  try{const [rows,notes]=await Promise.all([store.all(),store.allStaff()]);if(cfgUseAt!==at)return;cfgUse=cfgScan(rows,notes)}catch(e){if(cfgUseAt===at)cfgUse="error"}
+  if(view==="staff"&&staffTab==="settings")renderStaff()}
+// Usage of an item that exists in the saved settings (looked up by its saved name, so typing in the box doesn't change it).
+// Returns null for an item added in this edit, {n:0} when never ordered, undefined while still checking.
+function cfgUseOf(path,x){if(!cfgUse||cfgUse==="error")return undefined;
+  if(path.startsWith("menus.")){const k=path.split(".")[1];if(!cfgBase.menus[k].some(o=>o.id===x.id))return null;return cfgUse.get(`m:${k}:${x.id}`)||{n:0}}
+  const baseList=path.startsWith("snacks.")?Object.values(cfgBase.snacks).flat():cfgBase.rooms.flatMap(g=>g.rooms),o=baseList.find(b=>b._k===x._k);
+  if(!o)return null;return cfgUse.get((path.startsWith("snacks.")?"s:":"r:")+o.name)||{n:0}}
+const cfgLocked=u=>u===undefined||!!(u&&u.n);
 const CFG_SECS=[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["veg","Vegetarian"],["snacks","Snacks"],["rooms","Rooms"],["history","Change history"]];
 const cfgKey=()=>"k"+Math.random().toString(36).slice(2,9);
 // Snacks, rooms and room groups get a temporary key while editing so changes can be described; it is removed on save.
 function cfgKeyed(c){Object.values(c.snacks).forEach(a=>a.forEach(s=>s._k=cfgKey()));c.rooms.forEach(s=>{s._k=cfgKey();s.rooms.forEach(r=>r._k=cfgKey())});return c}
 function cfgStrip(c){c=structuredClone(c);Object.values(c.snacks).forEach(a=>a.forEach(s=>delete s._k));c.rooms.forEach(s=>{delete s._k;s.rooms.forEach(r=>delete r._k)});return c}
-function cfgOpen(){cfgBase=cfgKeyed(fullCatalog(settingsDoc&&settingsDoc.catalog));cfgDraft=structuredClone(cfgBase);cfgBaseAt=(settingsDoc&&settingsDoc.updatedAt)||"";cfgErr=[];cfgConflict=false}
+function cfgOpen(){cfgBase=cfgKeyed(fullCatalog(settingsDoc&&settingsDoc.catalog));cfgDraft=structuredClone(cfgBase);cfgBaseAt=(settingsDoc&&settingsDoc.updatedAt)||"";cfgErr=[];cfgConflict=false;cfgUse=null;cfgLoadUse()}
 const cfgDirty=()=>!!cfgDraft&&cfgChanges().length>0;
 const cfgGet=path=>path.split(".").reduce((o,k)=>o==null?o:o[k],cfgDraft);
 function cfgSet(path,v){const ks=path.split("."),last=ks.pop(),o=ks.reduce((o,k)=>o[k],cfgDraft);if(v===false||v==null)delete o[last];else o[last]=v}
@@ -1919,7 +1945,7 @@ function cfgDiffList(label,a,b,key){const out=[],am=new Map(a.map(x=>[key(x),x])
     if(!!o.off!==!!x.off)out.push(`${label}: ${x.off?"stopped offering":"offering again"} ${nm(x)}`);
     const other=[...new Set([...Object.keys(o),...Object.keys(x)])].filter(k=>!["name","off","_k","id"].includes(k)&&cfgVal(o[k])!==cfgVal(x[k]));
     if(other.length)out.push(`${label}: changed ${other.map(k=>CFG_WORD[k]||k).join(" and ")} for ${nm(x)}`)});
-  a.forEach(o=>{if(!bk.has(key(o)))out.push(`${label}: removed ${nm(o)}`)});
+  a.forEach(o=>{if(!bk.has(key(o)))out.push(`${label}: deleted ${nm(o)}`)});
   if(a.map(key).filter(k=>bk.has(k)).join()!==b.map(key).filter(k=>am.has(k)).join())out.push(`${label}: changed the order`);
   return out}
 function cfgChanges(){if(!cfgDraft)return [];const a=cfgBase,b=cfgDraft,out=[],byId=x=>x.id,byK=x=>x._k;
@@ -1933,6 +1959,13 @@ function cfgChanges(){if(!cfgDraft)return [];const a=cfgBase,b=cfgDraft,out=[],b
     if(o.label!==s.label)out.push(`Rooms: renamed the ${o.label} group to ${l}`);
     if((o.prefix||"")!==(s.prefix||""))out.push(`Rooms (${l}): changed how combined rooms are named`);
     out.push(...cfgDiffList(`Rooms (${l})`,o.rooms,s.rooms,byK))});
+  a.rooms.forEach(o=>{if(!b.rooms.some(s=>s._k===o._k))out.push(`Rooms: deleted the ${o.label} group`)});
+  return out}
+// Items in the saved settings that this edit deletes, with the key their orders are counted under.
+function cfgDeleted(){const out=[],a=cfgBase,b=cfgDraft;
+  Object.keys(a.menus).forEach(k=>a.menus[k].forEach(o=>{if(!b.menus[k].some(x=>x.id===o.id))out.push({key:`m:${k}:${o.id}`,name:o.name})}));
+  Object.values(a.snacks).flat().forEach(o=>{if(!Object.values(b.snacks).flat().some(x=>x._k===o._k))out.push({key:"s:"+o.name,name:o.name})});
+  a.rooms.flatMap(g=>g.rooms).forEach(o=>{if(!b.rooms.flatMap(g=>g.rooms).some(x=>x._k===o._k))out.push({key:"r:"+o.name,name:o.name})});
   return out}
 function cfgProblems(){const d=cfgDraft,out=[],dup=(label,names)=>{const seen=new Set();names.forEach(n=>{const k=n.trim().toLowerCase();if(!k)return;if(seen.has(k))out.push(`${label}: "${n.trim()}" is listed twice.`);seen.add(k)})};
   CFG_MEALS.forEach(([k,l])=>{const L=d.menus[k];if(L.some(x=>!x.name.trim()))out.push(`${l}: an entrée has no name.`);dup(l,L.map(x=>x.name));
@@ -1941,13 +1974,18 @@ function cfgProblems(){const d=cfgDraft,out=[],dup=(label,names)=>{const seen=ne
   const allSn=Object.values(d.snacks).flat();if(allSn.some(s=>!s.name.trim()))out.push("Snacks: an item has no name.");dup("Snacks",allSn.map(s=>s.name));
   const allR=d.rooms.flatMap(s=>s.rooms);if(allR.some(r=>!r.name.trim()))out.push("Rooms: a room has no name.");dup("Rooms",allR.map(r=>r.name));
   if(d.rooms.some(s=>!s.label.trim()))out.push("Rooms: a room group has no name.");
+  if(d.rooms.some(s=>!s.rooms.length))out.push(`Rooms: the ${d.rooms.find(s=>!s.rooms.length).label||"new"} group has no rooms. Add a room or delete the group.`);
   if(!allR.some(r=>!r.off))out.push("Rooms: at least one room must be offered.");
   return out}
 async function cfgSave(force){
   const probs=cfgProblems();if(probs.length){cfgErr=probs;renderStaff();document.getElementById("cfgerr")?.focus();return}
   const changes=cfgChanges();if(!changes.length)return;
   cfgBusy=true;cfgErr=[];renderStaff();
-  try{const cur=await store.loadSettings();
+  try{// A deleted item might have been ordered since this page opened. Check every group again right before saving.
+    const gone=cfgDeleted();if(gone.length){const fresh=cfgScan(await store.all(),await store.allStaff());cfgUse=fresh;
+      const now=gone.filter(g=>(fresh.get(g.key)||{}).n);
+      if(now.length){cfgBusy=false;cfgErr=now.map(g=>`${g.name} was just ordered by a group, so it can't be deleted. Press Discard to bring it back, or stop offering it instead.`);renderStaff();document.getElementById("cfgerr")?.focus();return}}
+    const cur=await store.loadSettings();
     if(!force&&((cur&&cur.updatedAt)||"")!==cfgBaseAt){cfgConflict=true;cfgBusy=false;renderStaff();return}
     const now=new Date().toISOString(),cat=cfgStrip(cfgDraft);
     // Trim names so "Pancakes " and "Pancakes" stay one item.
@@ -1964,37 +2002,40 @@ function cfgBar(){const ch=cfgChanges();
   if(!ch.length)return `<div class="cfgbar quiet" id="cfgbar"><span class="small muted">${settingsDoc?`All changes saved. Last saved ${fmtDate(new Date(settingsDoc.updatedAt),{month:"short",day:"numeric"})}, ${clock(settingsDoc.updatedAt)}.`:"Showing the built-in menus and rooms. Nothing has been changed yet."}</span></div>`;
   return `<div class="notice warn cfgbar" id="cfgbar"><details><summary><b>${ch.length} unsaved change${ch.length===1?"":"s"}</b></summary><ul class="small">${ch.map(c=>`<li>${esc(c)}</li>`).join("")}</ul></details>
     <span class="row"><button class="btn" data-cfg-discard>Discard</button><button class="btn primary" data-cfg-save ${cfgBusy?"disabled":""}>${cfgBusy?"Saving…":"Save changes"}</button></span></div>`}
-const cfgIn=(label,path,hint,attrs)=>{const id="cfg-"+path.replace(/\./g,"-");return `<label class="f" for="${id}">${label}<input type="text" id="${id}" data-cfg-field="${path}" value="${esc(cfgGet(path)||"")}" ${attrs||""}>${hint?`<span class="hint">${hint}</span>`:""}</label>`};
-function cfgStatus(path,i,x,locked){
+const cfgIn=(label,path,hint,attrs,ro)=>{const id="cfg-"+path.replace(/\./g,"-");return `<label class="f" for="${id}">${label}<input type="text" id="${id}" data-cfg-field="${path}" value="${esc(cfgGet(path)||"")}" ${ro?`readonly class="cfgro"`:""} ${attrs||""}>${hint&&!ro?`<span class="hint">${hint}</span>`:""}</label>`};
+const cfgUseText=(u,room)=>u===undefined?(cfgUse==="error"?"Couldn't check orders, so this is locked for now.":"Checking orders…"):u===null?"New, not saved yet":!u.n?(room?"Never assigned":"Never ordered"):`${room?"Assigned to":"Ordered by"} ${u.n} group${u.n===1?"":"s"}${u.last?`, latest ${fmtDate(new Date(u.last+"T12:00"),{month:"short",day:"numeric",year:"numeric"})}`:""}`;
+function cfgStatus(path,i,x,locked){const u=cfgUseOf(path,x),canDel=!locked&&!cfgLocked(u);
   return `<div class="cfgside"><span class="pill ${x.off?"waiting":"locked"}">${x.off?"Not offered":"Offered"}</span>
     ${locked?`<span class="small muted">${locked}</span>`:`<button class="btn tiny" data-cfg-toggle="${path}" data-i="${i}">${x.off?"Offer again":"Stop offering"}</button>`}
+    ${canDel?`<button class="btn tiny ghost danger-text" data-cfg-del="${path}" data-i="${i}">Delete</button>`:""}
+    <span class="small muted cfguse">${cfgUseText(u,path.startsWith("rooms."))}</span>
     <span class="row" style="gap:4px"><button class="btn tiny ghost" data-cfg-move="${path}" data-i="${i}" data-d="-1" aria-label="Move ${esc(x.name)} up" ${i===0?"disabled":""}>&#8593;</button><button class="btn tiny ghost" data-cfg-move="${path}" data-i="${i}" data-d="1" aria-label="Move ${esc(x.name)} down" ${i===cfgGet(path).length-1?"disabled":""}>&#8595;</button></span></div>`}
 function cfgMealSec(k,label){const path=`menus.${k}`,L=cfgGet(path),lc=label.toLowerCase(),inc=k==="veg"?null:`included.${k}`;
   const price=x=>[x.pp?`+$${x.pp} per person`:"",x.note?x.note.replace(/^\+\s*/,""):""].filter(Boolean).join(", ");
   return `<div class="panel">
     ${inc?`<div class="grid2">${cfgIn(`Served with every ${lc}`,inc+".base","Shown to organizers under the menu.")}${cfgIn("Short version for reports",inc+".incl",'For example "salad, dessert".')}</div>`
       :`<p class="small" style="margin:0">Groups can pick one of these for lunch or dinner, in place of the entrée for some guests. Each can also be made vegan.</p>`}
-    <div class="cfglist">${L.map((x,i)=>`<div class="cfgitem${x.off?" off":""}"><div class="cfgmain">
-        <div class="grid2">${cfgIn("Name",`${path}.${i}.name`)}${k==="veg"?"":cfgIn("Comes with",`${path}.${i}.sides`)}</div>
-        ${k==="breakfast"?`<div class="grid2"><div class="f"><span>Extras guests can add <span class="muted">($1.50 per person each)</span></span><div class="checks">${BF_EXTRAS.map(v=>`<label class="chk"><input type="checkbox" data-cfg-arr="${path}.${i}.x" value="${v}" ${(x.x||[]).includes(v)?"checked":""}> ${v}</label>`).join("")}</div></div>
-          ${cfgIn("Already includes",`${path}.${i}.has`,`Shown under the extras, as in "${esc(x.name||"Pancakes")} already include eggs, sausage and potatoes."`)}</div>`:""}
-        ${k==="lunch"?`<div class="checks"><label class="chk"><input type="checkbox" data-cfg-bool="${path}.${i}.second" ${x.second?"checked":""}> Offer a 2nd protein (+$3 per person)</label><label class="chk"><input type="checkbox" data-cfg-bool="${path}.${i}.meat" ${x.meat?"checked":""}> Group chooses beef or chicken</label></div>`:""}
+    <div class="cfglist">${L.map((x,i)=>{const ro=cfgLocked(cfgUseOf(path,x)),dis=ro?"disabled":"";return `<div class="cfgitem${x.off?" off":""}"><div class="cfgmain">
+        <div class="grid2">${cfgIn("Name",`${path}.${i}.name`,"","",ro)}${k==="veg"?"":cfgIn("Comes with",`${path}.${i}.sides`,"","",ro)}</div>
+        ${k==="breakfast"?`<div class="grid2"><div class="f"><span>Extras guests can add <span class="muted">($1.50 per person each)</span></span><div class="checks">${BF_EXTRAS.map(v=>`<label class="chk"><input type="checkbox" data-cfg-arr="${path}.${i}.x" value="${v}" ${(x.x||[]).includes(v)?"checked":""} ${dis}> ${v}</label>`).join("")}</div></div>
+          ${cfgIn("Already includes",`${path}.${i}.has`,`Shown under the extras, as in "${esc(x.name||"Pancakes")} already include eggs, sausage and potatoes."`,"",ro)}</div>`:""}
+        ${k==="lunch"?`<div class="checks"><label class="chk"><input type="checkbox" data-cfg-bool="${path}.${i}.second" ${x.second?"checked":""} ${dis}> Offer a 2nd protein (+$3 per person)</label><label class="chk"><input type="checkbox" data-cfg-bool="${path}.${i}.meat" ${x.meat?"checked":""} ${dis}> Group chooses beef or chicken</label></div>`:""}
         ${price(x)?`<span class="small muted">Price: ${esc(price(x))}. Prices can't be changed here yet.</span>`:""}
-      </div>${cfgStatus(path,i,x,k==="veg"&&x.id==="chef"?"Always offered. It's the default for every meal.":"")}</div>`).join("")}</div>
+      </div>${cfgStatus(path,i,x,k==="veg"&&x.id==="chef"?"Always offered. It's the default for every meal.":"")}</div>`}).join("")}</div>
     <div><button class="btn" data-cfg-add="${path}">+ Add ${k==="veg"?"a vegetarian option":`a ${lc} entrée`}</button></div>
-    ${k==="veg"?"":`<p class="small muted" style="margin:0">Renaming an item changes it everywhere, including for groups that already picked it. To replace a dish, stop offering the old one and add the new one.</p>`}
+    <p class="small muted" style="margin:0">Once any group orders an item, its details are locked so past orders and kitchen reports stay accurate. To change a dish, stop offering it and add a new one. Items no group has ordered can be edited or deleted.</p>
   </div>`}
 function cfgSnackSec(){return Object.keys(cfgDraft.snacks).map(cat=>{const path=`snacks.${cat}`,L=cfgGet(path);
-  return `<div class="panel"><h3 style="margin:0">${esc(cat)}</h3><div class="cfglist">${L.map((s,i)=>`<div class="cfgitem${s.off?" off":""}"><div class="cfgmain">${cfgIn("Name",`${path}.${i}.name`,"",`aria-label="${esc(cat)} snack name"`)}</div>${cfgStatus(path,i,s)}</div>`).join("")}</div>
+  return `<div class="panel"><h3 style="margin:0">${esc(cat)}</h3><div class="cfglist">${L.map((s,i)=>`<div class="cfgitem${s.off?" off":""}"><div class="cfgmain">${cfgIn("Name",`${path}.${i}.name`,"",`aria-label="${esc(cat)} snack name"`,cfgLocked(cfgUseOf(path,s)))}</div>${cfgStatus(path,i,s)}</div>`).join("")}</div>
     <div><button class="btn" data-cfg-add="${path}">+ Add a ${esc(cat.toLowerCase())} snack</button></div></div>`}).join("")
-  +`<p class="small muted">Groups that already picked a snack keep it, even if it's renamed or no longer offered.</p>`}
+  +`<p class="small muted">Once any group orders a snack, its name is locked. Snacks no group has ordered can be renamed or deleted.</p>`}
 function cfgRoomSec(){const saveSets=ROOM_SETS,saveO=ROOM_OPTS,saveP=ROOM_PARTS;
   ROOM_SETS=cfgDraft.rooms;buildRooms();const preview=ROOM_OPTS;ROOM_SETS=saveSets;ROOM_OPTS=saveO;ROOM_PARTS=saveP;
-  return `<div class="panel" style="gap:6px"><p class="small" style="margin:0">These are the rooms staff can assign on the Setup tab. Rooms in the same group are connected and listed in their order in the building, so neighbors can be booked together. Groups already assigned a room keep it, even if it's renamed or no longer offered.</p></div>`
-  +cfgDraft.rooms.map((s,si)=>{const path=`rooms.${si}.rooms`;
-    return `<div class="panel"><div class="grid2">${cfgIn("Group name",`rooms.${si}.label`,"For example \"Timp rooms\". Shown as a heading in the room list.")}${cfgIn("Start of combined names",`rooms.${si}.prefix`,'Optional. "Timp " makes rooms A and B read "Timp A & B".')}</div>
-      <div class="cfglist">${s.rooms.map((r,i)=>`<div class="cfgitem${r.off?" off":""}"><div class="cfgmain"><div class="grid2">${cfgIn("Room name",`${path}.${i}.name`)}${cfgIn("Short name in combined rooms",`${path}.${i}.short`,"For example \"A\". Leave blank to use the full name.")}</div></div>${cfgStatus(path,i,r)}</div>`).join("")}</div>
-      <div><button class="btn" data-cfg-add="${path}">+ Add a room to ${esc(s.label||"this group")}</button></div></div>`}).join("")
+  return `<div class="panel" style="gap:6px"><p class="small" style="margin:0">These are the rooms staff can assign on the Setup tab. Rooms in the same group are connected and listed in their order in the building, so neighbors can be booked together. Once a room has been assigned to any group, its names are locked so past assignments stay accurate. Rooms never assigned can be renamed or deleted.</p></div>`
+  +cfgDraft.rooms.map((s,si)=>{const path=`rooms.${si}.rooms`,anyUsed=s.rooms.some(r=>cfgLocked(cfgUseOf(path,r)));
+    return `<div class="panel"><div class="grid2">${cfgIn("Group name",`rooms.${si}.label`,"For example \"Timp rooms\". Shown as a heading in the room list.")}${cfgIn("Start of combined names",`rooms.${si}.prefix`,'Optional. "Timp " makes rooms A and B read "Timp A & B".',"",anyUsed)}</div>
+      <div class="cfglist">${s.rooms.map((r,i)=>{const ro=cfgLocked(cfgUseOf(path,r));return `<div class="cfgitem${r.off?" off":""}"><div class="cfgmain"><div class="grid2">${cfgIn("Room name",`${path}.${i}.name`,"","",ro)}${cfgIn("Short name in combined rooms",`${path}.${i}.short`,"For example \"A\". Leave blank to use the full name.","",ro)}</div></div>${cfgStatus(path,i,r)}</div>`}).join("")}</div>
+      <div class="row"><button class="btn" data-cfg-add="${path}">+ Add a room to ${esc(s.label||"this group")}</button>${s.rooms.length?"":`<button class="btn ghost danger-text" data-cfg-delset="${si}">Delete this group</button>`}</div></div>`}).join("")
   +`<div><button class="btn" data-cfg-addset>+ Add a room group</button> <span class="small muted">For a room that isn't connected to others, make it a group of one.</span></div>
    <div class="panel"><h3 style="margin:0">Staff will be able to choose</h3>${preview.length?preview.map(g=>`<p class="small" style="margin:0"><b>${esc(g.label)}:</b> ${g.opts.map(o=>esc(o.label)).join(" · ")}</p>`).join(""):`<p class="small muted" style="margin:0">No rooms offered.</p>`}</div>`}
 function cfgHistorySec(){const h=(settingsDoc&&settingsDoc.history)||[];
@@ -2003,7 +2044,7 @@ function cfgHistorySec(){const h=(settingsDoc&&settingsDoc.history)||[];
 function settingsView(){if(!cfgDraft)cfgOpen();
   const body=cfgSec==="snacks"?cfgSnackSec():cfgSec==="rooms"?cfgRoomSec():cfgSec==="history"?cfgHistorySec():cfgMealSec(cfgSec,CFG_SECS.find(s=>s[0]===cfgSec)[1]);
   return `<div class="stack" id="cfgview">
-    <div class="panel" style="gap:6px"><h2 style="margin:0">Settings</h2><p class="small" style="margin:0">The menus and rooms offered to groups. Saved changes show up for every group that hasn't locked in. Groups keep anything they already picked, even if it's no longer offered, and it still prints for the kitchen. Locked-in groups never change. Nothing is ever deleted, so anything you stop offering can be offered again.</p></div>
+    <div class="panel" style="gap:6px"><h2 style="margin:0">Settings</h2><p class="small" style="margin:0">The menus and rooms offered to groups. Saved changes show up for every group that hasn't locked in. Groups keep anything they already picked, even if it's no longer offered, and it still prints for the kitchen. Locked-in groups never change. Anything a group has ordered stays on this page for good: you can stop offering it and offer it again later. Only items no group has ever ordered can be deleted.</p></div>
     <div class="reportnav" role="group" aria-label="Settings sections">${CFG_SECS.map(([k,l])=>`<button data-cfg-sec="${k}" aria-pressed="${cfgSec===k}">${l}</button>`).join("")}</div>
     ${cfgChanges().length||cfgConflict?"":cfgBar()}
     ${cfgErr.length?`<div class="notice bad" id="cfgerr" tabindex="-1" role="alert"><b>Not saved yet.</b> Fix these first:<ul class="small" style="margin:4px 0 0">${cfgErr.map(e=>`<li>${esc(e)}</li>`).join("")}</ul></div>`:""}
@@ -2022,6 +2063,8 @@ app.addEventListener("change",e=>{const el=e.target;if(view!=="staff"||staffTab!
 });
 app.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b||view!=="staff"||staffTab!=="settings")return;const d=b.dataset;
   if(d.cfgSec){cfgSec=d.cfgSec;renderStaff();return}
+  if(d.cfgDel){const L=cfgGet(d.cfgDel),x=L[+d.i];if(!x||cfgLocked(cfgUseOf(d.cfgDel,x)))return;L.splice(+d.i,1);renderStaff();toast(`${x.name||"Item"} will be deleted when you save. Discard to undo.`);return}
+  if(d.cfgDelset!==undefined){const g=cfgDraft.rooms[+d.cfgDelset];if(g&&!g.rooms.length){cfgDraft.rooms.splice(+d.cfgDelset,1);renderStaff()}return}
   if(d.cfgToggle){const x=cfgGet(d.cfgToggle)[+d.i];if(x.off)delete x.off;else x.off=true;renderStaff();return}
   if(d.cfgMove){const L=cfgGet(d.cfgMove),i=+d.i,j=i+Number(d.cfgD||d.d);if(j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];renderStaff();document.querySelector(`[data-cfg-move="${d.cfgMove}"][data-i="${j}"][data-d="${d.d}"]`)?.focus();return}
   if(d.cfgAdd){const L=cfgGet(d.cfgAdd),p=d.cfgAdd,k=p.split(".")[1];
