@@ -1655,7 +1655,7 @@ app.addEventListener("click",async e=>{
   {const c=b.dataset.sheet||b.dataset.open||b.dataset.plan||b.dataset.treview||b.dataset.remind||b.dataset.invite||b.dataset.unlock;if(c&&view==="staff")markSeen([c])}
   if(b.dataset.mailmsg){const code=b.dataset.mailmsg,kind=/^Reminder/.test(staffMsg&&staffMsg.title||"")?"Reminder":"Invitation";
     // Let the mailto: link open the email program, then note it in the change history.
-    setTimeout(async()=>{if(staffMsg&&staffMsg.code===code){staffMsg.sentAt=new Date().toISOString();renderStaff()}
+    setTimeout(async()=>{if(staffMsg&&staffMsg.code===code){const m=staffMsg;staffNote={code,kind,isNew:!!m.isNew,group:m.group||(staffRows||[]).find(x=>x.code===code)?.group||code,to:m.to,text:m.text};staffMsg=null;renderStaff();window.scrollTo(0,0);document.getElementById("staffnote")?.focus()}
       try{const r=await store.get(code);if(!r)return;const a=actingAs;actingAs="staff";logEvent(r,`${kind} email opened to send${r.email?" to "+r.email:""}`);actingAs=a;await store.put(r);const row=(staffRows||[]).find(x=>x.code===code);if(row)row.history=r.history}catch(err){}},300);return}
   if(b.dataset.seenall!==undefined){markSeen((staffRows||[]).map(r=>r.code));renderStaff();return}
   if(b.matches(".rail a")){e.preventDefault();document.querySelector(b.getAttribute("href"))?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});return}
@@ -1670,11 +1670,13 @@ app.addEventListener("click",async e=>{
   if(b.dataset.treview){openTimeReview(b.dataset.treview);return}
   if(b.dataset.pastview){pastView=b.dataset.pastview==="1";pastQuery="";renderStaff();window.scrollTo(0,0);return}
   if(b.dataset.gfilter){const k=b.dataset.gfilter;groupFilter=groupFilter===k?"all":k;renderStaff();return}
-  if(b.dataset.stab){pastView=false;pickStaffTab(b.dataset.stab);staffMsg=null;startOpen=false;if(needsInfo())loadKitchen();renderStaff();return}
-  if(b.dataset.startgroup!==undefined){startOpen=!startOpen;staffMsg=null;renderStaff();if(startOpen)document.getElementById("sg-group")?.focus();return}
-  if(b.dataset.invite){inviteFor(b.dataset.invite);return}
-  if(b.dataset.remind){remindFor(b.dataset.remind);return}
+  if(b.dataset.stab){pastView=false;pickStaffTab(b.dataset.stab);staffMsg=null;staffNote=null;startOpen=false;if(needsInfo())loadKitchen();renderStaff();return}
+  if(b.dataset.startgroup!==undefined){startOpen=!startOpen;staffMsg=null;staffNote=null;renderStaff();if(startOpen)document.getElementById("sg-group")?.focus();return}
+  if(b.dataset.invite){staffNote=null;inviteFor(b.dataset.invite);return}
+  if(b.dataset.remind){staffNote=null;remindFor(b.dataset.remind);return}
   if(b.dataset.closemsg!==undefined){staffMsg=null;renderStaff();return}
+  if(b.dataset.closenote!==undefined){staffNote=null;renderStaff();return}
+  if(b.dataset.copynote!==undefined){try{await copyRich(staffNote?.text||"");toast("Message copied with a clickable link. Paste it into an email.")}catch(err){toast("Copy didn't work. Open the group's menu and choose the email again.")}return}
   if(b.dataset.copymsg!==undefined){const t=document.getElementById("msgtext");try{await copyRich(t.value);toast("Message copied with a clickable link. Paste it into an email.")}catch(err){t.focus();t.select();toast("Press Ctrl+C or Cmd+C to copy")}return}
   if(b.dataset.copylink!==undefined){const v=b.dataset.copylink;try{await navigator.clipboard.writeText(v);toast("Copied")}catch(err){toast("Select the text and copy it")}return}
   if(b.dataset.kdl!==undefined){downloadKitchen();return}
@@ -1855,7 +1857,7 @@ const deptOf=t=>(DEPTS.find(d=>d.tabs.some(([k])=>k===t))||{k:t}).k;
 function prefGet(k){try{return localStorage.getItem(k)||""}catch(e){return ""}}
 function prefSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 function pickStaffTab(t){staffTab=t;prefSet("ag:lastTab",t);const d=DEPTS.find(x=>x.tabs.some(([k])=>k===t));if(d&&d.tabs.length>1)prefSet("ag:lastTab:"+d.k,t)}
-let staffTab=STAFF_TABS.includes(prefGet("ag:lastTab"))?prefGet("ag:lastTab"):"groups", staffMsg=null, startOpen=false, kitchenInfo=null, kitchenDate="", checkResult=null, sheetCtx=null;
+let staffTab=STAFF_TABS.includes(prefGet("ag:lastTab"))?prefGet("ag:lastTab"):"groups", staffMsg=null, staffNote=null, startOpen=false, kitchenInfo=null, kitchenDate="", checkResult=null, sheetCtx=null;
 const SECS_TOTAL=5;
 function progressOf(r){const s=sectionStatus(normalize(structuredClone(r)));return ["contact","room","meals","allergies","checklist"].filter(k=>s[k]).length}
 function organizerStarted(r){if(r.createdBy!=="staff")return true;return (r.history||[]).some(h=>h.role==="organizer")}
@@ -1924,6 +1926,14 @@ function msgCard(){const m=staffMsg;if(!m)return "";
     <label class="f" for="msgtext">Message<textarea id="msgtext">${esc(m.text)}</textarea></label>
     <div class="row">${m.to?`<a class="btn primary" id="mailmsg" data-mailmsg="${esc(m.code)}" href="${esc(mailtoFor(m.to,m.text))}">Send email</a>`:`<span class="small muted">Add the organizer's email to the group to send from here.</span>`}<button class="btn" data-copymsg>Copy message</button></div>
     ${m.sentAt?`<p class="small muted" style="margin:0">Opened in your email program at ${clock(m.sentAt)}. If it didn't open, use Copy message and paste it into an email.</p>`:""}
+  </section>`}
+// Shown after Send email: the message panel closes and this confirms what happened. The app can't see whether the email was actually sent, so it says where to finish.
+function noteCard(){const n=staffNote;if(!n)return "";
+  const head=n.isNew?`Group started: ${esc(n.group)} (${esc(n.code)})`:`${esc(n.kind)} for ${esc(n.group)} is ready to send`;
+  return `<section class="notice ok" id="staffnote" tabindex="-1" role="status" style="display:grid;gap:6px">
+    <div class="row" style="justify-content:space-between;align-items:center"><b>&#10003; ${head}</b><button class="btn ghost tiny" data-closenote aria-label="Dismiss">Dismiss</button></div>
+    <span class="small">The ${n.kind.toLowerCase()}${n.to?` to <b>${esc(n.to)}</b>`:""} is open in your email program. Press Send there to deliver it.${n.isNew?" The group is in the list below as <b>Not started</b> until the organizer opens the form.":""}</span>
+    <span class="small">Email program didn't open? <button class="btn tiny" data-copynote>Copy message</button> and paste it into a new email.</span>
   </section>`}
 // Message text as email HTML: web addresses become real links.
 function msgHTML(text){const body=String(text||"").replace(/\r\n/g,"\n");
@@ -2011,7 +2021,7 @@ function groupsView(){
     <div class="stats" role="group" aria-label="Filter groups by status">
       ${card("all","Groups")}${card("locked","Locked in")}${card("progress","Organizer working on it")}${card("waiting","Invited, not started")}${card("overdue","Past the 14-day deadline")}
     </div>
-    ${msgCard()}${startForm()}
+    ${noteCard()}${msgCard()}${startForm()}
     <div class="panel" style="gap:14px">
       <div class="row" style="justify-content:space-between"><div class="row"><h2>${groupFilter==="all"?"Current &amp; upcoming":esc(GROUP_FILTERS[groupFilter])}</h2>${freshN?`<span class="small"><span class="newdot" aria-hidden="true"></span>${freshN} updated since you last looked</span><button class="btn ghost tiny" type="button" data-seenall>Mark all as seen</button>`:""}${groupFilter==="all"?"":`<span class="muted small">${shown.length} of ${rows.length}</span><button class="btn ghost" type="button" data-gfilter="all">Show all groups</button>`}</div><div class="row">${pastN?`<button class="btn ghost" type="button" data-pastview="1">Past groups (${pastN})</button>`:""}${startOpen?"":`<button class="btn primary" data-startgroup>+ Start a group</button>`}</div></div>
       ${rows.length?`<div class="tablewrap"><table class="stafftable"><thead><tr><th>Group</th><th>Event</th><th>Guests</th><th>Form</th><th>Lock-in deadline</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead><tbody>
@@ -2050,7 +2060,7 @@ async function createStaffGroup(form){
   try{await store.put(r)}catch(e){toast("Couldn't create the group. Try again in a moment.");return}
   if(store.mode!=="db"){staffRows=[...(staffRows||[]).filter(x=>x.code!==r.code),r]}
   else if(!(staffRows||[]).some(x=>x.code===r.code))staffRows=[...(staffRows||[]),r];
-  startOpen=false;staffMsg={code,title:`Invitation for ${r.group}`,to:r.email,text:inviteText(r)};renderStaff();window.scrollTo(0,0);toast(`${r.group} created as ${code}`);
+  startOpen=false;staffNote=null;staffMsg={code,title:`Invitation for ${r.group}`,group:r.group,isNew:true,to:r.email,text:inviteText(r)};renderStaff();window.scrollTo(0,0);toast(`${r.group} created as ${code}`);
 }
 app.addEventListener("submit",e=>{if(e.target.id==="startform"){e.preventDefault();createStaffGroup(e.target)}});
 
