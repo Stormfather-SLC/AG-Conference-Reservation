@@ -203,6 +203,11 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .rhint{font-size:.83rem;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .btn.tiny{padding:2px 8px;font-size:.8rem}
 .subhead{font-weight:600;padding-top:14px;border-top:1px solid var(--line)}
+.welcome{display:flex;gap:14px;align-items:flex-start;background:var(--ok-soft);border-left:4px solid var(--ok);border-radius:var(--r);padding:14px 16px}
+.welcome svg{flex:none;margin-top:2px;color:var(--ok)}
+.welcome p{margin:0}
+.welcome .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.welcome .tag{font-size:.8rem;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--surface);color:var(--ok);border:1px solid var(--ok)}
 .rosterbox{display:flex;flex-direction:column;gap:10px;border:1px dashed var(--spruce);border-radius:var(--r);padding:14px 16px;background:var(--aspen-soft)}
 .rosterbox details summary{cursor:pointer;color:var(--spruce);font-weight:600;font-size:.9rem}
 .coltable th{text-transform:none;letter-spacing:0;font-size:.85rem;color:var(--fg);width:210px}
@@ -1277,13 +1282,16 @@ function renderEditor(){
         ${walkBlock(r,locked)}
       </section>
 
-      <section class="card" id="sec-allergies"><div class="sechead"><h2><span class="num">04</span>Attendees &amp; allergies</h2><span class="small muted">Must be received ${DEADLINE_DAYS} days before your event</span></div>
+      <section class="card" id="sec-allergies"><div class="sechead"><h2><span class="num">04</span>Attendees &amp; dietary needs</h2><span class="small muted">Must be received ${DEADLINE_DAYS} days before your event</span></div>
         ${rosterBox(locked)}
-        <h3>Allergies and food restrictions</h3>
+        <h3>Allergies &amp; Dietary Needs</h3>
+        <div class="welcome"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6"/></svg>
+          <div><p>We're happy to accommodate food allergies and dietary preferences, including vegetarian, vegan, halal, kosher, and gluten-free. Let us know who needs what, and we'll do our best to take care of it.</p>
+          <div class="tags"><span class="tag">Vegetarian</span><span class="tag">Vegan</span><span class="tag">Halal</span><span class="tag">Kosher</span><span class="tag">Gluten-free</span><span class="tag">Food allergies</span></div></div></div>
         ${r.allergies.length?allergyList(locked)
-          :`<label class="chk" style="width:fit-content"><input type="checkbox" id="f-noAllergies" data-path="noAllergies" ${r.noAllergies===true?"checked":""}> No guests with allergies or food restrictions</label>`}
+          :`<label class="chk" style="width:fit-content"><input type="checkbox" id="f-noAllergies" data-path="noAllergies" ${r.noAllergies===true?"checked":""}> No guests with allergies or dietary needs</label>`}
         ${locked?"":`<div class="row"><button class="btn" id="addallergy">+ Add a guest</button></div>`}
-        <p class="small muted" style="margin:0">We accommodate many, but not all, food restrictions. We plan for each guest's allergies at every meal and snack.</p>
+        <p class="small muted" style="margin:0">Halal, kosher, or something else? Add the guest and choose “Something not listed.” We plan for each guest's needs at every meal and snack. Needs far outside the usual can be harder for our kitchen to adapt to, so tell us as early as you can and we'll reach out if we have questions.</p>
       </section>
 
       <section class="card" id="sec-meals"><div class="sechead"><h2><span class="num">05</span>Meals &amp; snacks</h2><span class="small muted">Dining hall · water, lemonade and soda included</span></div>
@@ -1452,13 +1460,13 @@ function renderReview(){
         <p class="prose">${r.walk.want?`<b>${esc(walkStatus(r,staffInfo&&staffInfo.walk))}</b>${wantsWalk(r)?`<br><span class="small muted">${esc(walkRequestText(r))}${r.walk.notes?" · "+esc(r.walk.notes):""}</span>`:""}`:`<span class="muted">Not requested</span>`}</p>
       </section>
 
-      <section class="card">${sumHead("04","Attendees &amp; allergies","allergies",locked)}
+      <section class="card">${sumHead("04","Attendees &amp; dietary needs","allergies",locked)}
         ${r.roster?`<p class="prose">Guest list: <b>${r.roster.length}</b> guests${r.rosterFile?` from ${esc(r.rosterFile)}`:""}${tableDietText()?` · ${tableDietText()}`:""}.</p>`:""}
         ${r.allergies.length?(()=>{const gs=allergyGuests(r),ns=gs.filter(guestSevere).length;return `<p class="prose">${gs.length} guest${gs.length===1?"":"s"} with allergies or restrictions${ns?` · <b style="color:var(--bad)">${ns} with something severe, airborne or medically prescribed</b>`:""}.</p>
           <div class="tablewrap"><table class="gtable"><thead><tr><th>Guest</th><th>Allergy or restriction</th><th>Type</th><th>Severity</th></tr></thead><tbody>
           ${gs.map(g=>g.rows.map(({a},j)=>`<tr${j?' class="cont"':""}>${j?"":`<td rowspan="${g.rows.length}"><b>${val(g.name)}</b></td>`}<td>${val(a.allergy)}</td><td>${a.type?TYPE_LABEL[a.type]||a.type:`<span class="muted">Not given</span>`}</td><td>${sevTag(a)}</td></tr>`).join("")).join("")}</tbody></table></div>`})()+`
           <p class="prose small muted">Planned for every meal and snack.</p>`
-          :`<p class="prose">${r.noAllergies===true?"No guests with allergies or food restrictions.":`<span class="missingval">List allergies, or confirm none.</span>`}</p>`}
+          :`<p class="prose">${r.noAllergies===true?"No guests with allergies or dietary needs.":`<span class="missingval">List allergies, or confirm none.</span>`}</p>`}
       </section>
 
       <section class="card">${sumHead("05","Meals &amp; snacks","meals",locked)}
