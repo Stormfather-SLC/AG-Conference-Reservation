@@ -1093,10 +1093,10 @@ function drawGuest(keepPicker){
   const picked=dr.items.filter(x=>!x.other).map(x=>x.allergy),others=dr.items.map((x,k)=>({...x,k})).filter(x=>x.other);
   const summary=dr.items.length?dr.items.map(x=>x.other?(x.allergy||"Other"):x.allergy).map(esc).join(", "):"Choose one or more";
   const levelRows=dr.items.map((x,k)=>({...x,k})).filter(x=>!(!x.other&&(DIETS.includes(x.allergy)||isCondition(x.allergy))));
-  d.innerHTML=`<div class="tdhead"><div><span class="eyebrow">${dr.isNew?"Add a guest":"Edit guest"}</span><h2>${dr.name?esc(dr.name):"Allergies & restrictions"}</h2></div><button class="btn ghost" data-gcancel aria-label="Close">✕</button></div>
+  d.innerHTML=`<div class="tdhead"><div><span class="eyebrow">${dr.isNew?"Add a guest":"Edit guest"}</span><h2>${dr.name?esc(dr.name):"Allergies & dietary needs"}</h2></div><button class="btn ghost" data-gcancel aria-label="Close">✕</button></div>
     <label class="f" for="gd-name">Guest name<input type="text" id="gd-name" value="${esc(dr.name)}" autocomplete="off"></label>
     <div class="gd-dup">${dupNote(dupOf(dr))}</div>
-    <div class="f"><span>Allergies &amp; restrictions</span>
+    <div class="f"><span>Allergies &amp; dietary needs</span>
       <details class="msel"${open?" open":""}><summary><span class="msel-sum">${summary}</span><span aria-hidden="true">▾</span></summary><div class="msel-list">
         <div class="msel-h">Allergens</div>${ALLERGENS.map(o=>`<label class="chk"><input type="checkbox" data-gpick value="${esc(o)}" ${picked.includes(o)?"checked":""}>${esc(o)}</label>`).join("")}
         <div class="msel-h">Medical</div>${CONDITIONS.map(o=>`<label class="chk"><input type="checkbox" data-gpick value="${esc(o)}" ${picked.includes(o)?"checked":""}>${esc(o)}</label>`).join("")}
