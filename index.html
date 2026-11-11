@@ -203,6 +203,11 @@ input.need,select.need,textarea.need{outline:0;border-color:var(--bad);box-shado
 .rhint{font-size:.83rem;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .btn.tiny{padding:2px 8px;font-size:.8rem}
 .subhead{font-weight:600;padding-top:14px;border-top:1px solid var(--line)}
+.welcome{display:flex;gap:14px;align-items:flex-start;background:var(--ok-soft);border-left:4px solid var(--ok);border-radius:var(--r);padding:14px 16px}
+.welcome svg{flex:none;margin-top:2px;color:var(--ok)}
+.welcome p{margin:0}
+.welcome .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.welcome .tag{font-size:.8rem;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--surface);color:var(--ok);border:1px solid var(--ok)}
 .rosterbox{display:flex;flex-direction:column;gap:10px;border:1px dashed var(--spruce);border-radius:var(--r);padding:14px 16px;background:var(--aspen-soft)}
 .rosterbox details summary{cursor:pointer;color:var(--spruce);font-weight:600;font-size:.9rem}
 .coltable th{text-transform:none;letter-spacing:0;font-size:.85rem;color:var(--fg);width:210px}
@@ -624,7 +629,7 @@ function normalize(r){
   {const w=r.walk||{};r.walk={...blankWalk(),...w,choices:[0,1].map(i=>({date:"",time:"",...((w.choices||[])[i]||{})}))}}r.lastMeal=r.lastMeal||"";r.roster=r.roster||null;
   r.days.forEach(d=>MEALS.forEach(m=>{const st=d.meals[m.k];if(st.count===undefined)st.count="";if(!m.snack){if(!st.service)st.service="hall";if(!Array.isArray(st.extras))st.extras=[];if(st.location===undefined)st.location=""}}));
   r.allergies=(r.allergies||[]).map(a=>({gid:a.gid||"",name:a.name||"",allergy:a.allergy||"",type:a.type||(a.allergy?"Allergy":""),severity:a.severity||"",mode:a.mode||"all",meals:Array.isArray(a.meals)?a.meals:[],note:typeof a.meals==="string"?a.meals:(a.note||""),from:a.from||"",to:a.to||"",src:a.src||"",other:a.other}));
-  r.allergies.forEach(a=>{if(a.other===undefined){const m=matchRestriction(a.allergy);if(a.allergy&&RESTRICT_OPTS.includes(a.allergy))a.other=false;else if(a.allergy&&m&&a.allergy.trim().toLowerCase()===m.toLowerCase()){a.allergy=m;a.other=false}else a.other=!!a.allergy}if(!a.other&&a.allergy==="Wheat")a.allergy="Wheat/Gluten";if(a.other&&/^\s*(gluten|wheat)\s*$/i.test(a.allergy)){a.allergy="Wheat/Gluten";a.other=false}if(!a.other&&isCondition(a.allergy)){a.type="Medical";a.severity=""}else if(isDietRow(a)){if(a.type!=="Medical")a.type="Preference";a.severity=""}else if(!a.other&&a.allergy&&noSeverity(a))a.type="";});
+  r.allergies.forEach(a=>{if(a.other===undefined){const m=matchRestriction(a.allergy);if(a.allergy&&RESTRICT_OPTS.includes(a.allergy))a.other=false;else if(a.allergy&&m&&a.allergy.trim().toLowerCase()===m.toLowerCase()){a.allergy=m;a.other=false}else a.other=!!a.allergy}if(!a.other&&a.allergy==="Wheat")a.allergy="Wheat/Gluten";if(a.other&&/^\s*(gluten|wheat)\s*$/i.test(a.allergy)){a.allergy="Wheat/Gluten";a.other=false}if(!a.other&&isCondition(a.allergy)){a.type="Medical";a.severity=""}else if(isDietRow(a)){if(a.type!=="Medical")a.type="Preference";a.severity=""}});
   // Group restrictions by guest: rows without a guest id join the first row with the same name (older data had one row per restriction).
   {const byName={},used=new Set();r.allergies.forEach(a=>{if(a.gid){used.add(a.gid);const k=a.name.trim().toLowerCase();if(k&&!byName[k])byName[k]=a.gid}});
    r.allergies.forEach((a,i)=>{if(a.gid)return;const k=a.name.trim().toLowerCase();if(k&&byName[k]){a.gid=byName[k];return}
@@ -1044,7 +1049,7 @@ function mealPicker(path,cur){const o=[];res.days.forEach(d=>MAINS.forEach(k=>o.
   return `<select id="f-${path}" data-path="${path}">${o.map(([v,l])=>`<option value="${v}" ${cur===v?"selected":""}>${l}</option>`).join("")}</select>`}
 // ---------- allergy list (one line per guest) + Add/Edit dialog ----------
 // "How serious" replaces separate Type and Severity: one choice per restriction.
-const LEVELS=[["intol","Intolerance"],["mild","Allergy, mild"],["severe","Allergy, severe"],["air","Allergy, airborne / anaphylactic"],["medical","Medically prescribed"]];
+const LEVELS=[["pref","Preference"],["intol","Intolerance"],["mild","Allergy, mild"],["severe","Allergy, severe"],["air","Allergy, airborne / anaphylactic"],["medical","Medically prescribed"]];
 const LEVEL_SET={intol:{type:"Intolerance",severity:""},mild:{type:"Allergy",severity:"Mild"},severe:{type:"Allergy",severity:"Severe"},air:{type:"Allergy",severity:"Airborne"},medical:{type:"Medical",severity:""},pref:{type:"Preference",severity:""}};
 const LEVEL_TEXT={intol:"intolerance",mild:"mild allergy",severe:"severe allergy",air:"airborne allergy",medical:"medically prescribed",pref:"preference"};
 function levelOf(a){if(isDietRow(a))return a.type==="Medical"?"medical":"pref";if(a.type==="Medical")return "medical";if(a.type==="Preference")return "pref";if(a.type==="Intolerance")return "intol";
@@ -1087,11 +1092,12 @@ function drawGuest(keepPicker){
   const d=document.getElementById("gdlg"),dr=gDraft,open=keepPicker&&d.querySelector("details.msel")?.open;
   const picked=dr.items.filter(x=>!x.other).map(x=>x.allergy),others=dr.items.map((x,k)=>({...x,k})).filter(x=>x.other);
   const summary=dr.items.length?dr.items.map(x=>x.other?(x.allergy||"Other"):x.allergy).map(esc).join(", "):"Choose one or more";
-  const levelRows=dr.items.map((x,k)=>({...x,k})).filter(x=>!(!x.other&&(DIETS.includes(x.allergy)||isCondition(x.allergy))));
-  d.innerHTML=`<div class="tdhead"><div><span class="eyebrow">${dr.isNew?"Add a guest":"Edit guest"}</span><h2>${dr.name?esc(dr.name):"Allergies & restrictions"}</h2></div><button class="btn ghost" data-gcancel aria-label="Close">✕</button></div>
+  const levelRows=dr.items.map((x,k)=>({...x,k})).filter(x=>!(!x.other&&isCondition(x.allergy)));
+  const DIET_LEVELS=[["pref","Preference"],["medical","Medically prescribed"]];
+  d.innerHTML=`<div class="tdhead"><div><span class="eyebrow">${dr.isNew?"Add a guest":"Edit guest"}</span><h2>${dr.name?esc(dr.name):"Allergies & dietary needs"}</h2></div><button class="btn ghost" data-gcancel aria-label="Close">✕</button></div>
     <label class="f" for="gd-name">Guest name<input type="text" id="gd-name" value="${esc(dr.name)}" autocomplete="off"></label>
     <div class="gd-dup">${dupNote(dupOf(dr))}</div>
-    <div class="f"><span>Allergies &amp; restrictions</span>
+    <div class="f"><span>Allergies &amp; dietary needs</span>
       <details class="msel"${open?" open":""}><summary><span class="msel-sum">${summary}</span><span aria-hidden="true">▾</span></summary><div class="msel-list">
         <div class="msel-h">Allergens</div>${ALLERGENS.map(o=>`<label class="chk"><input type="checkbox" data-gpick value="${esc(o)}" ${picked.includes(o)?"checked":""}>${esc(o)}</label>`).join("")}
         <div class="msel-h">Medical</div>${CONDITIONS.map(o=>`<label class="chk"><input type="checkbox" data-gpick value="${esc(o)}" ${picked.includes(o)?"checked":""}>${esc(o)}</label>`).join("")}
@@ -1099,7 +1105,7 @@ function drawGuest(keepPicker){
       </div></details>
       ${others.map(x=>`<div class="row gd-orow"><input type="text" class="gd-other" data-gother="${x.k}" value="${esc(x.allergy)}" placeholder="Something else, e.g. Kiwi" aria-label="Describe the restriction"><button type="button" class="btn ghost tiny" data-gdelother="${x.k}">Remove</button></div>`).join("")}
       <button type="button" class="btn ghost tiny" style="align-self:flex-start;padding-left:0" data-gaddother>+ Something not listed</button></div>
-    ${levelRows.length?`<div class="f"><span>How serious is each? <span class="muted small" style="font-weight:400">Optional. Leave blank if you don't know.</span></span><table class="gd-lv"><tbody>${levelRows.map(x=>`<tr><th scope="row" id="gd-lab-${x.k}">${x.other?(x.allergy?esc(x.allergy):"Other"):esc(x.allergy)}</th><td><select data-glevel="${x.k}" aria-label="How serious: ${esc(x.allergy||"other")}"><option value="">Not sure</option>${(x.other?[...LEVELS,["pref","Dietary preference"]]:LEVELS).map(([v,l])=>`<option value="${v}" ${x.level===v?"selected":""}>${l}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table></div>`:""}
+    ${levelRows.length?`<div class="f"><span>How serious is each? <span class="muted small" style="font-weight:400">Optional. Leave blank if you don't know.</span></span><table class="gd-lv"><tbody>${levelRows.map(x=>`<tr><th scope="row" id="gd-lab-${x.k}">${x.other?(x.allergy?esc(x.allergy):"Other"):esc(x.allergy)}</th><td><select data-glevel="${x.k}" aria-label="How serious: ${esc(x.allergy||"other")}">${!x.other&&DIETS.includes(x.allergy)?"":`<option value="">Not sure</option>`}${(!x.other&&DIETS.includes(x.allergy)?DIET_LEVELS:LEVELS).map(([v,l])=>`<option value="${v}" ${x.level===v?"selected":""}>${l}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table></div>`:""}
     <div class="row gd-acts"><button class="btn primary" data-gsave>${dr.isNew?"Add guest":"Save"}</button><button class="btn" data-gcancel>Cancel</button>${dr.isNew?"":`<button class="btn ghost danger-text" data-gremove style="margin-left:auto">Remove guest</button>`}</div>`;
 }
 function saveGuest(merge){
@@ -1133,7 +1139,7 @@ function rosterBox(locked){
   if(r.roster){const dt=tableDietText();return `<div class="rosterbox"><div><b>Guest list:</b> ${r.roster.length} guest${r.roster.length===1?"":"s"}${r.rosterFile?` from ${esc(r.rosterFile)}`:""}${r.rosterAt?`, uploaded ${fmtDate(new Date(r.rosterAt),{month:"short",day:"numeric"})}`:""}.${dt?` Diet: ${dt}.`:""}</div>
     ${locked?"":`<div class="row"><button class="btn" data-pickfile>Upload a new version</button>${file}${tpl}<button class="btn ghost danger-text" data-rosterremove>Remove list</button></div>`}${err}${templateFallback()}</div>`}
   if(locked)return "";
-  return `<div class="rosterbox"><div><b>Have a list of guests with allergies or special diets?</b> Upload it before planning meals and we'll fill in the allergy list below and your vegetarian plate counts. Start from our template so we get the columns we need.</div>
+  return `<div class="rosterbox"><div><b>Have a list of guests with allergies or dietary needs?</b> Upload it before planning meals and we'll fill in the allergy list below and your vegetarian plate counts. Start from our template so we get the columns we need.</div>
     <div class="row">${tpl}<button class="btn primary" data-pickfile>Upload guest list</button>${file}</div>
     <span class="hint">CSV or Excel file with these columns: Guest, Allergy or Restriction, Type, Diet, Severity.</span>${help}${err}${templateFallback()}</div>`;
 }
@@ -1222,7 +1228,7 @@ function renderEditor(){
   const r=res, locked=isLocked(), s=sectionStatus(r), dl=deadlineOf(r);
   const daysLeft=dl?daysBetween(TODAY,dl):null;
   const ex=extras(r);
-  const secs=[["contact","Group & contact"],["attendees","Attendee notes"],["room","Rooms & A/V"],["allergies","Attendees & allergies"],["meals","Meals & snacks"],["comments","Comments"]];
+  const secs=[["contact","Group & contact"],["attendees","Attendee notes"],["room","Rooms & A/V"],["allergies","Attendees & dietary needs"],["meals","Meals & snacks"],["comments","Comments"]];
   const dot=k=>k in s?`<span class="dot ${s[k]?"done":""}"></span>`:"";
   let deadlineNote="";
   if(dl&&!locked){
@@ -1277,13 +1283,16 @@ function renderEditor(){
         ${walkBlock(r,locked)}
       </section>
 
-      <section class="card" id="sec-allergies"><div class="sechead"><h2><span class="num">04</span>Attendees &amp; allergies</h2><span class="small muted">Must be received ${DEADLINE_DAYS} days before your event</span></div>
+      <section class="card" id="sec-allergies"><div class="sechead"><h2><span class="num">04</span>Attendees &amp; dietary needs</h2><span class="small muted">Must be received ${DEADLINE_DAYS} days before your event</span></div>
         ${rosterBox(locked)}
-        <h3>Allergies and food restrictions</h3>
+        <h3>Allergies &amp; Dietary Needs</h3>
+        <div class="welcome"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6"/></svg>
+          <div><p>We're happy to accommodate food allergies and dietary preferences, including vegetarian, vegan, halal, kosher, and gluten-free. Let us know who needs what, and we'll do our best to take care of it.</p>
+          <div class="tags"><span class="tag">Vegetarian</span><span class="tag">Vegan</span><span class="tag">Halal</span><span class="tag">Kosher</span><span class="tag">Gluten-free</span><span class="tag">Food allergies</span></div></div></div>
         ${r.allergies.length?allergyList(locked)
-          :`<label class="chk" style="width:fit-content"><input type="checkbox" id="f-noAllergies" data-path="noAllergies" ${r.noAllergies===true?"checked":""}> No guests with allergies or food restrictions</label>`}
+          :`<label class="chk" style="width:fit-content"><input type="checkbox" id="f-noAllergies" data-path="noAllergies" ${r.noAllergies===true?"checked":""}> No guests with allergies or dietary needs</label>`}
         ${locked?"":`<div class="row"><button class="btn" id="addallergy">+ Add a guest</button></div>`}
-        <p class="small muted" style="margin:0">We accommodate many, but not all, food restrictions. We plan for each guest's allergies at every meal and snack.</p>
+        <p class="small muted" style="margin:0">Halal, kosher, or something else? Add the guest and choose “Something not listed.” We plan for each guest's needs at every meal and snack. Needs far outside the usual can be harder for our kitchen to adapt to, so tell us as early as you can and we'll reach out if we have questions.</p>
       </section>
 
       <section class="card" id="sec-meals"><div class="sechead"><h2><span class="num">05</span>Meals &amp; snacks</h2><span class="small muted">Dining hall · water, lemonade and soda included</span></div>
@@ -1452,13 +1461,13 @@ function renderReview(){
         <p class="prose">${r.walk.want?`<b>${esc(walkStatus(r,staffInfo&&staffInfo.walk))}</b>${wantsWalk(r)?`<br><span class="small muted">${esc(walkRequestText(r))}${r.walk.notes?" · "+esc(r.walk.notes):""}</span>`:""}`:`<span class="muted">Not requested</span>`}</p>
       </section>
 
-      <section class="card">${sumHead("04","Attendees &amp; allergies","allergies",locked)}
+      <section class="card">${sumHead("04","Attendees &amp; dietary needs","allergies",locked)}
         ${r.roster?`<p class="prose">Guest list: <b>${r.roster.length}</b> guests${r.rosterFile?` from ${esc(r.rosterFile)}`:""}${tableDietText()?` · ${tableDietText()}`:""}.</p>`:""}
         ${r.allergies.length?(()=>{const gs=allergyGuests(r),ns=gs.filter(guestSevere).length;return `<p class="prose">${gs.length} guest${gs.length===1?"":"s"} with allergies or restrictions${ns?` · <b style="color:var(--bad)">${ns} with something severe, airborne or medically prescribed</b>`:""}.</p>
           <div class="tablewrap"><table class="gtable"><thead><tr><th>Guest</th><th>Allergy or restriction</th><th>Type</th><th>Severity</th></tr></thead><tbody>
           ${gs.map(g=>g.rows.map(({a},j)=>`<tr${j?' class="cont"':""}>${j?"":`<td rowspan="${g.rows.length}"><b>${val(g.name)}</b></td>`}<td>${val(a.allergy)}</td><td>${a.type?TYPE_LABEL[a.type]||a.type:`<span class="muted">Not given</span>`}</td><td>${sevTag(a)}</td></tr>`).join("")).join("")}</tbody></table></div>`})()+`
           <p class="prose small muted">Planned for every meal and snack.</p>`
-          :`<p class="prose">${r.noAllergies===true?"No guests with allergies or food restrictions.":`<span class="missingval">List allergies, or confirm none.</span>`}</p>`}
+          :`<p class="prose">${r.noAllergies===true?"No guests with allergies or dietary needs.":`<span class="missingval">List allergies, or confirm none.</span>`}</p>`}
       </section>
 
       <section class="card">${sumHead("05","Meals &amp; snacks","meals",locked)}
