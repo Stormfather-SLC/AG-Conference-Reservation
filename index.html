@@ -1092,7 +1092,8 @@ function drawGuest(keepPicker){
   const d=document.getElementById("gdlg"),dr=gDraft,open=keepPicker&&d.querySelector("details.msel")?.open;
   const picked=dr.items.filter(x=>!x.other).map(x=>x.allergy),others=dr.items.map((x,k)=>({...x,k})).filter(x=>x.other);
   const summary=dr.items.length?dr.items.map(x=>x.other?(x.allergy||"Other"):x.allergy).map(esc).join(", "):"Choose one or more";
-  const levelRows=dr.items.map((x,k)=>({...x,k})).filter(x=>!(!x.other&&(DIETS.includes(x.allergy)||isCondition(x.allergy))));
+  const levelRows=dr.items.map((x,k)=>({...x,k})).filter(x=>!(!x.other&&isCondition(x.allergy)));
+  const DIET_LEVELS=[["pref","Preference"],["medical","Medically prescribed"]];
   d.innerHTML=`<div class="tdhead"><div><span class="eyebrow">${dr.isNew?"Add a guest":"Edit guest"}</span><h2>${dr.name?esc(dr.name):"Allergies & dietary needs"}</h2></div><button class="btn ghost" data-gcancel aria-label="Close">✕</button></div>
     <label class="f" for="gd-name">Guest name<input type="text" id="gd-name" value="${esc(dr.name)}" autocomplete="off"></label>
     <div class="gd-dup">${dupNote(dupOf(dr))}</div>
@@ -1104,7 +1105,7 @@ function drawGuest(keepPicker){
       </div></details>
       ${others.map(x=>`<div class="row gd-orow"><input type="text" class="gd-other" data-gother="${x.k}" value="${esc(x.allergy)}" placeholder="Something else, e.g. Kiwi" aria-label="Describe the restriction"><button type="button" class="btn ghost tiny" data-gdelother="${x.k}">Remove</button></div>`).join("")}
       <button type="button" class="btn ghost tiny" style="align-self:flex-start;padding-left:0" data-gaddother>+ Something not listed</button></div>
-    ${levelRows.length?`<div class="f"><span>How serious is each? <span class="muted small" style="font-weight:400">Optional. Leave blank if you don't know.</span></span><table class="gd-lv"><tbody>${levelRows.map(x=>`<tr><th scope="row" id="gd-lab-${x.k}">${x.other?(x.allergy?esc(x.allergy):"Other"):esc(x.allergy)}</th><td><select data-glevel="${x.k}" aria-label="How serious: ${esc(x.allergy||"other")}"><option value="">Not sure</option>${LEVELS.map(([v,l])=>`<option value="${v}" ${x.level===v?"selected":""}>${l}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table></div>`:""}
+    ${levelRows.length?`<div class="f"><span>How serious is each? <span class="muted small" style="font-weight:400">Optional. Leave blank if you don't know.</span></span><table class="gd-lv"><tbody>${levelRows.map(x=>`<tr><th scope="row" id="gd-lab-${x.k}">${x.other?(x.allergy?esc(x.allergy):"Other"):esc(x.allergy)}</th><td><select data-glevel="${x.k}" aria-label="How serious: ${esc(x.allergy||"other")}">${!x.other&&DIETS.includes(x.allergy)?"":`<option value="">Not sure</option>`}${(!x.other&&DIETS.includes(x.allergy)?DIET_LEVELS:LEVELS).map(([v,l])=>`<option value="${v}" ${x.level===v?"selected":""}>${l}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table></div>`:""}
     <div class="row gd-acts"><button class="btn primary" data-gsave>${dr.isNew?"Add guest":"Save"}</button><button class="btn" data-gcancel>Cancel</button>${dr.isNew?"":`<button class="btn ghost danger-text" data-gremove style="margin-left:auto">Remove guest</button>`}</div>`;
 }
 function saveGuest(merge){
@@ -1227,7 +1228,7 @@ function renderEditor(){
   const r=res, locked=isLocked(), s=sectionStatus(r), dl=deadlineOf(r);
   const daysLeft=dl?daysBetween(TODAY,dl):null;
   const ex=extras(r);
-  const secs=[["contact","Group & contact"],["attendees","Attendee notes"],["room","Rooms & A/V"],["allergies","Attendees & allergies"],["meals","Meals & snacks"],["comments","Comments"]];
+  const secs=[["contact","Group & contact"],["attendees","Attendee notes"],["room","Rooms & A/V"],["allergies","Attendees & dietary needs"],["meals","Meals & snacks"],["comments","Comments"]];
   const dot=k=>k in s?`<span class="dot ${s[k]?"done":""}"></span>`:"";
   let deadlineNote="";
   if(dl&&!locked){
