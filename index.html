@@ -488,6 +488,7 @@ input.lockedf{background:var(--sunk);color:var(--muted);border-style:dashed;curs
 .sheet .pnotes{margin-top:14px;border:1px solid #c9ced6;border-radius:3px;min-height:70px;padding:4px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#5a6270;font-weight:700}
 @media print{body{margin:0!important}.sheet{border:0;padding:0;max-width:none;min-width:0}.noprint{display:none}}
 .sheet.pdf{border:0;border-radius:0;padding:0;max-width:none;min-width:0;margin:0}
+.sheet.pdf,.sheet.pdf *{box-sizing:border-box;max-width:100%}.sheet.pdf td{overflow-wrap:break-word}.sheet.pdf table{table-layout:auto;width:100%}
 .sheet.pdf .dpage{padding-top:6px}.sheet.pdf .dpage+.dpage{border-top:0;margin-top:0}
 </style>
 
@@ -2371,7 +2372,7 @@ async function makePdf(inner){
   try{await document.fonts.ready}catch(e){}
   const el=document.createElement("article");el.className="sheet pdf";el.innerHTML=inner;
   return lib().set({margin:[0.4,0.4,0.45,0.4],image:{type:"jpeg",quality:0.95},
-    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false},
+    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false,scrollX:0,scrollY:0},
     jsPDF:{unit:"in",format:"letter",orientation:"portrait"},
     pagebreak:{mode:["css","legacy"],avoid:["tr",".srvblock",".rgroup",".day","h2","h3",".dm",".dmenu",".pnotes",".top",".foot"]}})
     .from(el).outputPdf("blob")}
