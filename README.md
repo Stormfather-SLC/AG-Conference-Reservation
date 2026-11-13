@@ -54,12 +54,12 @@ What's in this phase, what's next, and what's parked: [docs/roadmap.md](docs/roa
 `index.html` is a single self-contained page with no build step.
 
 - **Inside Claude (the live page):** shared saving, downloads and the change history all work.
-- **Opened directly in a browser:** the page runs in demo mode and saves to that browser only. This is useful for reviewing screens and text, not for real use.
+- **Anywhere outside Claude** (the file opened from a computer, GitHub Pages, a copy uploaded to another website): the page runs as the demo described below, with sample groups, and saves to that browser only. This is useful for reviewing screens and text, not for real use.
 - **Published page, not signed in:** the page also runs in demo mode. Reservations made there are copied into the shared record the next time that person opens the page signed in on the same browser (the local copy is kept aside, not deleted).
 
 ## Demo (GitHub Pages)
 
-The same `index.html` runs as a stand-alone demo on GitHub Pages (`*.github.io`) or at any address ending in `?demo`. The demo:
+The same `index.html` runs as a stand-alone demo anywhere outside Claude: on GitHub Pages, on any other website it is uploaded to, or opened as a file. No `?demo` is needed there (adding `?demo` also forces the demo inside Claude). Every download works as a normal browser download: PDFs, the attendee-list template, and the Backup spreadsheets and full backup. The demo:
 
 - never connects to the shared record and needs no sign-in;
 - opens with six made-up sample groups whose dates move with today's date: two locked-in groups in camp the same week (Monday dinner–Friday breakfast and Tuesday lunch–Thursday dinner, the Monday of the week after next) so the kitchen list, weekly meal schedule and rooms show groups combined; one in progress and due soon; one with a pending time change; one invited but not started; and a past group;
