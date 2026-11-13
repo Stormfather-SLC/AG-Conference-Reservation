@@ -650,9 +650,11 @@ function applyRosterCounts(){res.days.forEach((d,di)=>MEALS.forEach(m=>{const st
   st.count=c;if(!isServed(m,st)&&!m.snack&&!st.choice&&c===0){st.choice="none";st.auto=true}}))}
 
 // ---------- demo ----------
-// The demo (GitHub Pages, or any address with ?demo) never touches the shared record. It opens with sample groups
-// saved in this browser, and the banner can reset them or load a backup-format file (e.g. a real example kept off GitHub).
-const DEMO=/[?&]demo(=|&|$)/.test(location.search)||/\.github\.io$/.test(location.hostname);
+// The demo never touches the shared record. It opens with sample groups saved in this browser, and the banner can
+// reset them or load a backup-format file (e.g. a real example kept off GitHub). The page is a demo anywhere outside
+// Claude (GitHub Pages, a copy on another website, the file opened from a computer) and at any address with ?demo.
+const IN_CLAUDE=!!(window.claude&&claude.use);
+const DEMO=/[?&]demo(=|&|$)/.test(location.search)||/\.github\.io$/.test(location.hostname)||!IN_CLAUDE;
 const DEMO_FLAG="agdemo:v3";
 // ---------- storage: shared db when available, this browser otherwise ----------
 const store={db:null,mode:"pending",
@@ -1725,7 +1727,9 @@ app.addEventListener("click",async e=>{
   if(b.dataset.editsec){const sec=b.dataset.editsec;view="edit";renderEditor();const el=document.getElementById("sec-"+sec);if(el)el.scrollIntoView();else window.scrollTo(0,0);return}
   if(b.dataset.day){activeDay=Number(b.dataset.day);if("top" in b.dataset){renderEditor();document.getElementById("sec-meals")?.scrollIntoView()}else rerender();return}
   if(b.dataset.pickfile!==undefined){document.getElementById("rosterfile")?.click();return}
-  if(b.id==="dltemplate"){const ns=await dlNs;if(!ns){showTpl=true;rerender();return}
+  if(b.id==="dltemplate"){const ns=await dlNs;
+    if(!ns&&!isFramed()){try{browserSave(`${res.code}-attendee-list.csv`,templateCSV());toast("Template saved")}catch(err){showTpl=true;rerender()}return}
+    if(!ns){showTpl=true;rerender();return}
     try{await ns.save({filename:`${res.code}-attendee-list.csv`,data:templateCSV()});toast("Template saved")}catch(err){if(err&&err.code==="declined")return;showTpl=true;rerender()}return}
   if(b.dataset.copytpl!==undefined){const t=document.getElementById("tpltext");try{await navigator.clipboard.writeText(templateCSV());toast("Template copied")}catch(err){t?.focus();t?.select();toast("Press Ctrl+C or Cmd+C to copy")}return}
   if(b.dataset.doimport!==undefined){doImport();return}
@@ -2388,17 +2392,24 @@ async function makePdf(inner){
 async function downloadPdf(filename,inner,label){
   if(pdfBusy)return;
   const ns=await dlNs;
-  if(!ns&&isFramed()){toast("Downloads aren't available in this view. Open the page in claude.ai to download.");return}
+  if(!ns&&isFramed()){toast(NO_DL);return}
   pdfBusy=true;toast("Making the PDF…");
   let blob;try{blob=await makePdf(inner)}catch(e){pdfBusy=false;toast("Couldn't make the PDF. Check your connection and try again.");return}
   pdfBusy=false;
   if(ns){await saveFile(filename,blob,label);return}
   // Outside claude.ai (e.g. the GitHub Pages demo) a normal browser download works.
+  browserSave(filename,blob);toast(label||"Saved")}
+const NO_DL=IN_CLAUDE?"Downloads aren't available in this view. Open the page in claude.ai to download.":"Downloads aren't available in this view. Open the page in its own tab to download.";
+// A normal browser download. Text gets a byte-order mark so Excel reads accented letters in a CSV correctly.
+function browserSave(filename,data){
+  const ext=(filename.split(".").pop()||"").toLowerCase(),type={csv:"text/csv;charset=utf-8",json:"application/json",pdf:"application/pdf"}[ext]||"application/octet-stream";
+  const blob=data instanceof Blob?data:new Blob([ext==="csv"&&String(data).charCodeAt(0)!==0xFEFF?"\ufeff":"",data],{type});
   const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),60000);toast(label||"Saved")}
+  setTimeout(()=>URL.revokeObjectURL(url),60000)}
 async function saveFile(filename,data,label){
   const ns=await dlNs;
-  if(!ns){toast("Downloads aren't available in this view. Open the page in claude.ai to download.");return false}
+  if(!ns){if(isFramed()){toast(NO_DL);return false}
+    try{browserSave(filename,data);toast(label||"Saved");return true}catch(err){toast("Couldn't save the file. Try again.");return false}}
   try{await ns.save({filename,data});toast(label||"Saved");return true}catch(err){if(err&&err.code==="declined")return false;toast("Couldn't save the file. Try again.");return false}
 }
 function downloadSheet(){const {r,info}=sheetCtx;downloadPdf(`${r.code} ${(r.group||"final details").replace(/[^\w\- ]+/g,"").trim()} - final details.pdf`,sheetBody(r,info),"Final report saved as a PDF.")}
