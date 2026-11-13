@@ -653,8 +653,9 @@ function applyRosterCounts(){res.days.forEach((d,di)=>MEALS.forEach(m=>{const st
 // The demo never touches the shared record. It opens with sample groups saved in this browser, and the banner can
 // reset them or load a backup-format file (e.g. a real example kept off GitHub). The page is a demo anywhere outside
 // Claude (GitHub Pages, a copy on another website, the file opened from a computer) and at any address with ?demo.
+// The Claude page always runs inside a frame, so a framed page is never switched to the demo on this check alone.
 const IN_CLAUDE=!!(window.claude&&claude.use);
-const DEMO=/[?&]demo(=|&|$)/.test(location.search)||/\.github\.io$/.test(location.hostname)||!IN_CLAUDE;
+const DEMO=/[?&]demo(=|&|$)/.test(location.search)||/\.github\.io$/.test(location.hostname)||(!IN_CLAUDE&&!isFramed());
 const DEMO_FLAG="agdemo:v3";
 // ---------- storage: shared db when available, this browser otherwise ----------
 const store={db:null,mode:"pending",
